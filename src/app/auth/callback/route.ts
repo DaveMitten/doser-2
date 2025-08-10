@@ -1,0 +1,35 @@
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { EmailOtpType, MobileOtpType } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const token_hash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
+  const next = searchParams.get("next") ?? "/authorised/dashboard";
+
+  const redirectTo = request.nextUrl.clone();
+  redirectTo.pathname = next;
+  redirectTo.searchParams.delete("token_hash");
+  redirectTo.searchParams.delete("type");
+  redirectTo.searchParams.delete("next");
+
+  if (token_hash && type) {
+    const supabase = await createSupabaseServerClient();
+
+    const { error } = await supabase.auth.verifyOtp({
+      type: type as EmailOtpType,
+      token_hash,
+    });
+
+    if (!error) {
+      redirectTo.searchParams.delete("next");
+      return NextResponse.redirect(redirectTo);
+    }
+  }
+
+  // Return the user to an error page with some instructions
+  redirectTo.pathname = "/auth";
+  redirectTo.searchParams.set("error", "Could not authenticate user");
+  return NextResponse.redirect(redirectTo);
+}
