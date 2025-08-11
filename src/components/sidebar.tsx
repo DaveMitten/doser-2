@@ -154,7 +154,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
           <div className="text-doser-text-muted text-xs mb-3">
             Need more? Upgrade your plan
           </div>
-          <Button variant="doser" size="sm" className="w-full text-xs">
+          <Button variant="dashboard" size="sm" className="w-full text-xs">
             Upgrade now
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Session } from "../../../lib/sessionService";
-import { Badge } from "lucide-react";
+import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 
@@ -28,15 +28,15 @@ const SessionsGrid = ({
   renderStars,
 }: Props) => {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {sessions.length === 0 ? (
-        <div className="col-span-full text-center py-12">
-          <div className="text-doser-text-muted mb-4">
+        <div className="col-span-full text-center py-6 sm:py-8 lg:py-12 px-4">
+          <div className="text-doser-text-muted mb-4 text-sm sm:text-base">
             No sessions recorded yet
           </div>
           <Button
             onClick={() => setIsNewSessionOpen(true)}
-            className="bg-doser-primary hover:bg-doser-primary/90"
+            className="bg-doser-primary hover:bg-doser-primary/90 w-full sm:w-auto max-w-xs"
           >
             Record Your First Session
           </Button>
@@ -45,53 +45,73 @@ const SessionsGrid = ({
         sessions.map((session) => (
           <Card
             key={session.id}
-            className="p-6 cursor-pointer hover:shadow-lg transition-shadow border-doser-primary/20 hover:border-doser-primary/40"
+            className="p-4 sm:p-6 cursor-pointer hover:shadow-lg transition-shadow border-doser-primary/20 hover:border-doser-primary/40"
             onClick={() => handleSessionClick(session)}
           >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="text-lg font-semibold text-doser-primary">
+            <div className="flex justify-between items-start mb-3 sm:mb-4">
+              <div className="flex-1 min-w-0">
+                <div className="text-base sm:text-lg font-semibold text-doser-primary truncate">
                   {formatTime(session.session_time)}
                 </div>
-                <div className="text-sm text-doser-text-muted">
+                <div className="text-xs sm:text-sm text-doser-text-muted">
                   {formatDate(session.session_date)}
                 </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center flex-shrink-0 ml-2">
                 {renderStars(session.rating)}
               </div>
             </div>
 
-            <div className="space-y-3 mb-4">
-              <div className="text-sm">
-                <span className="font-medium">Device:</span>{" "}
-                {session.device_name}
+            <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium text-doser-text-muted">
+                  Device:
+                </span>{" "}
+                <span className="truncate block text-doser-text">
+                  {session.device_name}
+                </span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Temperature:</span>{" "}
-                {getTemperatureDisplay(session)}
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium text-doser-text-muted">
+                  Temperature:
+                </span>{" "}
+                <span className="truncate block text-doser-text">
+                  {getTemperatureDisplay(session)}
+                </span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Draws:</span>{" "}
-                {session.draws_count}
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium text-doser-text-muted">
+                  Draws:
+                </span>{" "}
+                <span className="text-doser-text">{session.draws_count}</span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Material:</span>{" "}
-                {getMaterialDisplay(session)}
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium text-doser-text-muted">
+                  Material:
+                </span>{" "}
+                <span className="truncate block text-doser-text">
+                  {getMaterialDisplay(session)}
+                </span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Duration:</span>{" "}
-                {session.duration_minutes}min
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium text-doser-primary">
+                  Duration:
+                </span>{" "}
+                <span className="text-doser-text">
+                  {session.duration_minutes}min
+                </span>
               </div>
             </div>
 
             {/* Enhanced Calculations Display */}
-            {renderEnhancedCalculations(session)}
+            <div className="mb-3 sm:mb-4 text-xs sm:text-sm">
+              {renderEnhancedCalculations(session)}
+            </div>
 
             {/* Effects */}
             {session.effects && session.effects.length > 0 && (
-              <div className="mt-4">
-                <div className="text-sm font-medium text-doser-primary mb-2">
+              <div className="mt-3 sm:mt-4">
+                <div className="text-xs sm:text-sm font-medium text-doser-primary mb-2">
                   Effects
                 </div>
                 <div className="flex flex-wrap gap-1">

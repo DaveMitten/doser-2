@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+
 import {
   Sheet,
   SheetContent,
@@ -10,7 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { NewSessionForm } from "@/components/new-session/new-session-form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { sessionService, type Session } from "@/lib/sessionService";
 import SessionsGrid from "./SessionsGrid";
 
@@ -118,7 +118,7 @@ export default function SessionsPage() {
 
     if (!enhanced.hasEnhancedData) {
       return (
-        <div className="text-sm text-doser-text-muted">
+        <div className="text-xs sm:text-sm text-doser-text-muted">
           <div className="font-medium">
             Total THC: {session.total_thc_mg.toFixed(1)}mg
           </div>
@@ -133,13 +133,13 @@ export default function SessionsPage() {
     }
 
     return (
-      <div className="text-sm">
-        <div className="font-medium text-doser-primary mb-2">
+      <div className="text-xs sm:text-sm">
+        <div className="font-medium text-doser-primary mb-1 sm:mb-2">
           Enhanced Calculations
         </div>
 
         {/* Consumed Values (Primary Display) */}
-        <div className="mb-2">
+        <div className="mb-1 sm:mb-2">
           <div className="font-medium">
             Consumed THC: {enhanced.consumedThc?.toFixed(1)}mg
           </div>
@@ -153,7 +153,7 @@ export default function SessionsPage() {
         </div>
 
         {/* Original Values (Secondary Display) */}
-        <div className="text-xs text-doser-text-muted/70 border-t pt-2">
+        <div className="text-xs text-doser-text-muted/70 border-t pt-1 sm:pt-2">
           <div>Original THC: {enhanced.originalThc?.toFixed(1)}mg</div>
           <div>Original CBD: {enhanced.originalCbd?.toFixed(1)}mg</div>
           <div>Remaining: {enhanced.remainingMaterial?.toFixed(2)}g</div>
@@ -171,40 +171,43 @@ export default function SessionsPage() {
   // }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-doser-primary mb-2">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Responsive Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-doser-primary mb-2">
             Session History
           </h1>
-          <p className="text-doser-text-muted">
+          <p className="text-sm sm:text-base text-doser-text-muted">
             Track your consumption patterns and effects
           </p>
         </div>
         <Button
           onClick={() => setIsNewSessionOpen(true)}
-          className="bg-doser-primary hover:bg-doser-primary/90"
+          className="bg-doser-primary hover:bg-doser-primary/90 w-full sm:w-auto"
         >
           + New Session
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {filters.map((filter) => (
-          <Badge
-            key={filter}
-            variant={activeFilter === filter ? "default" : "outline"}
-            className={`cursor-pointer ${
-              activeFilter === filter
-                ? "bg-doser-primary text-white"
-                : "text-doser-text-muted border-doser-text-muted/30"
-            }`}
-            onClick={() => setActiveFilter(filter)}
-          >
-            {filter}
-          </Badge>
-        ))}
+      {/* Responsive Filters */}
+      <div className="mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide min-w-0">
+          {filters.map((filter) => (
+            <Badge
+              key={filter}
+              variant={activeFilter === filter ? "default" : "outline"}
+              className={`cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                activeFilter === filter
+                  ? "bg-doser-primary text-white"
+                  : "text-doser-text-muted border-doser-text-muted/30"
+              }`}
+              onClick={() => setActiveFilter(filter)}
+            >
+              {filter}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <SessionsGrid
@@ -221,15 +224,15 @@ export default function SessionsPage() {
 
       {/* Session Detail Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-4 sm:p-6">
           <SheetHeader>
             <SheetTitle className="text-doser-primary">
               Session Details
             </SheetTitle>
           </SheetHeader>
           {selectedSession && (
-            <div className="mt-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <div className="text-sm font-medium text-doser-text-muted">
                     Date
@@ -281,8 +284,8 @@ export default function SessionsPage() {
               </div>
 
               {/* Enhanced Calculations in Detail View */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-doser-primary mb-4">
+              <div className="border-t pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-doser-primary mb-3 sm:mb-4">
                   Consumption Analysis
                 </h3>
                 {renderEnhancedCalculations(selectedSession)}
@@ -291,8 +294,8 @@ export default function SessionsPage() {
               {/* Effects */}
               {selectedSession.effects &&
                 selectedSession.effects.length > 0 && (
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold text-doser-primary mb-4">
+                  <div className="border-t pt-4 sm:pt-6">
+                    <h3 className="text-base sm:text-lg font-semibold text-doser-primary mb-3 sm:mb-4">
                       Effects
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -301,7 +304,7 @@ export default function SessionsPage() {
                           <Badge
                             key={index}
                             variant="outline"
-                            className="border-doser-primary/30 text-doser-primary"
+                            className="border-doser-primary/30 text-doser-primary text-xs sm:text-sm"
                           >
                             {effect}
                           </Badge>
@@ -313,11 +316,11 @@ export default function SessionsPage() {
 
               {/* Notes */}
               {selectedSession.notes && (
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold text-doser-primary mb-4">
+                <div className="border-t pt-4 sm:pt-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-doser-primary mb-3 sm:mb-4">
                     Notes
                   </h3>
-                  <div className="text-doser-text-muted">
+                  <div className="text-doser-text-muted text-sm sm:text-base">
                     {selectedSession.notes}
                   </div>
                 </div>

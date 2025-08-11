@@ -107,7 +107,7 @@ export default function DashboardPage() {
                   algorithm
                 </p>
                 <Link href="/authorised/calculator">
-                  <Button variant="doser" className="w-full">
+                  <Button variant="dashboard" className="w-full">
                     Start Calculation
                   </Button>
                 </Link>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                 <p className="text-doser-text-muted text-sm mb-4">
                   View detailed insights about your consumption patterns
                 </p>
-                <Button variant="doser" className="w-full">
+                <Button variant="dashboard" className="w-full">
                   View Analytics
                 </Button>
               </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                   Monitor your tolerance levels and get personalized
                   recommendations
                 </p>
-                <Button variant="doser" className="w-full">
+                <Button variant="dashboard" className="w-full">
                   Check Tolerance
                 </Button>
               </div>
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                 <p className="text-doser-text-muted text-sm mb-4">
                   Download our mobile app for calculations on the go
                 </p>
-                <Button variant="doser" className="w-full">
+                <Button variant="dashboard" className="w-full">
                   Download App
                 </Button>
               </div>

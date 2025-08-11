@@ -163,102 +163,26 @@
   }
 }
 
-/* Calendar Component Styles */
-.rdp {
-  --rdp-cell-size: 40px;
-  --rdp-accent-color: #10b981;
-  --rdp-background-color: #111111;
-  --rdp-accent-color-dark: #059669;
-  --rdp-background-color-dark: #1a1a1a;
-  --rdp-outline: 2px solid var(--rdp-accent-color);
-  --rdp-outline-selected: 2px solid rgba(16, 185, 129, 0.4);
-  margin: 1em;
+/* Custom animations for Coming Soon badge */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-.rdp-day_selected,
-.rdp-day_selected:focus-visible,
-.rdp-day_selected:hover {
-  color: white;
-  opacity: 1;
-  background-color: var(--rdp-accent-color);
+.animate-shine {
+  animation: shine 2s ease-in-out infinite;
 }
 
-.rdp-day_today {
-  font-weight: bold;
-  color: #10b981;
+/* Hide scrollbar for filters */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
-.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-  background-color: #1a1a1a;
-}
-
-.rdp-nav_button {
-  color: #ffffff;
-  border-color: #333333;
-}
-
-.rdp-nav_button:hover {
-  background-color: #1a1a1a;
-}
-
-/* Doser Calendar Custom Styles */
-.doser-calendar .doser-calendar-caption {
-  color: #ffffff !important;
-}
-
-.doser-calendar .doser-calendar-head-cell {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .doser-calendar-day {
-  color: #ffffff !important;
-}
-
-.doser-calendar .doser-calendar-today {
-  color: #10b981 !important;
-}
-
-.doser-calendar .doser-calendar-outside {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .doser-calendar-disabled {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .doser-calendar-nav-button {
-  color: #ffffff !important;
-}
-
-/* Override react-day-picker default colors */
-.doser-calendar .rdp-button {
-  color: #ffffff !important;
-}
-
-.doser-calendar .rdp-head_cell {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .rdp-day {
-  color: #ffffff !important;
-}
-
-.doser-calendar .rdp-day_today {
-  color: #10b981 !important;
-}
-
-.doser-calendar .rdp-day_outside {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .rdp-day_disabled {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.doser-calendar .rdp-nav_button {
-  color: #ffffff !important;
-}
-
-.doser-calendar .rdp-weekday {
-  color: rgba(255, 255, 255, 0.6) !important;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }

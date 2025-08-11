@@ -24,6 +24,7 @@ import {
 import { Input } from "../../ui/input";
 import { Vaporizer } from "../../../context/data-types";
 import { SessionFormData } from "../../../lib/sessionService";
+import ComingSoon from "../../ComingSoon";
 
 type ConsumptionMethodProps = {
   formData: SessionFormData;
@@ -230,34 +231,29 @@ const ConsumptionMethod = ({
       </div>
 
       {/* Higher Accuracy Mode Toggle */}
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium text-doser-text mb-2">
-            Higher Accuracy Mode
-          </label>
-          <div className="flex items-center space-x-3">
-            <Switch
-              checked={formData.higherAccuracy}
-              onCheckedChange={(checked) => {
-                console.log("Switch changed to:", checked);
-                handleInputChange("higherAccuracy", checked);
-              }}
-            />
-            <span className="text-xs text-doser-text-muted">
-              Use detailed inhalation calculations
-            </span>
+      <ComingSoon>
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-doser-text mb-2">
+              Higher Accuracy Mode
+            </label>
+            <div className="flex items-center space-x-3">
+              <Switch
+                checked={formData.higherAccuracy}
+                onCheckedChange={(checked) => {
+                  console.log("Switch changed to:", checked);
+                  handleInputChange("higherAccuracy", checked);
+                }}
+                disabled
+              />
+              <span className="text-xs text-doser-text-muted">
+                Use detailed inhalation calculations
+              </span>
+            </div>
           </div>
-          {!formData.higherAccuracy && (
-            <p className="text-xs text-doser-text-muted mt-2 italic">
-              💡 When disabled, total inhalations is hidden and calculations use
-              a default value of 8 inhalations.
-            </p>
-          )}
         </div>
-      </div>
 
-      {/* Inhalations Fields - Now in a row when higher accuracy is enabled */}
-      {formData.higherAccuracy && (
+        {/* Inhalations Fields - Now in a row when higher accuracy is enabled */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-doser-text mb-2">
@@ -280,6 +276,7 @@ const ConsumptionMethod = ({
               min="1"
               max={getMaxDraws(formData)}
               required
+              disabled
             />
             <div className="mt-1">
               <p className="text-xs text-doser-text-muted">
@@ -313,6 +310,7 @@ const ConsumptionMethod = ({
                 handleInputChange("totalSessionInhalations", e.target.value)
               }
               className="w-full"
+              disabled
             />
             <p className="text-xs text-doser-text-muted mt-1">
               Total number of inhalations for this session
@@ -327,7 +325,7 @@ const ConsumptionMethod = ({
             </div>
           </div>
         </div>
-      )}
+      </ComingSoon>
     </div>
   );
 };
