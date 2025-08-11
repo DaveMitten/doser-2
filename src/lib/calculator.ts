@@ -12,6 +12,10 @@ export interface CalculatorInputs {
   desiredDoseType: "thc" | "cbd"; // User must choose one
   desiredDose: number; // in mg
   higherAccuracy: boolean; // Whether to use detailed inhalation calculations
+  inhalationsPerCapsule: number;
+
+  totalTHC: number; // Total THC
+  totalCBD: number; // Total CBD
 }
 
 export interface CalculatorOutputs {
