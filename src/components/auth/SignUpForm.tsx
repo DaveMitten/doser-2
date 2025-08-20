@@ -90,7 +90,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
           <p className="text-doser-text-muted mb-6">
             We&apos;ve sent you a confirmation link at <strong>{email}</strong>
           </p>
-          <Button onClick={onToggleMode} variant="outline">
+          <Button onClick={onToggleMode} variant="doser">
             Back to Sign In
           </Button>
         </div>

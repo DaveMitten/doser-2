@@ -11,9 +11,61 @@ interface SidebarProps {
   onMobileItemClick?: () => void;
 }
 
+interface NavigationItem {
+  href: string;
+  label: string;
+  icon: string;
+  pageKey: string;
+}
+
+interface SettingsItem {
+  href: string;
+  label: string;
+  icon: string;
+  pageKey: string;
+}
+
 export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   const { user, signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Navigation configuration
+  const navigationItems: NavigationItem[] = [
+    {
+      href: "/authorised/dashboard",
+      label: "Dashboard",
+      icon: "📊",
+      pageKey: "dashboard",
+    },
+    {
+      href: "/authorised/calculator",
+      label: "Calculator",
+      icon: "🧮",
+      pageKey: "calculator",
+    },
+    {
+      href: "/authorised/sessions",
+      label: "Sessions",
+      icon: "📈",
+      pageKey: "sessions",
+    },
+  ];
+
+  // Settings configuration
+  const settingsItems: SettingsItem[] = [
+    {
+      href: "/authorised/preferences",
+      label: "Preferences",
+      icon: "⚙️",
+      pageKey: "preferences",
+    },
+    // {
+    //   href: "/authorised/profile",
+    //   label: "Profile",
+    //   icon: "👥",
+    //   pageKey: "profile",
+    // },
+  ];
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -33,6 +85,40 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     }
   };
 
+  // Helper function to render navigation items
+  const renderNavigationItem = (item: NavigationItem) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
+        currentPage === item.pageKey
+          ? "text-doser-primary bg-doser-primary-light"
+          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+      }`}
+      onClick={onMobileItemClick}
+    >
+      <span className="text-base">{item.icon}</span>
+      <span>{item.label}</span>
+    </Link>
+  );
+
+  // Helper function to render settings items
+  const renderSettingsItem = (item: SettingsItem) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
+        currentPage === item.pageKey
+          ? "text-doser-primary bg-doser-primary-light"
+          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+      }`}
+      onClick={onMobileItemClick}
+    >
+      <span className="text-base">{item.icon}</span>
+      <span>{item.label}</span>
+    </Link>
+  );
+
   return (
     <aside className="w-64 min-h-screen bg-doser-surface border-r border-doser-border p-4 flex flex-col">
       <div className="space-y-6 flex flex-col h-full">
@@ -46,66 +132,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
 
         {/* Navigation Menu */}
         <nav className="space-y-1">
-          <Link
-            href="/authorised/dashboard"
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-              currentPage === "dashboard"
-                ? "text-doser-primary bg-doser-primary-light"
-                : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-            }`}
-            onClick={onMobileItemClick}
-          >
-            <span className="text-base">📊</span>
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/authorised/calculator"
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-              currentPage === "calculator"
-                ? "text-doser-primary bg-doser-primary-light"
-                : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-            }`}
-            onClick={onMobileItemClick}
-          >
-            <span className="text-base">🧮</span>
-            <span>Calculator</span>
-          </Link>
-          <Link
-            href="/authorised/sessions"
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-              currentPage === "sessions"
-                ? "text-doser-primary bg-doser-primary-light"
-                : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-            }`}
-            onClick={onMobileItemClick}
-          >
-            <span className="text-base">📈</span>
-            <span>Sessions</span>
-          </Link>
-          <Link
-            href="/authorised/calendar"
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-              currentPage === "calendar"
-                ? "text-doser-primary bg-doser-primary-light"
-                : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-            }`}
-            onClick={onMobileItemClick}
-          >
-            <span className="text-base">📅</span>
-            <span>Calendar</span>
-          </Link>
-          <Link
-            href="/authorised/history"
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-              currentPage === "history"
-                ? "text-doser-primary bg-doser-primary-light"
-                : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-            }`}
-            onClick={onMobileItemClick}
-          >
-            <span className="text-base">📋</span>
-            <span>History</span>
-          </Link>
+          {navigationItems.map(renderNavigationItem)}
         </nav>
 
         {/* Settings Section */}
@@ -114,30 +141,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
             Settings
           </div>
           <nav className="space-y-2">
-            <Link
-              href="/authorised/preferences"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-                currentPage === "preferences"
-                  ? "text-doser-primary bg-doser-primary-light"
-                  : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-              }`}
-              onClick={onMobileItemClick}
-            >
-              <span className="text-base">⚙️</span>
-              <span>Preferences</span>
-            </Link>
-            <Link
-              href="/authorised/profile"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-                currentPage === "profile"
-                  ? "text-doser-primary bg-doser-primary-light"
-                  : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-              }`}
-              onClick={onMobileItemClick}
-            >
-              <span className="text-base">👥</span>
-              <span>Profile</span>
-            </Link>
+            {settingsItems.map(renderSettingsItem)}
           </nav>
         </div>
 
@@ -155,9 +159,11 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
           <div className="text-doser-text-muted text-xs mb-3">
             Need more? Upgrade your plan
           </div>
-          <Button variant="dashboard" size="sm" className="w-full text-xs">
-            Upgrade now
-          </Button>
+          <Link href="/pricing">
+            <Button variant="dashboard" size="sm" className="w-full text-xs">
+              Upgrade now
+            </Button>
+          </Link>
         </div>
       </div>
       {/* User Profile - Bottom */}

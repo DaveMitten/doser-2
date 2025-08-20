@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 
 interface NavigationProps {
@@ -45,6 +46,18 @@ const ctaButtons: CTAButton[] = [
 
 export function Navigation({ currentPage }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Auto-determine current page if not provided
+  if (!currentPage) {
+    if (pathname === "/pricing") {
+      currentPage = "pricing";
+    } else if (pathname === "/auth" || pathname.startsWith("/auth/")) {
+      currentPage = "auth";
+    } else {
+      currentPage = "home";
+    }
+  }
 
   const renderNavigationLink = (link: NavigationLink, isMobile = false) => {
     const isActive = currentPage === link.pageKey;

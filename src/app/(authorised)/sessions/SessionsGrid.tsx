@@ -3,15 +3,18 @@ import { Session } from "../../../lib/sessionService";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
+import ListViewSessionCard from "../../../components/sessions/ListViewSessionCard";
+import {
+  formatDate,
+  formatTime,
+  getTemperatureDisplay,
+  renderStars,
+} from "../../../lib/sessionCardUtils";
 
 type Props = {
   sessions: Session[];
   setIsNewSessionOpen: (open: boolean) => void;
   handleSessionClick: (session: Session) => void;
-  formatDate: (date: string) => string;
-  formatTime: (time: string) => string;
-  getTemperatureDisplay: (session: Session) => string;
-  renderStars: (rating: number | null) => React.ReactNode;
   viewMode: "cards" | "list";
 };
 
@@ -19,10 +22,6 @@ const SessionsGrid = ({
   sessions,
   setIsNewSessionOpen,
   handleSessionClick,
-  formatDate,
-  formatTime,
-  getTemperatureDisplay,
-  renderStars,
   viewMode,
 }: Props) => {
   if (sessions.length === 0) {
@@ -66,62 +65,6 @@ const SessionsGrid = ({
                 </div>
               </div>
 
-              {/* Session Details Grid */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    THC:
-                  </span>
-                  <span className="block text-doser-text font-bold text-amber-400 text-lg">
-                    {session.total_thc_mg.toFixed(1)}mg
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    CBD:
-                  </span>
-                  <span className="block text-doser-text font-bold text-blue-400 text-lg">
-                    {session.total_cbd_mg.toFixed(1)}mg
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    Duration:
-                  </span>
-                  <span className="block text-doser-text font-semibold">
-                    {session.duration_minutes}min
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    Method:
-                  </span>
-                  <span className="block text-doser-text font-semibold">
-                    {session.unit_type === "capsule" ? "Capsule" : "Chamber"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Device and Temperature */}
-              <div className="space-y-2 mb-4">
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    Device:
-                  </span>
-                  <span className="block text-doser-text font-medium truncate">
-                    {session.device_name}
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium text-doser-text-muted">
-                    Temperature:
-                  </span>
-                  <span className="block text-doser-text font-medium">
-                    {getTemperatureDisplay(session)}
-                  </span>
-                </div>
-              </div>
-
               {/* Enhanced Calculations */}
               <div className="mb-4 p-3 bg-gradient-to-r from-doser-primary-light/10 to-doser-primary-light/5 border border-doser-primary/20 rounded-lg group-hover:border-doser-primary/30 transition-all duration-200">
                 <div className="text-xs font-semibold text-doser-primary mb-2 uppercase tracking-wide">
@@ -146,7 +89,6 @@ const SessionsGrid = ({
                   </div>
                 </div>
               </div>
-
               {/* Effects */}
               {session.effects && session.effects.length > 0 && (
                 <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/5 to-purple-500/10 border border-purple-500/20 rounded-lg group-hover:border-purple-500/30 transition-all duration-200">
@@ -172,6 +114,46 @@ const SessionsGrid = ({
                   </div>
                 </div>
               )}
+              {/* Session Details Grid */}
+              <div className="mb-4 p-3 bg-gradient-to-r from-doser-primary-light/10 to-doser-primary-light/5 border border-doser-primary/20 rounded-lg group-hover:border-doser-primary/30 transition-all duration-200">
+                {/* Device and Temperature */}
+                <div className="space-y-2 mb-4">
+                  <div className="text-sm">
+                    <span className="font-medium text-doser-text-muted">
+                      Device:
+                    </span>
+                    <span className="block text-doser-text font-medium truncate">
+                      {session.device_name}
+                    </span>
+                  </div>
+                  <div className="text-sm flex flex-row gap-2">
+                    <div className="font-medium text-doser-text-muted">
+                      Temp:
+                    </div>
+                    <div className="block text-doser-text font-medium">
+                      {getTemperatureDisplay(session)}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="text-sm">
+                    <span className="font-medium text-doser-text-muted">
+                      Duration:
+                    </span>
+                    <span className="block text-doser-text font-semibold">
+                      {session.duration_minutes}min
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium text-doser-text-muted">
+                      Method:
+                    </span>
+                    <span className="block text-doser-text font-semibold">
+                      {session.unit_type === "capsule" ? "Capsule" : "Chamber"}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* Higher Accuracy Badge */}
               {session.higher_accuracy_mode && (
@@ -195,87 +177,11 @@ const SessionsGrid = ({
     <div className="bg-doser-surface border border-doser-border rounded-xl overflow-hidden flex flex-col h-[calc(100vh-300px)]">
       <div className="flex-1 overflow-y-auto scrollbar-doser">
         {sessions.map((session) => (
-          <div
+          <ListViewSessionCard
             key={session.id}
-            className="p-4 border-b border-doser-border/50 cursor-pointer hover:bg-doser-surface-hover transition-colors duration-200 last:border-b-0"
-            onClick={() => handleSessionClick(session)}
-          >
-            {/* Session Header */}
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-lg font-semibold text-doser-text">
-                  {formatTime(session.session_time)}
-                </div>
-                <div className="text-sm text-doser-text-muted">
-                  {formatDate(session.session_date)}
-                </div>
-              </div>
-              <div className="flex items-center flex-shrink-0 ml-2">
-                {renderStars(session.rating)}
-              </div>
-            </div>
-
-            {/* Session Details Grid */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-doser-text-muted">THC:</span>
-                <span className="ml-2 text-amber-400 font-semibold">
-                  {session.total_thc_mg.toFixed(1)}mg
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-doser-text-muted">CBD:</span>
-                <span className="ml-2 text-blue-400 font-semibold">
-                  {session.total_cbd_mg.toFixed(1)}mg
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-doser-text-muted">
-                  Duration:
-                </span>
-                <span className="ml-2 text-doser-text font-semibold">
-                  {session.duration_minutes}min
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-doser-text-muted">
-                  Method:
-                </span>
-                <span className="ml-2 text-doser-text font-semibold">
-                  {session.unit_type === "capsule" ? "Capsule" : "Chamber"}
-                </span>
-              </div>
-            </div>
-
-            {/* Device and Temperature */}
-            <div className="mt-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-doser-text-muted">
-                  Device:
-                </span>
-                <span className="text-doser-text font-medium">
-                  {session.device_name}
-                </span>
-              </div>
-              <div className="flex justify-between items-center mt-1">
-                <span className="font-medium text-doser-text-muted">
-                  Temperature:
-                </span>
-                <span className="text-doser-text font-medium">
-                  {getTemperatureDisplay(session)}
-                </span>
-              </div>
-            </div>
-
-            {/* Higher Accuracy Badge */}
-            {session.higher_accuracy_mode && (
-              <div className="mt-3">
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-2 py-1">
-                  High Accuracy Mode
-                </Badge>
-              </div>
-            )}
-          </div>
+            session={session}
+            onClick={handleSessionClick}
+          />
         ))}
       </div>
     </div>
@@ -283,7 +189,6 @@ const SessionsGrid = ({
 
   return (
     <div className="space-y-4">
-      {/* Content */}
       {viewMode === "cards" ? renderCardView() : renderListView()}
     </div>
   );

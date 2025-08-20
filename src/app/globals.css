@@ -53,6 +53,11 @@
   --color-doser-text-muted: var(--doser-text-muted);
   --color-doser-border: var(--doser-border);
   --color-doser-accent: var(--doser-accent);
+  --color-doser-thc: var(--doser-thc);
+  --color-doser-cbd: var(--doser-cbd);
+  --color-doser-effects: var(--doser-effects);
+  --color-doser-notes: var(--doser-notes);
+  --color-doser-success: var(--doser-success);
 }
 
 :root {
@@ -103,6 +108,10 @@
   --doser-gradient-primary: linear-gradient(135deg, #10b981, #059669);
   --doser-gradient-secondary: linear-gradient(135deg, #6366f1, #8b5cf6);
   --doser-success: #34d399; /* emerald-400 */
+  --doser-thc: #f59e0b; /* amber-500 */
+  --doser-cbd: #3b82f6; /* blue-500 */
+  --doser-effects: #9333ea; /* purple-600 */
+  --doser-notes: #f59e0b; /* amber-500 */
 }
 
 .dark {
@@ -152,6 +161,10 @@
   --doser-gradient-primary: linear-gradient(135deg, #10b981, #059669);
   --doser-gradient-secondary: linear-gradient(135deg, #6366f1, #8b5cf6);
   --doser-success: #34d399; /* emerald-400 */
+  --doser-thc: #f59e0b; /* amber-500 */
+  --doser-cbd: #3b82f6; /* blue-500 */
+  --doser-effects: #9333ea; /* purple-600 */
+  --doser-notes: #f59e0b; /* amber-500 */
 }
 
 @layer base {
@@ -191,6 +204,11 @@
 .scrollbar-doser {
   scrollbar-width: thin;
   scrollbar-color: rgba(16, 185, 129, 0.5) transparent;
+}
+
+/* Prevent layout shift when scrollbars appear/disappear */
+html {
+  scrollbar-gutter: stable;
 }
 
 .scrollbar-doser::-webkit-scrollbar {

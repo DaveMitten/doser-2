@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,14 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function Home() {
   return (
     <>
-      {/* Background Pattern */}
-      <div className="fixed inset-0 bg-doser-background">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]"></div>
-      </div>
-
-      {/* Navigation */}
-      <Navigation currentPage="home" />
-
       {/* Main Content */}
       <main className="relative z-10">
         {/* Hero Section */}
@@ -100,16 +91,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-doser-border mt-16">
-        <div className="container mx-auto px-6 py-8">
-          {/* Copyright */}
-          <div className="mt-8 text-center">
-            <p className="text-doser-text-muted text-sm">© 2025 Doser.</p>
-          </div>
-        </div>
-      </footer>
     </>
   );
 }
