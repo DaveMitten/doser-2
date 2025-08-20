@@ -114,7 +114,7 @@ export default function CalculatorPage() {
         chamberWeight: prev.chamberWeight || 0.5, // Default to 0.5g if not set
       }));
     }
-  }, [selectedVaporizer, inputs.vaporizer]);
+  }, [selectedVaporizer, inputs.vaporizer, inputs.measurementMethod]);
 
   // Note: Display values are managed by handleDecimalInput to avoid race conditions
 

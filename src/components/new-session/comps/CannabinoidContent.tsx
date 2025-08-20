@@ -3,17 +3,24 @@
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
 import { Input } from "../../ui/input";
-import { getUnitLabel } from "../../../lib/new-session";
+
 import { calculateConsumedAmount } from "../../../lib/calculator";
+import { FieldErrors } from "react-hook-form";
+import { SessionFormSchema } from "../../../lib/validation-schemas";
 
 type CannabinoidContentProps = {
   formData: SessionFormData;
-  handleInputChange: (field: string, value: string | boolean) => void;
+  handleInputChange: (
+    field: keyof SessionFormSchema,
+    value: string | boolean
+  ) => void;
+  errors: FieldErrors<SessionFormSchema>;
 };
 
 const CannabinoidContent = ({
   formData,
   handleInputChange,
+  errors,
 }: CannabinoidContentProps) => {
   return (
     <div>
@@ -34,7 +41,9 @@ const CannabinoidContent = ({
               onChange={(e) =>
                 handleInputChange("thcPercentage", e.target.value)
               }
-              className="bg-doser-surface-hover border-doser-border text-doser-text pr-16"
+              className={`bg-doser-surface-hover border-doser-border text-doser-text pr-16 ${
+                errors.thcPercentage ? "border-red-500" : ""
+              }`}
               min="0"
               max="100"
               required
@@ -43,6 +52,11 @@ const CannabinoidContent = ({
               %
             </span>
           </div>
+          {errors.thcPercentage && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.thcPercentage.message}
+            </p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
             THC content percentage of your material
           </p>
@@ -60,7 +74,9 @@ const CannabinoidContent = ({
               onChange={(e) =>
                 handleInputChange("cbdPercentage", e.target.value)
               }
-              className="bg-doser-surface-hover border-doser-border text-doser-text pr-16"
+              className={`bg-doser-surface-hover border-doser-border text-doser-text pr-16 ${
+                errors.cbdPercentage ? "border-red-500" : ""
+              }`}
               min="0"
               max="100"
               required
@@ -69,6 +85,11 @@ const CannabinoidContent = ({
               %
             </span>
           </div>
+          {errors.cbdPercentage && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.cbdPercentage.message}
+            </p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
             CBD content percentage of your material
           </p>
@@ -86,8 +107,7 @@ const CannabinoidContent = ({
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-blue-600 mb-1">
-                  Per{" "}
-                  {formData.unit.includes("capsule") ? "Capsule" : "Chamber"}
+                  Per {formData.unitType}
                 </label>
                 <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
                   {formData.inhalationsPerCapsule} inhalations
@@ -110,7 +130,7 @@ const CannabinoidContent = ({
                   inhalations
                 </div>
                 <p className="text-xs text-blue-600/80 mt-1">
-                  Across all {getUnitLabel(formData)}
+                  Across all {formData.unitType}
                 </p>
               </div>
               <div>
@@ -158,7 +178,7 @@ const CannabinoidContent = ({
                 </label>
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
                   {calculateConsumedAmount(formData)?.consumedAmount || "0.00"}{" "}
-                  {getUnitLabel(formData)}
+                  {formData.unitType}
                 </div>
                 <p className="text-xs text-amber-600/80 mt-1">
                   Based on actual inhalations
@@ -181,7 +201,7 @@ const CannabinoidContent = ({
                 </label>
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
                   {calculateConsumedAmount(formData)?.remainingAmount || "0.00"}{" "}
-                  {getUnitLabel(formData)}
+                  {formData.unitType}
                 </div>
                 <p className="text-xs text-amber-600/80 mt-1">
                   Potentially reusable

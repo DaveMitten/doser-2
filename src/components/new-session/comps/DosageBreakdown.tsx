@@ -3,7 +3,7 @@
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
 import { Vaporizer } from "../../../context/data-types";
-import { getUnitLabel } from "../../../lib/new-session";
+
 import { calculateConsumedAmount } from "../../../lib/calculator";
 
 type DosageBreakdownProps = {
@@ -141,7 +141,7 @@ const DosageBreakdown = ({
             </p>
             <div className="text-xs text-doser-text-muted space-y-1">
               <div>
-                • {formData.unitAmount} {getUnitLabel(formData)} consumed
+                • {formData.unitAmount} {formData.unitType} consumed
               </div>
               <div>
                 • {formData.thcPercentage}% THC + {formData.cbdPercentage}% CBD
@@ -157,7 +157,7 @@ const DosageBreakdown = ({
                 <div>
                   • Total material weight:{" "}
                   {(() => {
-                    if (formData.unit.includes("capsule")) {
+                    if (formData.unitType === "capsule") {
                       return (
                         parseFloat(formData.unitAmount) *
                         (selectedDevice?.dosingCapsuleCapacity || 0)
@@ -182,11 +182,8 @@ const DosageBreakdown = ({
                         {calculateTotalInhalations(formData)}
                       </div>
                       <div>
-                        • Inhalations per{" "}
-                        {formData.unit.includes("capsule")
-                          ? "capsule"
-                          : "chamber"}
-                        : {formData.totalSessionInhalations}
+                        • Inhalations per {formData.unitType}:{" "}
+                        {formData.totalSessionInhalations}
                       </div>
                     </div>
 
@@ -196,15 +193,14 @@ const DosageBreakdown = ({
                       </div>
                       <div className="ml-2">
                         - Material actually consumed:{" "}
-                        {consumedAmount?.consumedAmount}{" "}
-                        {getUnitLabel(formData)}
+                        {consumedAmount?.consumedAmount} {formData.unitType}
                       </div>
                       <div className="ml-2">
                         - Consumption rate: {consumedAmount?.consumedRatio}%
                       </div>
                       <div className="ml-2">
                         - Remaining material: {consumedAmount?.remainingAmount}{" "}
-                        {getUnitLabel(formData)}
+                        {formData.unitType}
                       </div>
                     </div>
                   </>

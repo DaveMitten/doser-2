@@ -15,23 +15,27 @@ import {
   getTemperatureMin,
   getTemperatureMax,
   getTemperatureUnitSymbol,
-  getUnitPlaceholder,
   getUnitMax,
-  getUnitLabel,
   isDrawsValid,
   getMaxDraws,
 } from "../../../lib/new-session";
 import { Input } from "../../ui/input";
 import { Vaporizer } from "../../../context/data-types";
 import { SessionFormData } from "../../../lib/sessionService";
+import { FieldErrors } from "react-hook-form";
+import { SessionFormSchema } from "../../../lib/validation-schemas";
 import ComingSoon from "../../ComingSoon";
 
 type ConsumptionMethodProps = {
   formData: SessionFormData;
-  handleInputChange: (field: string, value: string | boolean) => void;
+  handleInputChange: (
+    field: keyof SessionFormSchema,
+    value: string | boolean
+  ) => void;
   selectedDevice: Vaporizer | null;
   temperatureUnit: "celsius" | "fahrenheit";
   setTemperatureUnit: (unit: "celsius" | "fahrenheit") => void;
+  errors: FieldErrors<SessionFormSchema>;
 };
 
 const ConsumptionMethod = ({
@@ -40,6 +44,7 @@ const ConsumptionMethod = ({
   selectedDevice,
   temperatureUnit,
   setTemperatureUnit,
+  errors,
 }: ConsumptionMethodProps) => {
   return (
     <div>
@@ -66,7 +71,11 @@ const ConsumptionMethod = ({
             value={formData.device}
             onValueChange={(value) => handleInputChange("device", value)}
           >
-            <SelectTrigger className="w-full bg-doser-surface-hover border-doser-border text-doser-text">
+            <SelectTrigger
+              className={`w-full bg-doser-surface-hover border-doser-border text-doser-text ${
+                errors.device ? "border-red-500" : ""
+              }`}
+            >
               <SelectValue placeholder="Select your vaporizer" />
             </SelectTrigger>
             <SelectContent className="bg-doser-surface-hover border-doser-border">
@@ -100,6 +109,9 @@ const ConsumptionMethod = ({
                 ))}
             </SelectContent>
           </Select>
+          {errors.device && (
+            <p className="text-red-500 text-xs mt-1">{errors.device.message}</p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
             Select the vaporizer you used for this session
           </p>
@@ -116,7 +128,9 @@ const ConsumptionMethod = ({
               placeholder={getTemperaturePlaceholder(temperatureUnit)}
               value={formData.temperature}
               onChange={(e) => handleInputChange("temperature", e.target.value)}
-              className="bg-doser-surface-hover border-doser-border text-doser-text pr-16"
+              className={`bg-doser-surface-hover border-doser-border text-doser-text pr-16 ${
+                errors.temperature ? "border-red-500" : ""
+              }`}
               min={getTemperatureMin(temperatureUnit)}
               max={getTemperatureMax(temperatureUnit)}
             />
@@ -137,6 +151,11 @@ const ConsumptionMethod = ({
               </div>
             </div>
           </div>
+          {errors.temperature && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.temperature.message}
+            </p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
             {temperatureUnit === "celsius"
               ? "150-230°C range"
@@ -153,16 +172,18 @@ const ConsumptionMethod = ({
             <button
               type="button"
               className={`flex-1 px-3 py-2 rounded-lg border transition-all text-sm font-medium ${
-                formData.unit.includes("chamber")
+                formData.unitType === "chamber"
                   ? "bg-doser-primary/10 border-doser-primary/30 text-doser-primary"
                   : "bg-doser-surface-hover border-doser-border text-doser-text-muted hover:text-doser-text hover:bg-doser-surface"
               }`}
               onClick={() => {
                 if (selectedDevice && selectedDevice.chamberCapacity > 0) {
+                  handleInputChange("unitType", "chamber");
                   handleInputChange(
-                    "unit",
-                    `chamber-${selectedDevice.chamberCapacity}`
+                    "unitCapacity",
+                    selectedDevice.chamberCapacity.toString()
                   );
+                  handleInputChange("unitType", "chamber");
                 }
               }}
               disabled={!selectedDevice || selectedDevice.chamberCapacity === 0}
@@ -172,15 +193,20 @@ const ConsumptionMethod = ({
             <button
               type="button"
               className={`flex-1 px-3 py-2 rounded-lg border transition-all text-sm font-medium ${
-                formData.unit.includes("capsule")
+                formData.unitType === "capsule"
                   ? "bg-doser-primary/10 border-doser-primary/30 text-doser-primary"
                   : "bg-doser-surface-hover border-doser-border text-doser-text-muted hover:text-doser-text hover:bg-doser-surface"
               }`}
               onClick={() => {
                 if (selectedDevice && selectedDevice.capsuleOption) {
                   handleInputChange(
-                    "unit",
-                    `capsule-${selectedDevice.dosingCapsuleCapacity}`
+                    "unitCapacity",
+                    selectedDevice.dosingCapsuleCapacity.toString()
+                  );
+                  handleInputChange("unitType", "capsule");
+                  handleInputChange(
+                    "unitCapacity",
+                    selectedDevice.dosingCapsuleCapacity.toString()
                   );
                 }
               }}
@@ -189,6 +215,11 @@ const ConsumptionMethod = ({
               Capsule
             </button>
           </div>
+          {errors.unitType && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.unitType.message}
+            </p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
             {selectedDevice
               ? `Select whether you used the chamber or dosing capsule`
@@ -203,23 +234,29 @@ const ConsumptionMethod = ({
             <Input
               type="number"
               step="1"
-              placeholder={getUnitPlaceholder(formData, selectedDevice)}
+              placeholder="1"
               value={formData.unitAmount}
               onChange={(e) => handleInputChange("unitAmount", e.target.value)}
-              className="bg-doser-surface-hover border-doser-border text-doser-text pr-20"
+              className={`bg-doser-surface-hover border-doser-border text-doser-text pr-20 ${
+                errors.unitAmount ? "border-red-500" : ""
+              }`}
               min="1"
-              max={getUnitMax(formData, selectedDevice)}
               required
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-doser-text-muted text-sm">
-              {getUnitLabel(formData)}
+              {formData.unitType}
             </span>
           </div>
+          {errors.unitAmount && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.unitAmount.message}
+            </p>
+          )}
           <p className="text-xs text-doser-text-muted mt-1">
-            Number of {getUnitLabel(formData)} consumed (max:{" "}
+            Number of {formData.unitType} consumed (max:{" "}
             {getUnitMax(formData, selectedDevice)}). Each{" "}
-            {formData.unit.includes("capsule") ? "capsule" : "chamber"} contains{" "}
-            {formData.unit.includes("capsule")
+            {formData.unitType === "capsule" ? "capsule" : "chamber"} contains{" "}
+            {formData.unitType === "capsule"
               ? selectedDevice?.dosingCapsuleCapacity
               : selectedDevice?.chamberCapacity}
             g of material.
@@ -254,8 +291,7 @@ const ConsumptionMethod = ({
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-doser-text mb-2">
-              Inhalations per{" "}
-              {formData.unit.includes("capsule") ? "capsule" : "chamber"}{" "}
+              Inhalations per {formData.unitType}{" "}
               <span className="text-red-400">*</span>
             </label>
             <Input
@@ -277,20 +313,17 @@ const ConsumptionMethod = ({
             />
             <div className="mt-1">
               <p className="text-xs text-doser-text-muted">
-                Max: {getMaxDraws(formData)} inhalations per{" "}
-                {formData.unit.includes("capsule") ? "capsule" : "chamber"}
+                Max: {getMaxDraws(formData)} inhalations per {formData.unitType}
               </p>
               {formData.totalSessionInhalations && !isDrawsValid(formData) && (
                 <p className="text-xs text-red-400 mt-1">
-                  ⚠️ Inhalations per{" "}
-                  {formData.unit.includes("capsule") ? "capsule" : "chamber"}{" "}
-                  cannot exceed {getMaxDraws(formData)}.
+                  ⚠️ Inhalations per {formData.unitType} cannot exceed{" "}
+                  {getMaxDraws(formData)}.
                 </p>
               )}
             </div>
             <p className="text-xs text-doser-text-muted mt-1">
-              Number of inhalations you took from each{" "}
-              {formData.unit.includes("capsule") ? "capsule" : "chamber"}
+              Number of inhalations you took from each {formData.unitType}
             </p>
           </div>
           <div>

@@ -29,7 +29,7 @@ export default function SessionsPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessions] = useState<Session[]>([]);
   // const [loading, setLoading] = useState(true);
 
   // Fetch real sessions on component mount
@@ -335,7 +335,7 @@ export default function SessionsPage() {
       {/* New Session Form */}
       <NewSessionForm
         isOpen={isNewSessionOpen}
-        onOpenChange={setIsNewSessionOpen}
+        setSessionFormOpen={setIsNewSessionOpen}
       />
     </div>
   );

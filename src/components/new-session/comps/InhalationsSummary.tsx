@@ -2,7 +2,6 @@
 
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
-import { getUnitLabel } from "../../../lib/new-session";
 
 type InhalationsSummaryProps = {
   formData: SessionFormData;
@@ -21,7 +20,7 @@ const InhalationsSummary = ({ formData }: InhalationsSummaryProps) => {
               {formData.inhalationsPerCapsule}
             </div>
             <div className="text-xs text-blue-600/80">
-              Per {formData.unit.includes("capsule") ? "Capsule" : "Chamber"}
+              Per {formData.unitType}
             </div>
           </div>
           <div className="text-center">
@@ -29,7 +28,7 @@ const InhalationsSummary = ({ formData }: InhalationsSummaryProps) => {
               {formData.unitAmount}
             </div>
             <div className="text-xs text-purple-600/80">
-              {getUnitLabel(formData)} Used
+              {formData.unitType} Used
             </div>
           </div>
           <div className="text-center">

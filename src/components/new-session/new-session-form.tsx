@@ -8,14 +8,21 @@ import {
 } from "@/components/ui/dialog";
 
 import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useUserPreferences } from "@/lib/useUserPreferences";
 import { dryHerbVaporizers } from "@/data/vapes";
 import { type Vaporizer } from "@/context/data-types";
 
 import { formatDecimalInput } from "@/lib/utils";
+import {
+  sessionFormSchema,
+  higherAccuracySchema,
+  type SessionFormSchema,
+} from "@/lib/validation-schemas";
 
 import { getMaxDraws } from "../../lib/new-session";
-import { SessionFormData, sessionService } from "../../lib/sessionService";
+import { SessionFormData } from "../../lib/sessionService";
 import ConsumptionMethod from "./comps/ConsumptionMethod";
 import CannabinoidContent from "./comps/CannabinoidContent";
 import SessionNotes from "./comps/SessionNotes";
@@ -24,36 +31,19 @@ import DosageBreakdown from "./comps/DosageBreakdown";
 import EffectsExperienced from "./comps/EffectsExperienced";
 import SessionRating from "./comps/SessionRating";
 import FormActions from "./comps/FormActions";
-import SuccessAndErrorMessages from "./comps/SuccessAndErrorMessages";
 import InhalationsSummary from "./comps/InhalationsSummary";
+import { Button } from "../ui/button";
 
 interface NewSessionFormProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  setSessionFormOpen: (open: boolean) => void;
 }
 
-export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
+export function NewSessionForm({
+  isOpen,
+  setSessionFormOpen,
+}: NewSessionFormProps) {
   const { preferences } = useUserPreferences();
-  const [formData, setFormData] = useState<SessionFormData>({
-    date: new Date().toISOString().split("T")[0],
-    time: new Date().toISOString().slice(0, 5),
-    duration: "",
-    method: "dry-herb", // Fixed to vaporizer
-    device: "",
-    temperature: "",
-    unit: "", // Will be set when device is selected
-    unitAmount: "", // New field for actual amount used
-    thcPercentage: "0", // New field for THC percentage
-    cbdPercentage: "0", // New field for CBD percentage
-    totalSessionInhalations: "", // Total session inhalations
-    inhalationsPerCapsule: "", // Inhalations per capsule/chamber
-    higherAccuracy: false, // New field for calculation mode
-    totalTHC: "",
-    totalCBD: "",
-    rating: 0,
-    notes: "",
-  });
-
   const [selectedEffects, setSelectedEffects] = useState<string[]>([]);
   const [temperatureUnit, setTemperatureUnit] = useState<
     "celsius" | "fahrenheit"
@@ -74,8 +64,45 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
 
   // New state for form submission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+  // React Hook Form setup
+  const form = useForm<SessionFormSchema>({
+    resolver: zodResolver(sessionFormSchema),
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      time: new Date().toISOString().slice(0, 5),
+      duration: "",
+      method: "dry-herb", // Fixed to vaporizer
+      device: "",
+      temperature: "",
+      unitAmount: "", // New field for actual amount used
+      unitType: "capsule", // New field for unit type
+      unitCapacity: "0", // New field for unit capacity
+      thcPercentage: "0", // New field for THC percentage
+      cbdPercentage: "0", // New field for CBD percentage
+      totalSessionInhalations: "", // Total session inhalations
+      inhalationsPerCapsule: "", // Inhalations per capsule/chamber
+      higherAccuracy: false, // New field for calculation mode
+      totalTHC: "",
+      totalCBD: "",
+      rating: 0,
+      notes: "",
+    },
+    mode: "onSubmit", // Only validate when form is submitted
+    reValidateMode: "onSubmit", // Re-validate only on submit
+  });
+
+  const {
+    watch,
+    setValue,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    trigger, // Add trigger for manual validation
+  } = form;
+  if (errors) console.log(errors);
+  const watchedValues = watch();
 
   // Update temperature unit when preferences change
   useEffect(() => {
@@ -88,18 +115,17 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
   useEffect(() => {
     if (!isOpen) {
       setIsSubmitting(false);
-      setSubmitError(null);
-      setSubmitSuccess(false);
     } else {
       // Reset form to initial state when dialog opens
-      setFormData({
+      reset({
         date: new Date().toISOString().split("T")[0],
         time: new Date().toISOString().slice(0, 5),
         duration: "",
         method: "dry-herb", // Fixed to vaporizer
         device: "",
         temperature: "",
-        unit: "", // Will be auto-selected when device is chosen
+        unitType: "", // Will be auto-selected when device is chosen
+        unitCapacity: "", // Will be auto-selected when device is chosen
         unitAmount: "", // New field for actual amount used
         thcPercentage: "0", // New field for THC percentage
         cbdPercentage: "0", // New field for CBD percentage
@@ -115,34 +141,42 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
       setSelectedDevice(null);
       setCalculatedTotals(null);
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
   // Update selected device when device selection changes
   useEffect(() => {
-    if (formData.device) {
-      const device = dryHerbVaporizers.find((v) => v.name === formData.device);
+    if (watchedValues.device) {
+      const device = dryHerbVaporizers.find(
+        (v) => v.name === watchedValues.device
+      );
       setSelectedDevice(device || null);
 
       // Auto-select the first available option (chamber or capsule) when device changes
       if (device) {
-        let autoSelectedUnit = "";
+        let unitType = "";
+        let unitCapacity = "";
 
         // Prefer chamber if available, otherwise use capsule
         if (device.chamberCapacity > 0) {
-          autoSelectedUnit = `chamber-${device.chamberCapacity}`;
+          unitType = "chamber";
+          unitCapacity = device.chamberCapacity.toString();
         } else if (device.capsuleOption) {
-          autoSelectedUnit = `capsule-${device.dosingCapsuleCapacity}`;
+          unitType = "capsule";
+          unitCapacity = device.dosingCapsuleCapacity.toString();
         }
 
-        setFormData((prev) => ({ ...prev, unit: autoSelectedUnit }));
+        setValue("unitType", unitType);
+        setValue("unitCapacity", unitCapacity);
       } else {
-        setFormData((prev) => ({ ...prev, unit: "" }));
+        setValue("unitType", "");
+        setValue("unitCapacity", "");
       }
     } else {
       setSelectedDevice(null);
-      setFormData((prev) => ({ ...prev, unit: "" }));
+      setValue("unitType", "");
+      setValue("unitCapacity", "");
     }
-  }, [formData.device]);
+  }, [watchedValues.device, setValue]);
 
   // Update inhalations per capsule from user preferences when device changes
   useEffect(() => {
@@ -151,37 +185,38 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
       preferences &&
       preferences.inhalations_per_capsule !== null
     ) {
-      setFormData((prev) => ({
-        ...prev,
-        inhalationsPerCapsule:
-          preferences.inhalations_per_capsule?.toString() ?? "8",
-      }));
+      setValue(
+        "inhalationsPerCapsule",
+        preferences.inhalations_per_capsule?.toString()
+      );
     }
-  }, [selectedDevice, preferences]);
+  }, [selectedDevice, preferences, setValue]);
 
   // Reset inhalations when higher accuracy settings change to prevent invalid values
   useEffect(() => {
-    if (formData.higherAccuracy && formData.totalSessionInhalations) {
-      const maxDraws = getMaxDraws(formData);
-      if (parseFloat(formData.totalSessionInhalations) > maxDraws) {
-        setFormData((prev) => ({ ...prev, totalSessionInhalations: "" }));
+    if (watchedValues.higherAccuracy && watchedValues.totalSessionInhalations) {
+      const maxDraws = getMaxDraws(watchedValues as unknown as SessionFormData);
+      if (parseFloat(watchedValues.totalSessionInhalations) > maxDraws) {
+        setValue("totalSessionInhalations", "");
       }
     }
   }, [
-    formData.higherAccuracy,
-    formData.totalSessionInhalations,
-    formData.unitAmount,
+    watchedValues,
+    watchedValues.higherAccuracy,
+    watchedValues.totalSessionInhalations,
+    watchedValues.unitAmount,
+    setValue,
   ]);
 
-  // Real-time calculation updates
+  // Real-time calculation updates - only when essential values change
   const calculateTotals = useCallback(() => {
     if (
       !selectedDevice ||
-      !formData.unit ||
-      !formData.unitAmount ||
-      !formData.thcPercentage ||
-      !formData.cbdPercentage ||
-      (formData.higherAccuracy && !formData.totalSessionInhalations)
+      !watchedValues.unitType ||
+      !watchedValues.unitAmount ||
+      !watchedValues.thcPercentage ||
+      !watchedValues.cbdPercentage ||
+      (watchedValues.higherAccuracy && !watchedValues.totalSessionInhalations)
     ) {
       setCalculatedTotals(null);
       return;
@@ -189,17 +224,18 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
 
     try {
       // Calculate material weight based on device and method
-      const unitWeight = formData.unit.includes("capsule")
-        ? (selectedDevice?.dosingCapsuleCapacity || 0) *
-          parseFloat(formData.unitAmount)
-        : (selectedDevice?.chamberCapacity || 0) *
-          parseFloat(formData.unitAmount);
+      const unitWeight =
+        watchedValues.unitType === "capsule"
+          ? (selectedDevice?.dosingCapsuleCapacity || 0) *
+            parseFloat(watchedValues.unitAmount)
+          : (selectedDevice?.chamberCapacity || 0) *
+            parseFloat(watchedValues.unitAmount);
 
       // Calculate total cannabinoids in the material
       const totalThc =
-        (parseFloat(formData.thcPercentage) / 100) * unitWeight * 1000; // Convert to mg
+        (parseFloat(watchedValues.thcPercentage) / 100) * unitWeight * 1000; // Convert to mg
       const totalCbd =
-        (parseFloat(formData.cbdPercentage) / 100) * unitWeight * 1000; // Convert to mg
+        (parseFloat(watchedValues.cbdPercentage) / 100) * unitWeight * 1000; // Convert to mg
 
       // Calculate consumed amounts based on higher accuracy mode
       let consumedThc = totalThc;
@@ -207,13 +243,15 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
       let consumptionRatio = 1;
 
       if (
-        formData.higherAccuracy &&
-        formData.totalSessionInhalations &&
-        formData.inhalationsPerCapsule
+        watchedValues.higherAccuracy &&
+        watchedValues.totalSessionInhalations &&
+        watchedValues.inhalationsPerCapsule
       ) {
-        const totalInhalations = parseFloat(formData.totalSessionInhalations);
+        const totalInhalations = parseFloat(
+          watchedValues.totalSessionInhalations
+        );
         const inhalationsPerCapsule = parseFloat(
-          formData.inhalationsPerCapsule
+          watchedValues.inhalationsPerCapsule
         );
         consumptionRatio = totalInhalations / inhalationsPerCapsule;
         consumedThc = totalThc * consumptionRatio;
@@ -237,31 +275,31 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
       setCalculatedTotals(null);
     }
   }, [
-    formData.device,
-    formData.unit,
-    formData.unitAmount,
-    formData.thcPercentage,
-    formData.cbdPercentage,
-    formData.higherAccuracy,
-    formData.totalSessionInhalations,
-    formData.inhalationsPerCapsule,
     selectedDevice,
+    watchedValues.unitType,
+    watchedValues.unitAmount,
+    watchedValues.thcPercentage,
+    watchedValues.cbdPercentage,
+    watchedValues.higherAccuracy,
+    watchedValues.totalSessionInhalations,
+    watchedValues.inhalationsPerCapsule,
   ]);
 
+  // Only calculate totals when essential values change
   useEffect(() => {
     calculateTotals();
   }, [calculateTotals]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (
+    field: keyof SessionFormSchema,
+    value: string | boolean
+  ) => {
     // Apply decimal formatting for THC and CBD percentage fields
     if (field === "thcPercentage" || field === "cbdPercentage") {
       const formattedValue = formatDecimalInput(value as string);
-      setFormData((prev) => ({ ...prev, [field]: formattedValue }));
+      setValue(field, formattedValue);
     } else {
-      if (field === "higherAccuracy") {
-        console.log("Setting higherAccuracy to:", value);
-      }
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      setValue(field, value);
     }
   };
 
@@ -275,66 +313,67 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
 
   const handleRatingChange = (rating: number) => {
     // If clicking the same star again, clear the rating (set to 0)
-    if (formData.rating === rating) {
-      setFormData((prev) => ({ ...prev, rating: 0 }));
+    if (watchedValues.rating === rating) {
+      setValue("rating", 0);
     } else {
-      setFormData((prev) => ({ ...prev, rating }));
+      setValue("rating", rating);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const onSubmit = async (data: SessionFormSchema) => {
     // Prevent double submission
     if (isSubmitting) {
       return;
     }
 
-    // Validate required fields
-    if (!formData.device || !formData.unit || !formData.unitAmount) {
-      setSubmitError(
-        "Please fill in all required fields (device, unit, and amount)"
-      );
+    // Trigger validation for all fields
+    const isValid = await trigger();
+    if (!isValid) {
+      // Validation failed, errors will be displayed by react-hook-form
+      console.log("Validation failed");
       return;
     }
 
-    if (!selectedDevice) {
-      setSubmitError("Please select a valid device");
-      return;
+    // Additional validation for higher accuracy mode
+    if (data.higherAccuracy) {
+      try {
+        higherAccuracySchema.parse(data);
+      } catch (error) {
+        console.error("Error in onSubmit:", error);
+        return;
+      }
     }
 
     setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
       // Import sessionService dynamically to avoid SSR issues
       const { sessionService } = await import("@/lib/sessionService");
 
-      const { data, error } = await sessionService.createSession(
-        formData,
+      const { data: sessionData, error } = await sessionService.createSession(
+        data as unknown as SessionFormData,
         selectedEffects,
         calculatedTotals,
-        selectedDevice,
+        selectedDevice as Vaporizer,
         temperatureUnit
       );
 
       if (error) {
         console.error("Error creating session:", error);
-        setSubmitError("Failed to save session. Please try again.");
         return;
       }
 
-      if (data) {
-        setSubmitSuccess(true);
+      if (sessionData) {
         // Reset form after successful submission
-        setFormData({
+        reset({
           date: new Date().toISOString().split("T")[0],
           time: new Date().toISOString().slice(0, 5),
           duration: "",
           method: "dry-herb",
           device: "",
           temperature: "",
-          unit: "",
+          unitType: "",
+          unitCapacity: "",
           unitAmount: "",
           thcPercentage: "0",
           cbdPercentage: "0",
@@ -350,105 +389,132 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
         setSelectedDevice(null);
         setCalculatedTotals(null);
 
-        // Close the dialog after a short delay to show success message
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 2000);
+        // Show success overlay
+        setShowSuccessOverlay(true);
       }
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      setSubmitError("An unexpected error occurred. Please try again.");
+      console.error("Error in onSubmit:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setSessionFormOpen}>
       <DialogContent className="bg-doser-surface border-doser-border w-[90vw] max-w-[1000px] sm:max-w-[1000px] max-h-[90vh] overflow-y-auto p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-doser-primary/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-doser-primary [&::-webkit-scrollbar]:hover:w-2 [&::-webkit-scrollbar-thumb]:transition-all [&::-webkit-scrollbar-thumb]:duration-200">
-        <DialogHeader className="pb-6 border-b border-doser-border">
-          <DialogTitle className="flex items-center gap-3 text-doser-text">
-            <div className="w-10 h-10 bg-gradient-to-br from-doser-primary to-doser-primary-hover rounded-xl flex items-center justify-center">
-              <span className="text-white text-lg">📝</span>
-            </div>
-            <div>
-              <div className="font-semibold text-xl">Log New Session</div>
-              <div className="text-doser-text-muted text-sm font-normal">
-                Record your cannabis session details for tracking
+        {showSuccessOverlay ? (
+          <DialogHeader className="bg-doser-surface flex items-center justify-center  h-[90vh]">
+            <DialogTitle className="text-center space-y-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto">
+                <span className="text-white text-3xl">✓</span>
               </div>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
+              <div>
+                <h3 className="text-2xl font-bold text-doser-text mb-2">
+                  Session Logged Successfully!
+                </h3>
+                <p className="text-doser-text-muted">
+                  Your cannabis session has been recorded.
+                </p>
+                <Button
+                  variant="dashboard"
+                  className="mt-4 w-full"
+                  onClick={() => setSessionFormOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+        ) : (
+          <>
+            <DialogHeader className="pb-6 border-b border-doser-border">
+              <DialogTitle className="flex items-center gap-3 text-doser-text">
+                <div className="w-10 h-10 bg-gradient-to-br from-doser-primary to-doser-primary-hover rounded-xl flex items-center justify-center">
+                  <span className="text-white text-lg">📝</span>
+                </div>
+                <div>
+                  <div className="font-semibold text-xl">Log New Session</div>
+                  <div className="text-doser-text-muted text-sm font-normal">
+                    Record your cannabis session details for tracking
+                  </div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
 
-        {/* Success and Error Messages */}
-        <SuccessAndErrorMessages
-          submitSuccess={submitSuccess}
-          submitError={submitError}
-        />
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-8">
+              {/* Session Details */}
+              <SessionDetails
+                formData={watchedValues as unknown as SessionFormData}
+                handleInputChange={handleInputChange}
+                errors={errors}
+              />
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-8">
-          {/* Session Details */}
-          <SessionDetails
-            formData={formData}
-            handleInputChange={handleInputChange}
-          />
+              {/* Consumption Method */}
+              <ConsumptionMethod
+                formData={watchedValues as unknown as SessionFormData}
+                handleInputChange={handleInputChange}
+                selectedDevice={selectedDevice}
+                temperatureUnit={temperatureUnit}
+                setTemperatureUnit={setTemperatureUnit}
+                errors={errors}
+              />
 
-          {/* Consumption Method */}
-          <ConsumptionMethod
-            formData={formData}
-            handleInputChange={handleInputChange}
-            selectedDevice={selectedDevice}
-            temperatureUnit={temperatureUnit}
-            setTemperatureUnit={setTemperatureUnit}
-          />
+              {/* Cannabinoid Content */}
+              <CannabinoidContent
+                formData={watchedValues as unknown as SessionFormData}
+                handleInputChange={handleInputChange}
+                errors={errors}
+              />
 
-          {/* Cannabinoid Content */}
-          <CannabinoidContent
-            formData={formData}
-            handleInputChange={handleInputChange}
-          />
+              {/* Inhalations Summary - Only shown in higher accuracy mode */}
+              {watchedValues.higherAccuracy &&
+                watchedValues.inhalationsPerCapsule &&
+                watchedValues.unitAmount && (
+                  <InhalationsSummary
+                    formData={watchedValues as unknown as SessionFormData}
+                  />
+                )}
 
-          {/* Inhalations Summary - Only shown in higher accuracy mode */}
-          {formData.higherAccuracy &&
-            formData.inhalationsPerCapsule &&
-            formData.unitAmount && <InhalationsSummary formData={formData} />}
+              {/* Dosage Breakdown */}
+              <DosageBreakdown
+                formData={watchedValues as unknown as SessionFormData}
+                calculatedTotals={calculatedTotals}
+                selectedDevice={selectedDevice}
+              />
 
-          {/* Dosage Breakdown */}
-          <DosageBreakdown
-            formData={formData}
-            calculatedTotals={calculatedTotals}
-            selectedDevice={selectedDevice}
-          />
+              {/* Effects Experienced */}
+              <EffectsExperienced
+                selectedEffects={selectedEffects}
+                handleEffectToggle={handleEffectToggle}
+              />
 
-          {/* Effects Experienced */}
-          <EffectsExperienced
-            selectedEffects={selectedEffects}
-            handleEffectToggle={handleEffectToggle}
-          />
+              {/* Session Rating */}
+              <SessionRating
+                rating={watchedValues.rating}
+                hoveredRating={hoveredRating}
+                handleRatingChange={handleRatingChange}
+                setHoveredRating={setHoveredRating}
+              />
 
-          {/* Session Rating */}
-          <SessionRating
-            rating={formData.rating}
-            hoveredRating={hoveredRating}
-            handleRatingChange={handleRatingChange}
-            setHoveredRating={setHoveredRating}
-          />
+              {/* Session Notes */}
+              <SessionNotes
+                formData={watchedValues as unknown as SessionFormData}
+                handleInputChange={handleInputChange}
+                errors={errors}
+              />
 
-          {/* Session Notes */}
-          <SessionNotes
-            formData={formData}
-            handleInputChange={handleInputChange}
-          />
-
-          {/* Form Actions */}
-          <FormActions
-            formData={formData}
-            selectedEffects={selectedEffects}
-            isSubmitting={isSubmitting}
-            handleSubmit={handleSubmit}
-            onSaveAsDraft={() => {}}
-          />
-        </form>
+              {/* Form Actions */}
+              <FormActions
+                formData={watchedValues as unknown as SessionFormData}
+                selectedEffects={selectedEffects}
+                isSubmitting={isSubmitting}
+                form={form}
+                handleSubmit={handleSubmit(onSubmit)}
+                onSaveAsDraft={() => {}}
+              />
+            </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -56,6 +56,7 @@ export default function ResetPasswordPage() {
         }, 2000);
       }
     } catch (err) {
+      console.error(err);
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);

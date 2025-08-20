@@ -14,7 +14,8 @@ export interface SessionFormData {
   temperature: string;
   totalSessionInhalations: string;
   inhalationsPerCapsule: string;
-  unit: string;
+  unitType: string;
+  unitCapacity: string;
   unitAmount: string;
   thcPercentage: string;
   cbdPercentage: string;
@@ -64,91 +65,21 @@ export class SessionService {
         throw new Error("User not authenticated");
       }
 
-      // Validate required fields
-      if (!formData.duration || formData.duration.trim() === "") {
-        throw new Error("Duration is required");
-      }
-
-      if (!formData.device || formData.device.trim() === "") {
-        throw new Error("Device is required");
-      }
-
-      if (!formData.unitAmount || formData.unitAmount.trim() === "") {
-        throw new Error("Unit amount is required");
-      }
-
-      if (!formData.thcPercentage || formData.thcPercentage.trim() === "") {
-        throw new Error("THC percentage is required");
-      }
-
-      if (!formData.cbdPercentage || formData.cbdPercentage.trim() === "") {
-        throw new Error("CBD percentage is required");
-      }
-
-      // Validate numeric constraints
+      // Parse form data without validation
       const duration = parseInt(formData.duration);
-      if (isNaN(duration) || duration <= 0 || duration > 300) {
-        throw new Error("Duration must be between 1 and 300 minutes");
-      }
-
       const unitAmount = parseInt(formData.unitAmount);
-      if (isNaN(unitAmount) || unitAmount <= 0 || unitAmount > 10) {
-        throw new Error("Unit amount must be between 1 and 10");
-      }
-
       const thcPercentage = parseFloat(formData.thcPercentage);
-      if (isNaN(thcPercentage) || thcPercentage < 0 || thcPercentage > 100) {
-        throw new Error("THC percentage must be between 0 and 100");
-      }
-
       const cbdPercentage = parseFloat(formData.cbdPercentage);
-      if (isNaN(cbdPercentage) || cbdPercentage < 0 || cbdPercentage > 100) {
-        throw new Error("CBD percentage must be between 0 and 100");
-      }
-
-      // Validate effects array
-      if (!effects || effects.length === 0) {
-        throw new Error("At least one effect must be selected");
-      }
 
       // Handle total_session_inhalations based on higher_accuracy_mode
       let totalInhalations: number | null = null;
-      if (formData.higherAccuracy) {
-        // In higher accuracy mode, total_session_inhalations is required and must be 1-50
-        if (
-          !formData.totalSessionInhalations ||
-          formData.totalSessionInhalations.trim() === ""
-        ) {
-          throw new Error(
-            "Total session inhalations is required in higher accuracy mode"
-          );
-        }
-
+      if (formData.higherAccuracy && formData.totalSessionInhalations) {
         totalInhalations = parseInt(formData.totalSessionInhalations);
-        if (
-          isNaN(totalInhalations) ||
-          totalInhalations <= 0 ||
-          totalInhalations > 50
-        ) {
-          throw new Error(
-            "Total session inhalations must be between 1 and 50 in higher accuracy mode"
-          );
-        }
-      } else {
-        // In regular mode, total_session_inhalations is optional and can be null
-        if (
-          formData.totalSessionInhalations &&
-          formData.totalSessionInhalations.trim() !== ""
-        ) {
-          totalInhalations = parseInt(formData.totalSessionInhalations);
-          if (isNaN(totalInhalations) || totalInhalations < 0) {
-            throw new Error("Total session inhalations must be 0 or greater");
-          }
-        }
-        // If not provided, totalInhalations remains null (which is correct)
+      } else if (!formData.higherAccuracy && formData.totalSessionInhalations) {
+        totalInhalations = parseInt(formData.totalSessionInhalations);
       }
 
-      // Parse and validate form data
+      // Parse and prepare session data
       const sessionData: SessionInsert = {
         user_id: user.id,
         session_date: formData.date,
@@ -156,9 +87,9 @@ export class SessionService {
         duration_minutes: duration,
         device_name: formData.device,
         total_session_inhalations: totalInhalations,
-        unit_type: formData.unit.includes("capsule") ? "capsule" : "chamber",
+        unit_type: formData.unitType,
         unit_amount: unitAmount,
-        unit_capacity_grams: formData.unit.includes("capsule")
+        unit_capacity_grams: formData.unitType
           ? selectedDevice?.dosingCapsuleCapacity || 0
           : selectedDevice?.chamberCapacity || 0,
         thc_percentage: thcPercentage,

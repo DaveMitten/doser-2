@@ -21,11 +21,12 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       // Try client-side signout first
       await signOut();
     } catch (error) {
+      console.error("1: Error signing out:", error);
       // Fallback to server action
       try {
         await serverSignOut();
       } catch (serverError) {
-        console.error("Error signing out:", serverError);
+        console.error("2: Error server error signing out:", serverError);
       }
     } finally {
       setIsLoggingOut(false);
