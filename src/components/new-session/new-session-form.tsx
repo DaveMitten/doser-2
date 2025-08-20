@@ -10,7 +10,7 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useUserPreferences } from "@/lib/useUserPreferences";
+
 import { dryHerbVaporizers } from "@/data/vapes";
 import { type Vaporizer } from "@/context/data-types";
 
@@ -33,6 +33,7 @@ import SessionRating from "./comps/SessionRating";
 import FormActions from "./comps/FormActions";
 import InhalationsSummary from "./comps/InhalationsSummary";
 import { Button } from "../ui/button";
+import { useUserPreferences } from "../../lib/useUserPreferences";
 
 interface NewSessionFormProps {
   isOpen: boolean;

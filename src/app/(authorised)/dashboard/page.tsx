@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import ComingSoon from "../../../components/ComingSoon";
 import { useAuth } from "@/context/AuthContext";
-import { useUserPreferences } from "@/lib/useUserPreferences";
 import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";

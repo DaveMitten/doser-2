@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       {/* Main Content */}
-      <main className="relative z-10">
+      <main className="relative z-10 min-h-screen">
         {/* Hero Section */}
         <div className="container mx-auto px-6 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

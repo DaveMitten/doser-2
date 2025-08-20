@@ -3,8 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useUserPreferences } from "@/lib/useUserPreferences";
 import { useState } from "react";
+import { useUserPreferences } from "../../../lib/useUserPreferences";
 
 export default function PreferencesPage() {
   const { preferences, loading, error, updateTemperatureUnit } =
