@@ -10,12 +10,6 @@ import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import ListViewSessionCard from "@/components/sessions/ListViewSessionCard";
-import {
-  formatDate,
-  formatTime,
-  getTemperatureDisplay,
-  renderStars,
-} from "@/lib/sessionCardUtils";
 
 interface DashboardStats {
   totalSessions: number;
@@ -40,7 +34,6 @@ interface UserProfile {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { preferences } = useUserPreferences();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);

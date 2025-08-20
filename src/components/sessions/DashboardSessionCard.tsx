@@ -1,11 +1,6 @@
 import React from "react";
 import { Session } from "@/lib/sessionService";
-import {
-  formatDate,
-  formatTime,
-  getTemperatureDisplay,
-  renderStars,
-} from "@/lib/sessionCardUtils";
+import { formatDate, formatTime } from "@/lib/sessionCardUtils";
 
 interface DashboardSessionCardProps {
   session: Session;

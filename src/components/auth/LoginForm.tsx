@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { login } from "@/app/auth/actions";
+import { login } from "../../app/(public)/auth/actions";
 
 interface LoginFormProps {
   onToggleMode: () => void;

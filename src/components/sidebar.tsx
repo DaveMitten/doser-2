@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
-import { signOut as serverSignOut } from "@/app/auth/actions";
+import { signOut as serverSignOut } from "@/app/(public)/auth/actions";
 
 interface SidebarProps {
   currentPage?: string;
