@@ -297,7 +297,7 @@ export default function DashboardPage() {
             ))}
           </div>
           <div className="text-center">
-            <Link href="/authorised/sessions">
+            <Link href="/sessions">
               <Button variant="outline">View All Sessions</Button>
             </Link>
           </div>
@@ -331,7 +331,7 @@ export default function DashboardPage() {
                   Calculate your perfect dose in seconds with our smart
                   algorithm
                 </p>
-                <Link href="/authorised/calculator">
+                <Link href="/calculator">
                   <Button variant="dashboard" className="w-full">
                     Start Calculation
                   </Button>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                 <p className="text-doser-text-muted text-sm mb-4">
                   Record your latest cannabis session and track your experience
                 </p>
-                <Link href="/authorised/sessions">
+                <Link href="/sessions">
                   <Button variant="dashboard" className="w-full">
                     Log Session
                   </Button>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                 <p className="text-doser-text-muted text-sm mb-4">
                   Customize your default settings and preferences
                 </p>
-                <Link href="/authorised/preferences">
+                <Link href="/preferences">
                   <Button variant="dashboard" className="w-full">
                     Manage Preferences
                   </Button>

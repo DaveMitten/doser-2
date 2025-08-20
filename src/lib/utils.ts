@@ -6,18 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getCurrentPage(pathname: string): string {
-  // Remove leading slash and split by '/'
-  const segments = pathname.replace(/^\//, "").split("/");
-
-  // If we're in the authorised area, get the second segment
-  if (segments[0] === "authorised" && segments[1]) {
-    return segments[1];
-  }
-
-  // Default to dashboard if no specific page
-  return "dashboard";
-}
+// Determine current page based on pathname for navigation highlighting
+export const getCurrentPage = (pathname: string): string => {
+  if (pathname.startsWith("/dashboard")) return "dashboard";
+  if (pathname.startsWith("/calculator")) return "calculator";
+  if (pathname.startsWith("/sessions")) return "sessions";
+  if (pathname.startsWith("/preferences")) return "preferences";
+  return "dashboard"; // default fallback
+};
 
 export const validateNumberInput = (
   e: React.ChangeEvent<HTMLInputElement>,

@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { getCurrentPage } from "@/lib/utils";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 export default function AuthorisedLayout({
@@ -15,6 +16,7 @@ export default function AuthorisedLayout({
 }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
+
   const currentPage = getCurrentPage(pathname);
 
   return (

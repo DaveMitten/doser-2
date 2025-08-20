@@ -32,19 +32,19 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   // Navigation configuration
   const navigationItems: NavigationItem[] = [
     {
-      href: "/authorised/dashboard",
+      href: "/dashboard",
       label: "Dashboard",
       icon: "📊",
       pageKey: "dashboard",
     },
     {
-      href: "/authorised/calculator",
+      href: "/calculator",
       label: "Calculator",
       icon: "🧮",
       pageKey: "calculator",
     },
     {
-      href: "/authorised/sessions",
+      href: "/sessions",
       label: "Sessions",
       icon: "📈",
       pageKey: "sessions",
@@ -54,13 +54,13 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   // Settings configuration
   const settingsItems: SettingsItem[] = [
     {
-      href: "/authorised/preferences",
+      href: "/preferences",
       label: "Preferences",
       icon: "⚙️",
       pageKey: "preferences",
     },
     // {
-    //   href: "/authorised/profile",
+    //   href: "/profile",
     //   label: "Profile",
     //   icon: "👥",
     //   pageKey: "profile",

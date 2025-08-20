@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { SignUpForm } from '@/components/auth/SignUpForm';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -13,7 +13,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/authorised/dashboard');
+      router.push("/dashboard");
     }
   }, [user, loading, router]);
 
@@ -33,7 +33,7 @@ export default function AuthPage() {
     <div className="min-h-screen bg-doser-background">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]"></div>
-      
+
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         {isSignUp ? (
           <SignUpForm onToggleMode={() => setIsSignUp(false)} />

@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
         setSuccess(true);
         // Redirect to dashboard after successful password reset
         setTimeout(() => {
-          router.push("/authorised/dashboard");
+          router.push("/dashboard");
         }, 2000);
       }
     } catch (err) {
