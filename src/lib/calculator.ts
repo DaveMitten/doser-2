@@ -1,4 +1,5 @@
 import { dryHerbVaporizers } from "@/data/vapes";
+import { SessionFormData } from "./sessionService";
 
 // Types for calculator inputs and outputs
 export interface CalculatorInputs {
@@ -229,3 +230,27 @@ export function calculateConfidence(
   // - User experience level
   return 85; // Placeholder
 }
+
+export const calculateConsumedAmount = (formData: SessionFormData) => {
+  if (
+    !formData.totalSessionInhalations ||
+    !formData.inhalationsPerCapsule ||
+    !formData.unitAmount
+  )
+    return null;
+
+  const totalInhalations = parseFloat(formData.totalSessionInhalations);
+  const inhalationsPerCapsule = parseFloat(formData.inhalationsPerCapsule);
+  const unitAmount = parseFloat(formData.unitAmount);
+
+  const consumedRatio = (totalInhalations / inhalationsPerCapsule) * 100;
+  const consumedAmount =
+    (totalInhalations / inhalationsPerCapsule) * unitAmount;
+  const remainingAmount = unitAmount - consumedAmount;
+
+  return {
+    consumedAmount: consumedAmount.toFixed(2),
+    consumedRatio: consumedRatio.toFixed(1),
+    remainingAmount: remainingAmount.toFixed(2),
+  };
+};

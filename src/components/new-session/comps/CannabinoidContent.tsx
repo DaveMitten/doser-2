@@ -3,7 +3,8 @@
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
 import { Input } from "../../ui/input";
-import { getMaterialUnitLabel } from "../../../lib/new-session";
+import { getUnitLabel } from "../../../lib/new-session";
+import { calculateConsumedAmount } from "../../../lib/calculator";
 
 type CannabinoidContentProps = {
   formData: SessionFormData;
@@ -77,7 +78,7 @@ const CannabinoidContent = ({
       {/* Inhalations Summary Display */}
       {formData.higherAccuracy &&
         formData.totalSessionInhalations &&
-        formData.materialAmount && (
+        formData.unitAmount && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
             <h4 className="text-blue-600 font-medium text-sm mb-3">
               📈 Inhalations Analysis
@@ -86,9 +87,7 @@ const CannabinoidContent = ({
               <div>
                 <label className="block text-xs font-medium text-blue-600 mb-1">
                   Per{" "}
-                  {formData.material.includes("capsule")
-                    ? "Capsule"
-                    : "Chamber"}
+                  {formData.unit.includes("capsule") ? "Capsule" : "Chamber"}
                 </label>
                 <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
                   {formData.inhalationsPerCapsule} inhalations
@@ -102,16 +101,16 @@ const CannabinoidContent = ({
                   Total Possible
                 </label>
                 <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
-                  {formData.inhalationsPerCapsule && formData.materialAmount
+                  {formData.inhalationsPerCapsule && formData.unitAmount
                     ? (
                         parseFloat(formData.inhalationsPerCapsule) *
-                        parseFloat(formData.materialAmount)
+                        parseFloat(formData.unitAmount)
                       ).toString()
                     : "0"}{" "}
                   inhalations
                 </div>
                 <p className="text-xs text-blue-600/80 mt-1">
-                  Across all {getMaterialUnitLabel(formData)}
+                  Across all {getUnitLabel(formData)}
                 </p>
               </div>
               <div>
@@ -121,7 +120,7 @@ const CannabinoidContent = ({
                 <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
                   {formData.totalSessionInhalations &&
                   formData.inhalationsPerCapsule &&
-                  formData.materialAmount
+                  formData.unitAmount
                     ? Math.round(
                         (parseFloat(formData.totalSessionInhalations) /
                           parseFloat(formData.inhalationsPerCapsule)) *
@@ -147,7 +146,7 @@ const CannabinoidContent = ({
       {formData.higherAccuracy &&
         formData.totalSessionInhalations &&
         formData.inhalationsPerCapsule &&
-        formData.materialAmount && (
+        formData.unitAmount && (
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4">
             <h4 className="text-amber-600 font-medium text-sm mb-3">
               📊 Enhanced Material Consumption Analysis
@@ -158,9 +157,8 @@ const CannabinoidContent = ({
                   Material Consumed
                 </label>
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
-                  {calculateConsumedMaterialAmount(formData)?.consumedAmount ||
-                    "0.00"}{" "}
-                  {getMaterialUnitLabel(formData)}
+                  {calculateConsumedAmount(formData)?.consumedAmount || "0.00"}{" "}
+                  {getUnitLabel(formData)}
                 </div>
                 <p className="text-xs text-amber-600/80 mt-1">
                   Based on actual inhalations
@@ -171,7 +169,7 @@ const CannabinoidContent = ({
                   Consumption Rate
                 </label>
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
-                  {calculateConsumedMaterialAmount()?.consumedRatio || "0.0"}%
+                  {calculateConsumedAmount(formData)?.consumedRatio || "0.0"}%
                 </div>
                 <p className="text-xs text-amber-600/80 mt-1">
                   Of total material used
@@ -182,8 +180,8 @@ const CannabinoidContent = ({
                   Remaining Material
                 </label>
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1 text-doser-text font-mono text-center text-sm">
-                  {calculateConsumedMaterialAmount()?.remainingAmount || "0.00"}{" "}
-                  {getMaterialUnitLabel()}
+                  {calculateConsumedAmount(formData)?.remainingAmount || "0.00"}{" "}
+                  {getUnitLabel(formData)}
                 </div>
                 <p className="text-xs text-amber-600/80 mt-1">
                   Potentially reusable

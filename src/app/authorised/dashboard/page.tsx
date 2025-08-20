@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import ComingSoon from "../../../components/ComingSoon";
 
 export default function DashboardPage() {
   return (
@@ -194,15 +195,17 @@ export default function DashboardPage() {
                   />
                 </svg>
               </div>
-              <div className="flex-1">
-                <h3 className="text-doser-text font-bold mb-2">Mobile App</h3>
-                <p className="text-doser-text-muted text-sm mb-4">
-                  Download our mobile app for calculations on the go
-                </p>
-                <Button variant="dashboard" className="w-full">
-                  Download App
-                </Button>
-              </div>
+              <ComingSoon>
+                <div className="flex-1">
+                  <h3 className="text-doser-text font-bold mb-2">Mobile App</h3>
+                  <p className="text-doser-text-muted text-sm mb-4">
+                    Download our mobile app for calculations on the go
+                  </p>
+                  <Button variant="dashboard" className="w-full">
+                    Download App
+                  </Button>
+                </div>
+              </ComingSoon>
             </div>
           </CardContent>
         </Card>

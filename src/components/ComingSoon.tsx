@@ -30,7 +30,12 @@ const ComingSoon = ({
       <div className={overlayClasses}>
         <div className="text-center">
           <Badge variant="coming-soon">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-doser-primary to-transparent animate-shine" />
+            <div
+              className={cn(
+                "absolute inset-0 bg-gradient-to-r from-transparent via-doser-primary to-transparent animate-shine",
+                variant === "default" ? "hidden" : ""
+              )}
+            />
             Coming Soon
           </Badge>
         </div>

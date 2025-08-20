@@ -21,22 +21,6 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Column - Content */}
             <div className="space-y-8">
-              {/* AI Badge */}
-              <div className="inline-flex items-center space-x-2 bg-doser-primary-light text-green-400 px-3 py-1 rounded-full text-sm">
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>Powered by AI</span>
-              </div>
-
               {/* Main Headline */}
               <h1 className="text-4xl lg:text-6xl font-bold text-doser-text leading-tight">
                 The <span className="text-doser-primary">smartest</span>{" "}
@@ -60,52 +44,6 @@ export default function Home() {
                 <Button className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text">
                   Join Waitlist
                 </Button>
-              </div>
-
-              {/* Benefits */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-doser-text-muted">
-                  <svg
-                    className="w-5 h-5 text-doser-primary"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>Early access</span>
-                </div>
-                <div className="flex items-center space-x-2 text-doser-text-muted">
-                  <svg
-                    className="w-5 h-5 text-doser-primary"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>No spam, ever</span>
-                </div>
-                <div className="flex items-center space-x-2 text-doser-text-muted">
-                  <svg
-                    className="w-5 h-5 text-doser-primary"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>Free forever</span>
-                </div>
               </div>
             </div>
 
@@ -166,57 +104,9 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-doser-border mt-16">
         <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            {/* Left Side - Circular Buttons */}
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                A
-              </div>
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                M
-              </div>
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                S
-              </div>
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                L
-              </div>
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                J
-              </div>
-              <div className="w-10 h-10 bg-doser-primary rounded-full flex items-center justify-center text-doser-text font-bold">
-                +
-              </div>
-            </div>
-
-            {/* Right Side - Trust Indicators */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-doser-text-muted text-sm">
-                  Trusted by 1,200+ beta users
-                </span>
-                <div className="flex space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className="w-4 h-4 text-yellow-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Copyright */}
           <div className="mt-8 text-center">
-            <p className="text-doser-text-muted text-sm">
-              © 2025 Doser. For educational purposes only. Please consume
-              responsibly and in accordance with local laws.
-            </p>
+            <p className="text-doser-text-muted text-sm">© 2025 Doser.</p>
           </div>
         </div>
       </footer>

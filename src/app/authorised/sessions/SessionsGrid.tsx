@@ -83,7 +83,11 @@ const SessionsGrid = ({
                 <span className="font-medium text-doser-text-muted">
                   Draws:
                 </span>{" "}
-                <span className="text-doser-text">{session.draws_count}</span>
+                <span className="text-doser-text">
+                  {session.total_session_inhalations !== null
+                    ? session.total_session_inhalations
+                    : "N/A"}
+                </span>
               </div>
               <div className="text-xs sm:text-sm">
                 <span className="font-medium text-doser-text-muted">

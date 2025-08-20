@@ -24,12 +24,12 @@ CREATE TABLE public.sessions (
   device_name TEXT NOT NULL,
   temperature_celsius NUMERIC(5,1) CHECK (temperature_celsius >= 150 AND temperature_celsius <= 230),
   temperature_fahrenheit NUMERIC(5,1) CHECK (temperature_fahrenheit >= 300 AND temperature_fahrenheit <= 450),
-  draws_count INTEGER NOT NULL CHECK (draws_count > 0 AND draws_count <= 50),
+  total_session_inhalations INTEGER CHECK (total_session_inhalations IS NULL OR (total_session_inhalations > 0 AND total_session_inhalations <= 50)), -- NULL when higher_accuracy_mode is false
   
-  -- Material and dosing
-  material_type TEXT NOT NULL CHECK (material_type IN ('capsule', 'chamber')),
-  material_amount INTEGER NOT NULL CHECK (material_amount > 0 AND material_amount <= 10),
-  material_capacity_grams NUMERIC(4,3) NOT NULL CHECK (material_capacity_grams > 0),
+  -- Unit and dosing (changed from material to unit for clarity)
+  unit_type TEXT NOT NULL CHECK (unit_type IN ('capsule', 'chamber')),
+  unit_amount INTEGER NOT NULL CHECK (unit_amount > 0 AND unit_amount <= 10),
+  unit_capacity_grams NUMERIC(4,3) NOT NULL CHECK (unit_capacity_grams > 0),
   
   -- Cannabinoid content
   thc_percentage NUMERIC(4,1) NOT NULL CHECK (thc_percentage >= 0 AND thc_percentage <= 100),
@@ -85,7 +85,7 @@ CREATE TRIGGER on_sessions_updated
 -- The sessions table now supports:
 -- ✅ Rich session data collection
 -- ✅ Temperature in both Celsius and Fahrenheit
--- ✅ Detailed material and dosing information
+-- ✅ Detailed unit and dosing information (changed from material)
 -- ✅ Cannabinoid calculations
 -- ✅ Effects tracking as an array
 -- ✅ Session rating and notes

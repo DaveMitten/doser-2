@@ -8,10 +8,10 @@ export const isFormValid = (
 ) => {
   return (
     formData.device &&
-    formData.material &&
-    formData.materialAmount &&
-    formData.thcPercentage &&
-    formData.cbdPercentage &&
+    formData.unit &&
+    formData.unitAmount &&
+    formData.thcPercentage !== "" &&
+    formData.cbdPercentage !== "" &&
     (!formData.higherAccuracy || formData.totalSessionInhalations) &&
     (!formData.higherAccuracy || formData.inhalationsPerCapsule) &&
     formData.date &&
@@ -38,39 +38,39 @@ export const getTemperatureUnitSymbol = (temperatureUnit: string) => {
   return temperatureUnit === "celsius" ? "°C" : "°F";
 };
 
-// Get material placeholder based on selected device and method
-export const getMaterialPlaceholder = (
+// Get unit placeholder based on selected device and method
+export const getUnitPlaceholder = (
   formData: SessionFormData,
   selectedDevice: Vaporizer | null
 ) => {
   if (!selectedDevice) return "1";
 
-  if (formData.material.includes("capsule")) {
+  if (formData.unit.includes("capsule")) {
     return "1";
   } else {
     return "1";
   }
 };
 
-// Get material max based on selected device and method
-export const getMaterialMax = (
+// Get unit max based on selected device and method
+export const getUnitMax = (
   formData: SessionFormData,
   selectedDevice: Vaporizer | null
 ) => {
   if (!selectedDevice) return 5;
 
-  if (formData.material.includes("capsule")) {
+  if (formData.unit.includes("capsule")) {
     return 10; // Allow up to 10 capsules
   } else {
     return 5; // Allow up to 5 chamber loads
   }
 };
 
-// Get material unit label
-export const getMaterialUnitLabel = (formData: SessionFormData) => {
-  if (!formData.material.includes("-")) return "units";
+// Get unit label
+export const getUnitLabel = (formData: SessionFormData) => {
+  if (!formData.unit.includes("-")) return "units";
 
-  if (formData.material.includes("capsule")) {
+  if (formData.unit.includes("capsule")) {
     return "capsules";
   } else {
     return "chambers";
@@ -98,12 +98,11 @@ export const getMaxDraws = (formData: SessionFormData) => {
   if (
     !formData.higherAccuracy ||
     !formData.inhalationsPerCapsule ||
-    !formData.materialAmount
+    !formData.unitAmount
   ) {
     return 50;
   }
   return Math.floor(
-    parseFloat(formData.inhalationsPerCapsule) *
-      parseFloat(formData.materialAmount)
+    parseFloat(formData.inhalationsPerCapsule) * parseFloat(formData.unitAmount)
   );
 };

@@ -15,7 +15,7 @@ import { type Vaporizer } from "@/context/data-types";
 import { formatDecimalInput } from "@/lib/utils";
 
 import { getMaxDraws } from "../../lib/new-session";
-import { SessionFormData } from "../../lib/sessionService";
+import { SessionFormData, sessionService } from "../../lib/sessionService";
 import ConsumptionMethod from "./comps/ConsumptionMethod";
 import CannabinoidContent from "./comps/CannabinoidContent";
 import SessionNotes from "./comps/SessionNotes";
@@ -41,8 +41,8 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
     method: "dry-herb", // Fixed to vaporizer
     device: "",
     temperature: "",
-    material: "", // Will be set when device is selected
-    materialAmount: "", // New field for actual amount used
+    unit: "", // Will be set when device is selected
+    unitAmount: "", // New field for actual amount used
     thcPercentage: "0", // New field for THC percentage
     cbdPercentage: "0", // New field for CBD percentage
     totalSessionInhalations: "", // Total session inhalations
@@ -84,17 +84,63 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
     }
   }, [preferences]);
 
+  // Reset form state when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSubmitting(false);
+      setSubmitError(null);
+      setSubmitSuccess(false);
+    } else {
+      // Reset form to initial state when dialog opens
+      setFormData({
+        date: new Date().toISOString().split("T")[0],
+        time: new Date().toISOString().slice(0, 5),
+        duration: "",
+        method: "dry-herb", // Fixed to vaporizer
+        device: "",
+        temperature: "",
+        unit: "", // Will be auto-selected when device is chosen
+        unitAmount: "", // New field for actual amount used
+        thcPercentage: "0", // New field for THC percentage
+        cbdPercentage: "0", // New field for CBD percentage
+        totalSessionInhalations: "", // Total session inhalations
+        inhalationsPerCapsule: "", // Inhalations per capsule/chamber
+        higherAccuracy: false, // New field for calculation mode
+        totalTHC: "",
+        totalCBD: "",
+        rating: 0,
+        notes: "",
+      });
+      setSelectedEffects([]);
+      setSelectedDevice(null);
+      setCalculatedTotals(null);
+    }
+  }, [isOpen]);
+
   // Update selected device when device selection changes
   useEffect(() => {
     if (formData.device) {
       const device = dryHerbVaporizers.find((v) => v.name === formData.device);
       setSelectedDevice(device || null);
 
-      // Clear material selection when device changes so user can choose
-      setFormData((prev) => ({ ...prev, material: "" }));
+      // Auto-select the first available option (chamber or capsule) when device changes
+      if (device) {
+        let autoSelectedUnit = "";
+
+        // Prefer chamber if available, otherwise use capsule
+        if (device.chamberCapacity > 0) {
+          autoSelectedUnit = `chamber-${device.chamberCapacity}`;
+        } else if (device.capsuleOption) {
+          autoSelectedUnit = `capsule-${device.dosingCapsuleCapacity}`;
+        }
+
+        setFormData((prev) => ({ ...prev, unit: autoSelectedUnit }));
+      } else {
+        setFormData((prev) => ({ ...prev, unit: "" }));
+      }
     } else {
       setSelectedDevice(null);
-      setFormData((prev) => ({ ...prev, material: "" }));
+      setFormData((prev) => ({ ...prev, unit: "" }));
     }
   }, [formData.device]);
 
@@ -124,15 +170,15 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
   }, [
     formData.higherAccuracy,
     formData.totalSessionInhalations,
-    formData.materialAmount,
+    formData.unitAmount,
   ]);
 
   // Real-time calculation updates
   const calculateTotals = useCallback(() => {
     if (
       !selectedDevice ||
-      !formData.material ||
-      !formData.materialAmount ||
+      !formData.unit ||
+      !formData.unitAmount ||
       !formData.thcPercentage ||
       !formData.cbdPercentage ||
       (formData.higherAccuracy && !formData.totalSessionInhalations)
@@ -143,17 +189,17 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
 
     try {
       // Calculate material weight based on device and method
-      const materialWeight = formData.material.includes("capsule")
+      const unitWeight = formData.unit.includes("capsule")
         ? (selectedDevice?.dosingCapsuleCapacity || 0) *
-          parseFloat(formData.materialAmount)
+          parseFloat(formData.unitAmount)
         : (selectedDevice?.chamberCapacity || 0) *
-          parseFloat(formData.materialAmount);
+          parseFloat(formData.unitAmount);
 
       // Calculate total cannabinoids in the material
       const totalThc =
-        (parseFloat(formData.thcPercentage) / 100) * materialWeight * 1000; // Convert to mg
+        (parseFloat(formData.thcPercentage) / 100) * unitWeight * 1000; // Convert to mg
       const totalCbd =
-        (parseFloat(formData.cbdPercentage) / 100) * materialWeight * 1000; // Convert to mg
+        (parseFloat(formData.cbdPercentage) / 100) * unitWeight * 1000; // Convert to mg
 
       // Calculate consumed amounts based on higher accuracy mode
       let consumedThc = totalThc;
@@ -182,7 +228,7 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
         consumedThc: consumedThc,
         consumedCbd: consumedCbd,
         consumptionRatio: consumptionRatio,
-        remainingMaterial: materialWeight * (1 - consumptionRatio),
+        remainingMaterial: unitWeight * (1 - consumptionRatio),
       };
 
       setCalculatedTotals(calculatedTotals);
@@ -192,8 +238,8 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
     }
   }, [
     formData.device,
-    formData.material,
-    formData.materialAmount,
+    formData.unit,
+    formData.unitAmount,
     formData.thcPercentage,
     formData.cbdPercentage,
     formData.higherAccuracy,
@@ -238,7 +284,83 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    // Prevent double submission
+    if (isSubmitting) {
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.device || !formData.unit || !formData.unitAmount) {
+      setSubmitError(
+        "Please fill in all required fields (device, unit, and amount)"
+      );
+      return;
+    }
+
+    if (!selectedDevice) {
+      setSubmitError("Please select a valid device");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Import sessionService dynamically to avoid SSR issues
+      const { sessionService } = await import("@/lib/sessionService");
+
+      const { data, error } = await sessionService.createSession(
+        formData,
+        selectedEffects,
+        calculatedTotals,
+        selectedDevice,
+        temperatureUnit
+      );
+
+      if (error) {
+        console.error("Error creating session:", error);
+        setSubmitError("Failed to save session. Please try again.");
+        return;
+      }
+
+      if (data) {
+        setSubmitSuccess(true);
+        // Reset form after successful submission
+        setFormData({
+          date: new Date().toISOString().split("T")[0],
+          time: new Date().toISOString().slice(0, 5),
+          duration: "",
+          method: "dry-herb",
+          device: "",
+          temperature: "",
+          unit: "",
+          unitAmount: "",
+          thcPercentage: "0",
+          cbdPercentage: "0",
+          totalSessionInhalations: "0",
+          inhalationsPerCapsule: "",
+          higherAccuracy: false,
+          totalTHC: "",
+          totalCBD: "",
+          rating: 0,
+          notes: "",
+        });
+        setSelectedEffects([]);
+        setSelectedDevice(null);
+        setCalculatedTotals(null);
+
+        // Close the dialog after a short delay to show success message
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      setSubmitError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -289,9 +411,7 @@ export function NewSessionForm({ isOpen, onOpenChange }: NewSessionFormProps) {
           {/* Inhalations Summary - Only shown in higher accuracy mode */}
           {formData.higherAccuracy &&
             formData.inhalationsPerCapsule &&
-            formData.materialAmount && (
-              <InhalationsSummary formData={formData} />
-            )}
+            formData.unitAmount && <InhalationsSummary formData={formData} />}
 
           {/* Dosage Breakdown */}
           <DosageBreakdown

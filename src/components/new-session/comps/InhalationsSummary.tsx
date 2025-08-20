@@ -2,7 +2,7 @@
 
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
-import { getMaterialUnitLabel } from "../../../lib/new-session";
+import { getUnitLabel } from "../../../lib/new-session";
 
 type InhalationsSummaryProps = {
   formData: SessionFormData;
@@ -21,24 +21,23 @@ const InhalationsSummary = ({ formData }: InhalationsSummaryProps) => {
               {formData.inhalationsPerCapsule}
             </div>
             <div className="text-xs text-blue-600/80">
-              Per{" "}
-              {formData.material.includes("capsule") ? "Capsule" : "Chamber"}
+              Per {formData.unit.includes("capsule") ? "Capsule" : "Chamber"}
             </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {formData.materialAmount}
+              {formData.unitAmount}
             </div>
             <div className="text-xs text-purple-600/80">
-              {getMaterialUnitLabel(formData)} Used
+              {getUnitLabel(formData)} Used
             </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {formData.inhalationsPerCapsule && formData.materialAmount
+              {formData.inhalationsPerCapsule && formData.unitAmount
                 ? (
                     parseFloat(formData.inhalationsPerCapsule) *
-                    parseFloat(formData.materialAmount)
+                    parseFloat(formData.unitAmount)
                   ).toString()
                 : "0"}
             </div>

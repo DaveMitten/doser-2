@@ -77,6 +77,28 @@ export default function CalculatorPage() {
         }));
       }
 
+      // Auto-select the first available measurement method when vaporizer is selected
+      if (
+        inputs.measurementMethod === "capsule" ||
+        inputs.measurementMethod === "chamber"
+      ) {
+        // User has already made a selection, don't override
+        return;
+      }
+
+      // Prefer chamber if available, otherwise use capsule
+      if (selectedVaporizer.chamberCapacity > 0) {
+        setInputs((prev) => ({
+          ...prev,
+          measurementMethod: "chamber",
+        }));
+      } else if (selectedVaporizer.capsuleOption) {
+        setInputs((prev) => ({
+          ...prev,
+          measurementMethod: "capsule",
+        }));
+      }
+
       // If vaporizer doesn't support capsules, force chamber method
       if (!selectedVaporizer.capsuleOption) {
         setInputs((prev) => ({

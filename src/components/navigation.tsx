@@ -4,13 +4,94 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { cn } from "../lib/utils";
 
 interface NavigationProps {
   currentPage?: string;
 }
 
+interface NavigationLink {
+  href: string;
+  label: string;
+  pageKey: string;
+}
+
+const navigationLinks: NavigationLink[] = [
+  { href: "/", label: "Home", pageKey: "home" },
+  { href: "/pricing", label: "Pricing", pageKey: "pricing" },
+];
+
+interface CTAButton {
+  href: string;
+  label: string;
+  variant: "ghost" | "default";
+  className?: string;
+}
+
+const ctaButtons: CTAButton[] = [
+  {
+    href: "/auth",
+    label: "Sign In",
+    variant: "ghost",
+    className: "text-doser-text-muted ",
+  },
+  {
+    href: "/auth",
+    label: "Get Started",
+    variant: "default",
+    className: "bg-doser-primary hover:bg-doser-primary-hover text-doser-text ",
+  },
+];
+
 export function Navigation({ currentPage }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const renderNavigationLink = (link: NavigationLink, isMobile = false) => {
+    const isActive = currentPage === link.pageKey;
+    const baseClasses = isMobile
+      ? "block py-3 px-4 rounded-lg transition-colors"
+      : "transition-colors";
+
+    const activeClasses = isActive
+      ? "text-doser-text"
+      : "text-doser-text-muted hover:text-doser-text";
+
+    return (
+      <Link
+        key={link.label + `${isMobile}`}
+        href={link.href}
+        className={`${baseClasses} ${activeClasses}`}
+        onClick={() => isMobile && setIsMobileMenuOpen(false)}
+      >
+        {link.label}
+      </Link>
+    );
+  };
+
+  const renderCTAButton = (button: CTAButton, isMobile = false) => {
+    const mobileClasses = isMobile
+      ? cn(
+          "w-full justify-center ",
+          button.variant === "ghost"
+            ? "hover:!bg-transparent hover:!text-doser-text"
+            : ""
+        )
+      : "";
+    const buttonClasses = `${button.className} ${mobileClasses}`;
+
+    return (
+      <Link
+        key={button.label + `${isMobile}`}
+        href={button.href}
+        className="w-full "
+        onClick={() => isMobile && setIsMobileMenuOpen(false)}
+      >
+        <Button variant={button.variant} className={buttonClasses}>
+          {button.label}
+        </Button>
+      </Link>
+    );
+  };
 
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 py-4 lg:px-8">
@@ -30,49 +111,12 @@ export function Navigation({ currentPage }: NavigationProps) {
 
       {/* Desktop Navigation Links */}
       <div className="hidden md:flex items-center space-x-8">
-        <Link
-          href="/"
-          className={`transition-colors ${
-            currentPage === "home"
-              ? "text-doser-text"
-              : "text-doser-text-muted hover:text-doser-text"
-          }`}
-        >
-          Home
-        </Link>
-        <a
-          href="#features"
-          className="text-doser-text-muted hover:text-doser-text transition-colors"
-        >
-          Features
-        </a>
-        <Link
-          href="/pricing"
-          className={`transition-colors ${
-            currentPage === "pricing"
-              ? "text-doser-text"
-              : "text-doser-text-muted hover:text-doser-text"
-          }`}
-        >
-          Pricing
-        </Link>
+        {navigationLinks.map((link) => renderNavigationLink(link))}
       </div>
 
       {/* Desktop CTA Buttons */}
       <div className="hidden md:flex items-center space-x-4">
-        <Link href="/auth">
-          <Button
-            variant="ghost"
-            className="text-doser-text-muted hover:text-doser-text"
-          >
-            Sign In
-          </Button>
-        </Link>
-        <Link href="/auth">
-          <Button className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text">
-            Get Started
-          </Button>
-        </Link>
+        {ctaButtons.map((button) => renderCTAButton(button))}
       </div>
 
       {/* Mobile Menu Button */}
@@ -105,53 +149,15 @@ export function Navigation({ currentPage }: NavigationProps) {
           >
             <div className="space-y-6">
               {/* Mobile Navigation Links */}
-              <div className="space-y-4">
-                <Link
-                  href="/"
-                  className={`block py-3 px-4 rounded-lg transition-colors ${
-                    currentPage === "home"
-                      ? "text-doser-text bg-doser-surface-hover"
-                      : "text-doser-text-muted hover:text-doser-text hover:bg-doser-surface-hover"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Home
-                </Link>
-                <a
-                  href="#features"
-                  className="block py-3 px-4 rounded-lg text-doser-text-muted hover:text-doser-text hover:bg-doser-surface-hover transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Features
-                </a>
-                <Link
-                  href="/pricing"
-                  className={`block py-3 px-4 rounded-lg transition-colors ${
-                    currentPage === "pricing"
-                      ? "text-doser-text bg-doser-surface-hover"
-                      : "text-doser-text-muted hover:text-doser-text hover:bg-doser-surface-hover"
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Pricing
-                </Link>
+              <div className="space-y-2">
+                {navigationLinks.map((link) =>
+                  renderNavigationLink(link, true)
+                )}
               </div>
 
               {/* Mobile CTA Buttons */}
-              <div className="space-y-3 pt-6 border-t border-doser-border">
-                <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-doser-text-muted hover:text-doser-text justify-start"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text">
-                    Get Started
-                  </Button>
-                </Link>
+              <div className="pt-6 border-t border-doser-border space-y-2">
+                {ctaButtons.map((button) => renderCTAButton(button, true))}
               </div>
             </div>
           </SheetContent>

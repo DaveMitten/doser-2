@@ -14,8 +14,8 @@ export interface SessionFormData {
   temperature: string;
   totalSessionInhalations: string;
   inhalationsPerCapsule: string;
-  material: string;
-  materialAmount: string;
+  unit: string;
+  unitAmount: string;
   thcPercentage: string;
   cbdPercentage: string;
 
@@ -51,7 +51,8 @@ export class SessionService {
     formData: SessionFormData,
     effects: string[],
     calculatedTotals: EnhancedCalculatedTotals | null,
-    selectedDevice: Vaporizer
+    selectedDevice: Vaporizer,
+    temperatureUnit: "celsius" | "fahrenheit"
   ): Promise<{ data: Session | null; error: unknown }> {
     try {
       // Get current user
@@ -63,28 +64,110 @@ export class SessionService {
         throw new Error("User not authenticated");
       }
 
+      // Validate required fields
+      if (!formData.duration || formData.duration.trim() === "") {
+        throw new Error("Duration is required");
+      }
+
+      if (!formData.device || formData.device.trim() === "") {
+        throw new Error("Device is required");
+      }
+
+      if (!formData.unitAmount || formData.unitAmount.trim() === "") {
+        throw new Error("Unit amount is required");
+      }
+
+      if (!formData.thcPercentage || formData.thcPercentage.trim() === "") {
+        throw new Error("THC percentage is required");
+      }
+
+      if (!formData.cbdPercentage || formData.cbdPercentage.trim() === "") {
+        throw new Error("CBD percentage is required");
+      }
+
+      // Validate numeric constraints
+      const duration = parseInt(formData.duration);
+      if (isNaN(duration) || duration <= 0 || duration > 300) {
+        throw new Error("Duration must be between 1 and 300 minutes");
+      }
+
+      const unitAmount = parseInt(formData.unitAmount);
+      if (isNaN(unitAmount) || unitAmount <= 0 || unitAmount > 10) {
+        throw new Error("Unit amount must be between 1 and 10");
+      }
+
+      const thcPercentage = parseFloat(formData.thcPercentage);
+      if (isNaN(thcPercentage) || thcPercentage < 0 || thcPercentage > 100) {
+        throw new Error("THC percentage must be between 0 and 100");
+      }
+
+      const cbdPercentage = parseFloat(formData.cbdPercentage);
+      if (isNaN(cbdPercentage) || cbdPercentage < 0 || cbdPercentage > 100) {
+        throw new Error("CBD percentage must be between 0 and 100");
+      }
+
+      // Validate effects array
+      if (!effects || effects.length === 0) {
+        throw new Error("At least one effect must be selected");
+      }
+
+      // Handle total_session_inhalations based on higher_accuracy_mode
+      let totalInhalations: number | null = null;
+      if (formData.higherAccuracy) {
+        // In higher accuracy mode, total_session_inhalations is required and must be 1-50
+        if (
+          !formData.totalSessionInhalations ||
+          formData.totalSessionInhalations.trim() === ""
+        ) {
+          throw new Error(
+            "Total session inhalations is required in higher accuracy mode"
+          );
+        }
+
+        totalInhalations = parseInt(formData.totalSessionInhalations);
+        if (
+          isNaN(totalInhalations) ||
+          totalInhalations <= 0 ||
+          totalInhalations > 50
+        ) {
+          throw new Error(
+            "Total session inhalations must be between 1 and 50 in higher accuracy mode"
+          );
+        }
+      } else {
+        // In regular mode, total_session_inhalations is optional and can be null
+        if (
+          formData.totalSessionInhalations &&
+          formData.totalSessionInhalations.trim() !== ""
+        ) {
+          totalInhalations = parseInt(formData.totalSessionInhalations);
+          if (isNaN(totalInhalations) || totalInhalations < 0) {
+            throw new Error("Total session inhalations must be 0 or greater");
+          }
+        }
+        // If not provided, totalInhalations remains null (which is correct)
+      }
+
       // Parse and validate form data
       const sessionData: SessionInsert = {
         user_id: user.id,
         session_date: formData.date,
         session_time: formData.time,
-        duration_minutes: parseInt(formData.duration),
+        duration_minutes: duration,
         device_name: formData.device,
-        draws_count: parseInt(formData.totalSessionInhalations),
-        material_type: formData.material.includes("capsule")
-          ? "capsule"
-          : "chamber",
-        material_amount: parseInt(formData.materialAmount),
-        material_capacity_grams: formData.material.includes("capsule")
+        total_session_inhalations: totalInhalations,
+        unit_type: formData.unit.includes("capsule") ? "capsule" : "chamber",
+        unit_amount: unitAmount,
+        unit_capacity_grams: formData.unit.includes("capsule")
           ? selectedDevice?.dosingCapsuleCapacity || 0
           : selectedDevice?.chamberCapacity || 0,
-        thc_percentage: parseFloat(formData.thcPercentage),
-        cbd_percentage: parseFloat(formData.cbdPercentage),
+        thc_percentage: thcPercentage,
+        cbd_percentage: cbdPercentage,
         total_thc_mg: calculatedTotals?.thc || 0,
         total_cbd_mg: calculatedTotals?.cbd || 0,
         higher_accuracy_mode: formData.higherAccuracy,
         inhalations_per_capsule: formData.higherAccuracy
-          ? parseInt(formData.totalSessionInhalations)
+          ? parseInt(formData.inhalationsPerCapsule)
           : null,
         effects: effects,
         rating: formData.rating > 0 ? formData.rating : null,
@@ -114,15 +197,19 @@ export class SessionService {
       // Handle temperature - store in both units if provided
       if (formData.temperature) {
         const tempValue = parseFloat(formData.temperature);
-        // Determine if the temperature is in Celsius or Fahrenheit based on range
-        if (tempValue >= 150 && tempValue <= 230) {
-          // Likely Celsius
-          sessionData.temperature_celsius = tempValue;
-          sessionData.temperature_fahrenheit = (tempValue * 9) / 5 + 32;
-        } else if (tempValue >= 300 && tempValue <= 450) {
-          // Likely Fahrenheit
-          sessionData.temperature_fahrenheit = tempValue;
-          sessionData.temperature_celsius = ((tempValue - 32) * 5) / 9;
+        if (!isNaN(tempValue)) {
+          // Store temperature based on the unit the user selected
+          if (temperatureUnit === "celsius") {
+            // User entered temperature in Celsius
+            sessionData.temperature_celsius = tempValue;
+            // Convert to Fahrenheit for storage
+            sessionData.temperature_fahrenheit = (tempValue * 9) / 5 + 32;
+          } else {
+            // User entered temperature in Fahrenheit
+            sessionData.temperature_fahrenheit = tempValue;
+            // Convert to Celsius for storage
+            sessionData.temperature_celsius = ((tempValue - 32) * 5) / 9;
+          }
         }
       }
 

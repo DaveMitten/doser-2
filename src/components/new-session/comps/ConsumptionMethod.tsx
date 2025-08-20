@@ -15,9 +15,9 @@ import {
   getTemperatureMin,
   getTemperatureMax,
   getTemperatureUnitSymbol,
-  getMaterialPlaceholder,
-  getMaterialMax,
-  getMaterialUnitLabel,
+  getUnitPlaceholder,
+  getUnitMax,
+  getUnitLabel,
   isDrawsValid,
   getMaxDraws,
 } from "../../../lib/new-session";
@@ -153,14 +153,14 @@ const ConsumptionMethod = ({
             <button
               type="button"
               className={`flex-1 px-3 py-2 rounded-lg border transition-all text-sm font-medium ${
-                formData.material.includes("chamber")
+                formData.unit.includes("chamber")
                   ? "bg-doser-primary/10 border-doser-primary/30 text-doser-primary"
                   : "bg-doser-surface-hover border-doser-border text-doser-text-muted hover:text-doser-text hover:bg-doser-surface"
               }`}
               onClick={() => {
                 if (selectedDevice && selectedDevice.chamberCapacity > 0) {
                   handleInputChange(
-                    "material",
+                    "unit",
                     `chamber-${selectedDevice.chamberCapacity}`
                   );
                 }
@@ -172,14 +172,14 @@ const ConsumptionMethod = ({
             <button
               type="button"
               className={`flex-1 px-3 py-2 rounded-lg border transition-all text-sm font-medium ${
-                formData.material.includes("capsule")
+                formData.unit.includes("capsule")
                   ? "bg-doser-primary/10 border-doser-primary/30 text-doser-primary"
                   : "bg-doser-surface-hover border-doser-border text-doser-text-muted hover:text-doser-text hover:bg-doser-surface"
               }`}
               onClick={() => {
                 if (selectedDevice && selectedDevice.capsuleOption) {
                   handleInputChange(
-                    "material",
+                    "unit",
                     `capsule-${selectedDevice.dosingCapsuleCapacity}`
                   );
                 }
@@ -203,26 +203,23 @@ const ConsumptionMethod = ({
             <Input
               type="number"
               step="1"
-              placeholder={getMaterialPlaceholder(formData, selectedDevice)}
-              value={formData.materialAmount}
-              onChange={(e) =>
-                handleInputChange("materialAmount", e.target.value)
-              }
+              placeholder={getUnitPlaceholder(formData, selectedDevice)}
+              value={formData.unitAmount}
+              onChange={(e) => handleInputChange("unitAmount", e.target.value)}
               className="bg-doser-surface-hover border-doser-border text-doser-text pr-20"
               min="1"
-              max={getMaterialMax(formData, selectedDevice)}
+              max={getUnitMax(formData, selectedDevice)}
               required
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-doser-text-muted text-sm">
-              {getMaterialUnitLabel(formData)}
+              {getUnitLabel(formData)}
             </span>
           </div>
           <p className="text-xs text-doser-text-muted mt-1">
-            Number of {getMaterialUnitLabel(formData)} consumed (max:{" "}
-            {getMaterialMax(formData, selectedDevice)}). Each{" "}
-            {formData.material.includes("capsule") ? "capsule" : "chamber"}{" "}
-            contains{" "}
-            {formData.material.includes("capsule")
+            Number of {getUnitLabel(formData)} consumed (max:{" "}
+            {getUnitMax(formData, selectedDevice)}). Each{" "}
+            {formData.unit.includes("capsule") ? "capsule" : "chamber"} contains{" "}
+            {formData.unit.includes("capsule")
               ? selectedDevice?.dosingCapsuleCapacity
               : selectedDevice?.chamberCapacity}
             g of material.
@@ -258,7 +255,7 @@ const ConsumptionMethod = ({
           <div>
             <label className="block text-sm font-medium text-doser-text mb-2">
               Inhalations per{" "}
-              {formData.material.includes("capsule") ? "capsule" : "chamber"}{" "}
+              {formData.unit.includes("capsule") ? "capsule" : "chamber"}{" "}
               <span className="text-red-400">*</span>
             </label>
             <Input
@@ -281,21 +278,19 @@ const ConsumptionMethod = ({
             <div className="mt-1">
               <p className="text-xs text-doser-text-muted">
                 Max: {getMaxDraws(formData)} inhalations per{" "}
-                {formData.material.includes("capsule") ? "capsule" : "chamber"}
+                {formData.unit.includes("capsule") ? "capsule" : "chamber"}
               </p>
               {formData.totalSessionInhalations && !isDrawsValid(formData) && (
                 <p className="text-xs text-red-400 mt-1">
                   ⚠️ Inhalations per{" "}
-                  {formData.material.includes("capsule")
-                    ? "capsule"
-                    : "chamber"}{" "}
+                  {formData.unit.includes("capsule") ? "capsule" : "chamber"}{" "}
                   cannot exceed {getMaxDraws(formData)}.
                 </p>
               )}
             </div>
             <p className="text-xs text-doser-text-muted mt-1">
               Number of inhalations you took from each{" "}
-              {formData.material.includes("capsule") ? "capsule" : "chamber"}
+              {formData.unit.includes("capsule") ? "capsule" : "chamber"}
             </p>
           </div>
           <div>

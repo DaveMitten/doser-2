@@ -3,7 +3,8 @@
 import React from "react";
 import { SessionFormData } from "../../../lib/sessionService";
 import { Vaporizer } from "../../../context/data-types";
-import { getMaterialUnitLabel } from "../../../lib/new-session";
+import { getUnitLabel } from "../../../lib/new-session";
+import { calculateConsumedAmount } from "../../../lib/calculator";
 
 type DosageBreakdownProps = {
   formData: SessionFormData;
@@ -26,35 +27,16 @@ const DosageBreakdown = ({
   selectedDevice,
 }: DosageBreakdownProps) => {
   const calculateTotalInhalations = (formData: SessionFormData) => {
-    if (!formData.totalSessionInhalations || !formData.inhalationsPerCapsule)
+    console.log(formData);
+    if (
+      (formData.higherAccuracy && !formData.totalSessionInhalations) ||
+      !formData.inhalationsPerCapsule
+    )
       return null;
     return parseFloat(formData.totalSessionInhalations);
   };
 
-  const calculateConsumedMaterialAmount = (formData: SessionFormData) => {
-    if (
-      !formData.totalSessionInhalations ||
-      !formData.inhalationsPerCapsule ||
-      !formData.materialAmount
-    )
-      return null;
-
-    const totalInhalations = parseFloat(formData.totalSessionInhalations);
-    const inhalationsPerCapsule = parseFloat(formData.inhalationsPerCapsule);
-    const materialAmount = parseFloat(formData.materialAmount);
-
-    const consumedRatio = (totalInhalations / inhalationsPerCapsule) * 100;
-    const consumedAmount =
-      (totalInhalations / inhalationsPerCapsule) * materialAmount;
-    const remainingAmount = materialAmount - consumedAmount;
-
-    return {
-      consumedAmount: consumedAmount.toFixed(2),
-      consumedRatio: consumedRatio.toFixed(1),
-      remainingAmount: remainingAmount.toFixed(2),
-    };
-  };
-
+  const consumedAmount = calculateConsumedAmount(formData);
   return (
     <div>
       <h3 className="text-doser-primary font-semibold mb-4">
@@ -159,8 +141,7 @@ const DosageBreakdown = ({
             </p>
             <div className="text-xs text-doser-text-muted space-y-1">
               <div>
-                • {formData.materialAmount} {getMaterialUnitLabel(formData)}{" "}
-                consumed
+                • {formData.unitAmount} {getUnitLabel(formData)} consumed
               </div>
               <div>
                 • {formData.thcPercentage}% THC + {formData.cbdPercentage}% CBD
@@ -176,14 +157,14 @@ const DosageBreakdown = ({
                 <div>
                   • Total material weight:{" "}
                   {(() => {
-                    if (formData.material.includes("capsule")) {
+                    if (formData.unit.includes("capsule")) {
                       return (
-                        parseFloat(formData.materialAmount) *
+                        parseFloat(formData.unitAmount) *
                         (selectedDevice?.dosingCapsuleCapacity || 0)
                       ).toFixed(2);
                     } else {
                       return (
-                        parseFloat(formData.materialAmount) *
+                        parseFloat(formData.unitAmount) *
                         (selectedDevice?.chamberCapacity || 0)
                       ).toFixed(2);
                     }
@@ -202,43 +183,30 @@ const DosageBreakdown = ({
                       </div>
                       <div>
                         • Inhalations per{" "}
-                        {formData.material.includes("capsule")
+                        {formData.unit.includes("capsule")
                           ? "capsule"
                           : "chamber"}
                         : {formData.totalSessionInhalations}
                       </div>
                     </div>
-                    {calculateConsumedMaterialAmount(formData) && (
-                      <div className="pt-1 border-t border-doser-primary/20">
-                        <div className="text-amber-600 font-medium">
-                          • Enhanced calculation based on actual inhalations:
-                        </div>
-                        <div className="ml-2">
-                          - Material actually consumed:{" "}
-                          {
-                            calculateConsumedMaterialAmount(formData)
-                              ?.consumedAmount
-                          }{" "}
-                          {getMaterialUnitLabel(formData)}
-                        </div>
-                        <div className="ml-2">
-                          - Consumption rate:{" "}
-                          {
-                            calculateConsumedMaterialAmount(formData)
-                              ?.consumedRatio
-                          }
-                          %
-                        </div>
-                        <div className="ml-2">
-                          - Remaining material:{" "}
-                          {
-                            calculateConsumedMaterialAmount(formData)
-                              ?.remainingAmount
-                          }{" "}
-                          {getMaterialUnitLabel(formData)}
-                        </div>
+
+                    <div className="pt-1 border-t border-doser-primary/20">
+                      <div className="text-amber-600 font-medium">
+                        • Enhanced calculation based on actual inhalations:
                       </div>
-                    )}
+                      <div className="ml-2">
+                        - Material actually consumed:{" "}
+                        {consumedAmount?.consumedAmount}{" "}
+                        {getUnitLabel(formData)}
+                      </div>
+                      <div className="ml-2">
+                        - Consumption rate: {consumedAmount?.consumedRatio}%
+                      </div>
+                      <div className="ml-2">
+                        - Remaining material: {consumedAmount?.remainingAmount}{" "}
+                        {getUnitLabel(formData)}
+                      </div>
+                    </div>
                   </>
                 )}
             </div>

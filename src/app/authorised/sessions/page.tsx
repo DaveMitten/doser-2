@@ -106,10 +106,10 @@ export default function SessionsPage() {
   };
 
   const getMaterialDisplay = (session: Session) => {
-    if (session.material_type === "capsule") {
-      return `${session.material_amount} capsule(s)`;
+    if (session.unit_type === "capsule") {
+      return `${session.unit_amount} capsule(s)`;
     } else {
-      return `${session.material_capacity_grams}g`;
+      return `${session.unit_capacity_grams}g`;
     }
   };
 
@@ -270,7 +270,9 @@ export default function SessionsPage() {
                     Draws
                   </div>
                   <div className="text-doser-primary">
-                    {selectedSession.draws_count}
+                    {selectedSession.total_session_inhalations !== null
+                      ? selectedSession.total_session_inhalations
+                      : "N/A"}
                   </div>
                 </div>
                 <div>
