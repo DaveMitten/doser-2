@@ -37,11 +37,13 @@ import { Button } from "../ui/button";
 interface NewSessionFormProps {
   isOpen: boolean;
   setSessionFormOpen: (open: boolean) => void;
+  onSessionCreated?: () => void;
 }
 
 export function NewSessionForm({
   isOpen,
   setSessionFormOpen,
+  onSessionCreated,
 }: NewSessionFormProps) {
   const { preferences } = useUserPreferences();
   const [selectedEffects, setSelectedEffects] = useState<string[]>([]);
@@ -391,6 +393,7 @@ export function NewSessionForm({
 
         // Show success overlay
         setShowSuccessOverlay(true);
+        onSessionCreated?.(); // Call the prop function
       }
     } catch (error) {
       console.error("Error in onSubmit:", error);
@@ -401,7 +404,7 @@ export function NewSessionForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={setSessionFormOpen}>
-      <DialogContent className="bg-doser-surface border-doser-border w-[90vw] max-w-[1000px] sm:max-w-[1000px] max-h-[90vh] overflow-y-auto p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-doser-primary/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-doser-primary [&::-webkit-scrollbar]:hover:w-2 [&::-webkit-scrollbar-thumb]:transition-all [&::-webkit-scrollbar-thumb]:duration-200">
+      <DialogContent className="bg-doser-surface border-doser-border w-[90vw] max-w-[1000px] sm:max-w-[1000px] max-h-[90vh] overflow-y-auto p-6 scrollbar-doser">
         {showSuccessOverlay ? (
           <DialogHeader className="bg-doser-surface flex items-center justify-center  h-[90vh]">
             <DialogTitle className="text-center space-y-4">
@@ -418,7 +421,10 @@ export function NewSessionForm({
                 <Button
                   variant="dashboard"
                   className="mt-4 w-full"
-                  onClick={() => setSessionFormOpen(false)}
+                  onClick={() => {
+                    setSessionFormOpen(false);
+                    onSessionCreated?.();
+                  }}
                 >
                   Close
                 </Button>

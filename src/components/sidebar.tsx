@@ -34,8 +34,8 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 h-full bg-doser-surface border-r border-doser-border p-4">
-      <div className="space-y-6">
+    <aside className="w-64 min-h-screen bg-doser-surface border-r border-doser-border p-4 flex flex-col">
+      <div className="space-y-6 flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center space-x-3 pb-6 border-b border-doser-border">
           <div className="w-7 h-7 bg-gradient-to-br from-doser-primary to-doser-primary-hover rounded-lg flex items-center justify-center">
@@ -159,31 +159,30 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
             Upgrade now
           </Button>
         </div>
-
-        {/* User Profile */}
-        <div className="absolute bottom-4 left-4 right-4 space-y-3">
-          <div className="flex items-center gap-3 p-3 bg-doser-surface-hover rounded-lg">
-            <div className="w-8 h-8 bg-gradient-to-br from-doser-accent to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {user?.email?.[0]?.toUpperCase() || "U"}
-              </span>
-            </div>
-            <div className="flex-1">
-              <div className="text-doser-text text-sm font-semibold">
-                {user?.email?.split("@")[0] || "User"}
-              </div>
-              <div className="text-doser-text-muted text-xs">Free Plan</div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              disabled={isLoggingOut}
-              className="text-doser-text-muted hover:text-doser-text p-1"
-            >
-              {isLoggingOut ? "..." : "🚪"}
-            </Button>
+      </div>
+      {/* User Profile - Bottom */}
+      <div className="space-y-3 mt-auto">
+        <div className="flex items-center gap-3 p-3 bg-doser-surface-hover rounded-lg">
+          <div className="w-4 h-4 bg-gradient-to-br from-doser-accent to-purple-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-sm font-medium">
+              {user?.email?.[0]?.toUpperCase() || "U"}
+            </span>
           </div>
+          <div className="">
+            <div className="text-doser-text text-sm font-semibold">
+              {user?.email?.split("@")[0] || "User"}
+            </div>
+            <div className="text-doser-text-muted text-xs">Free Plan</div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            disabled={isLoggingOut}
+            className="text-doser-text-muted hover:text-doser-text p-1"
+          >
+            {isLoggingOut ? "..." : "🚪"}
+          </Button>
         </div>
       </div>
     </aside>

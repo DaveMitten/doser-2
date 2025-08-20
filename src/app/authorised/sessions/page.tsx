@@ -10,47 +10,77 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { NewSessionForm } from "@/components/new-session/new-session-form";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { sessionService, type Session } from "@/lib/sessionService";
 import SessionsGrid from "./SessionsGrid";
 
-const filters = [
-  "All",
-  "Today",
-  "This Week",
-  "This Month",
-  "Vaporizer",
-  "Edibles",
-  "Joints",
-];
+const filters = ["All", "Today", "This Week", "This Month"];
 
 export default function SessionsPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
-  const [sessions] = useState<Session[]>([]);
-  // const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+
+  // Fetch sessions function
+  const fetchSessions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await sessionService.getUserSessions();
+      if (error) {
+        console.error("Error fetching sessions:", error);
+      } else if (data) {
+        setSessions(data);
+      }
+    } catch (error) {
+      console.error("Error in fetchSessions:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Fetch real sessions on component mount
-  // useEffect(() => {
-  //   const fetchSessions = async () => {
-  //     try {
-  //       const { data, error } = await sessionService.getUserSessions();
-  //       if (error) {
-  //         console.error("Error fetching sessions:", error);
-  //       } else if (data) {
-  //         setSessions(data);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error in fetchSessions:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
-  //   fetchSessions();
-  // }, []);
+  // Handle new session creation - refresh sessions list
+  const handleNewSessionCreated = useCallback(() => {
+    fetchSessions();
+    setIsNewSessionOpen(false);
+  }, [fetchSessions]);
+
+  // Filter sessions based on active filter
+  const filteredSessions = useCallback(() => {
+    if (activeFilter === "All") return sessions;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(
+      today.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+
+    return sessions.filter((session) => {
+      const sessionDate = new Date(session.session_date);
+
+      switch (activeFilter) {
+        case "Today":
+          return sessionDate >= today;
+        case "This Week":
+          return sessionDate >= weekAgo;
+        case "This Month":
+          return sessionDate >= monthAgo;
+        default:
+          return true;
+      }
+    });
+  }, [sessions, activeFilter]);
 
   const renderStars = (rating: number | null) => {
     if (!rating) return null;
@@ -105,14 +135,6 @@ export default function SessionsPage() {
     return "N/A";
   };
 
-  const getMaterialDisplay = (session: Session) => {
-    if (session.unit_type === "capsule") {
-      return `${session.unit_amount} capsule(s)`;
-    } else {
-      return `${session.unit_capacity_grams}g`;
-    }
-  };
-
   const renderEnhancedCalculations = (session: Session) => {
     const enhanced = sessionService.parseEnhancedCalculations(session);
 
@@ -162,13 +184,13 @@ export default function SessionsPage() {
     );
   };
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <div className="text-doser-text-muted">Loading sessions...</div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-doser-text-muted">Loading sessions...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -192,34 +214,61 @@ export default function SessionsPage() {
 
       {/* Responsive Filters */}
       <div className="mb-6">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide min-w-0">
-          {filters.map((filter) => (
+        <div className="flex justify-between items-center">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide min-w-0">
+            {filters.map((filter) => (
+              <Badge
+                key={filter}
+                variant={activeFilter === filter ? "default" : "outline"}
+                className={`cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeFilter === filter
+                    ? "bg-doser-primary text-white"
+                    : "text-doser-text-muted border-doser-text-muted/30"
+                }`}
+                onClick={() => setActiveFilter(filter)}
+              >
+                {filter}
+              </Badge>
+            ))}
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex gap-2 flex-shrink-0">
             <Badge
-              key={filter}
-              variant={activeFilter === filter ? "default" : "outline"}
-              className={`cursor-pointer whitespace-nowrap flex-shrink-0 ${
-                activeFilter === filter
+              variant={viewMode === "cards" ? "default" : "outline"}
+              className={`cursor-pointer whitespace-nowrap ${
+                viewMode === "cards"
                   ? "bg-doser-primary text-white"
                   : "text-doser-text-muted border-doser-text-muted/30"
               }`}
-              onClick={() => setActiveFilter(filter)}
+              onClick={() => setViewMode("cards")}
             >
-              {filter}
+              Cards
             </Badge>
-          ))}
+            <Badge
+              variant={viewMode === "list" ? "default" : "outline"}
+              className={`cursor-pointer whitespace-nowrap ${
+                viewMode === "list"
+                  ? "bg-doser-primary text-white"
+                  : "text-doser-text-muted border-doser-text-muted/30"
+              }`}
+              onClick={() => setViewMode("list")}
+            >
+              List
+            </Badge>
+          </div>
         </div>
       </div>
 
       <SessionsGrid
-        sessions={sessions ?? []}
+        sessions={filteredSessions()}
         setIsNewSessionOpen={setIsNewSessionOpen}
         handleSessionClick={handleSessionClick}
         formatDate={formatDate}
         formatTime={formatTime}
         getTemperatureDisplay={getTemperatureDisplay}
-        getMaterialDisplay={getMaterialDisplay}
-        renderEnhancedCalculations={renderEnhancedCalculations}
         renderStars={renderStars}
+        viewMode={viewMode}
       />
 
       {/* Session Detail Sheet */}
@@ -336,6 +385,7 @@ export default function SessionsPage() {
       <NewSessionForm
         isOpen={isNewSessionOpen}
         setSessionFormOpen={setIsNewSessionOpen}
+        onSessionCreated={handleNewSessionCreated}
       />
     </div>
   );

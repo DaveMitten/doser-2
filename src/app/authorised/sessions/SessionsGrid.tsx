@@ -11,9 +11,8 @@ type Props = {
   formatDate: (date: string) => string;
   formatTime: (time: string) => string;
   getTemperatureDisplay: (session: Session) => string;
-  getMaterialDisplay: (session: Session) => string;
-  renderEnhancedCalculations: (session: Session) => React.ReactNode;
   renderStars: (rating: number | null) => React.ReactNode;
+  viewMode: "cards" | "list";
 };
 
 const SessionsGrid = ({
@@ -23,37 +22,191 @@ const SessionsGrid = ({
   formatDate,
   formatTime,
   getTemperatureDisplay,
-  getMaterialDisplay,
-  renderEnhancedCalculations,
   renderStars,
+  viewMode,
 }: Props) => {
-  return (
-    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {sessions.length === 0 ? (
-        <div className="col-span-full text-center py-6 sm:py-8 lg:py-12 px-4">
-          <div className="text-doser-text-muted mb-4 text-sm sm:text-base">
-            No sessions recorded yet
-          </div>
-          <Button
-            onClick={() => setIsNewSessionOpen(true)}
-            className="bg-doser-primary hover:bg-doser-primary/90 w-full sm:w-auto max-w-xs"
-          >
-            Record Your First Session
-          </Button>
+  if (sessions.length === 0) {
+    return (
+      <div className="col-span-full text-center py-6 sm:py-8 lg:py-12 px-4">
+        <div className="text-doser-text-muted mb-4 text-sm sm:text-base">
+          No sessions recorded yet
         </div>
-      ) : (
-        sessions.map((session) => (
-          <Card
+        <Button
+          onClick={() => setIsNewSessionOpen(true)}
+          className="bg-doser-primary hover:bg-doser-primary-hover w-full sm:w-auto max-w-xs"
+        >
+          Record Your First Session
+        </Button>
+      </div>
+    );
+  }
+
+  const renderCardView = () => (
+    <div className="bg-doser-surface border border-doser-border rounded-xl overflow-hidden flex flex-col h-[calc(100vh-300px)]">
+      <div className="flex-1 overflow-y-auto scrollbar-doser p-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sessions.map((session) => (
+            <Card
+              key={session.id}
+              className="relative bg-doser-surface border border-doser-border rounded-xl p-4 cursor-pointer hover:shadow-xl hover:shadow-doser-primary/10 transition-all duration-300 hover:border-doser-primary/40 hover:bg-doser-surface-hover group transform hover:-translate-y-1"
+              onClick={() => handleSessionClick(session)}
+            >
+              {/* Session Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xl font-bold text-doser-text truncate group-hover:text-doser-primary transition-colors duration-200">
+                    {formatTime(session.session_time)}
+                  </div>
+                  <div className="text-sm text-doser-text-muted group-hover:text-doser-text/80 transition-colors duration-200">
+                    {formatDate(session.session_date)}
+                  </div>
+                </div>
+                <div className="flex items-center flex-shrink-0 ml-2">
+                  {renderStars(session.rating)}
+                </div>
+              </div>
+
+              {/* Session Details Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    THC:
+                  </span>
+                  <span className="block text-doser-text font-bold text-amber-400 text-lg">
+                    {session.total_thc_mg.toFixed(1)}mg
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    CBD:
+                  </span>
+                  <span className="block text-doser-text font-bold text-blue-400 text-lg">
+                    {session.total_cbd_mg.toFixed(1)}mg
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    Duration:
+                  </span>
+                  <span className="block text-doser-text font-semibold">
+                    {session.duration_minutes}min
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    Method:
+                  </span>
+                  <span className="block text-doser-text font-semibold">
+                    {session.unit_type === "capsule" ? "Capsule" : "Chamber"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Device and Temperature */}
+              <div className="space-y-2 mb-4">
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    Device:
+                  </span>
+                  <span className="block text-doser-text font-medium truncate">
+                    {session.device_name}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium text-doser-text-muted">
+                    Temperature:
+                  </span>
+                  <span className="block text-doser-text font-medium">
+                    {getTemperatureDisplay(session)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Enhanced Calculations */}
+              <div className="mb-4 p-3 bg-gradient-to-r from-doser-primary-light/10 to-doser-primary-light/5 border border-doser-primary/20 rounded-lg group-hover:border-doser-primary/30 transition-all duration-200">
+                <div className="text-xs font-semibold text-doser-primary mb-2 uppercase tracking-wide">
+                  Dosage Breakdown
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="text-center">
+                    <div className="text-amber-400 font-bold text-sm">
+                      {session.total_thc_mg.toFixed(1)}mg
+                    </div>
+                    <div className="text-doser-text-muted text-xs">
+                      Total THC
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-blue-400 font-bold text-sm">
+                      {session.total_cbd_mg.toFixed(1)}mg
+                    </div>
+                    <div className="text-doser-text-muted text-xs">
+                      Total CBD
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Effects */}
+              {session.effects && session.effects.length > 0 && (
+                <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/5 to-purple-500/10 border border-purple-500/20 rounded-lg group-hover:border-purple-500/30 transition-all duration-200">
+                  <div className="text-xs font-semibold text-purple-400 mb-2 uppercase tracking-wide">
+                    Effects Experienced
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {session.effects
+                      .slice(0, 4)
+                      .map((effect: string, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <div className="w-4 h-4 bg-green-500/20 text-green-400 rounded text-center text-xs flex items-center justify-center">
+                            😌
+                          </div>
+                          <span className="text-doser-text truncate">
+                            {effect}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Higher Accuracy Badge */}
+              {session.higher_accuracy_mode && (
+                <div className="mt-3">
+                  <Badge className="bg-gradient-to-r from-green-500/20 to-green-400/20 text-green-400 border-green-500/30 text-xs px-3 py-1 font-medium">
+                    High Accuracy Mode
+                  </Badge>
+                </div>
+              )}
+
+              {/* Hover Effect Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-doser-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderListView = () => (
+    <div className="bg-doser-surface border border-doser-border rounded-xl overflow-hidden flex flex-col h-[calc(100vh-300px)]">
+      <div className="flex-1 overflow-y-auto scrollbar-doser">
+        {sessions.map((session) => (
+          <div
             key={session.id}
-            className="p-4 sm:p-6 cursor-pointer hover:shadow-lg transition-shadow border-doser-primary/20 hover:border-doser-primary/40"
+            className="p-4 border-b border-doser-border/50 cursor-pointer hover:bg-doser-surface-hover transition-colors duration-200 last:border-b-0"
             onClick={() => handleSessionClick(session)}
           >
-            <div className="flex justify-between items-start mb-3 sm:mb-4">
+            {/* Session Header */}
+            <div className="flex justify-between items-start mb-3">
               <div className="flex-1 min-w-0">
-                <div className="text-base sm:text-lg font-semibold text-doser-primary truncate">
+                <div className="text-lg font-semibold text-doser-text">
                   {formatTime(session.session_time)}
                 </div>
-                <div className="text-xs sm:text-sm text-doser-text-muted">
+                <div className="text-sm text-doser-text-muted">
                   {formatDate(session.session_date)}
                 </div>
               </div>
@@ -62,87 +215,76 @@ const SessionsGrid = ({
               </div>
             </div>
 
-            <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-              <div className="text-xs sm:text-sm">
-                <span className="font-medium text-doser-text-muted">
-                  Device:
-                </span>{" "}
-                <span className="truncate block text-doser-text">
-                  {session.device_name}
+            {/* Session Details Grid */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-doser-text-muted">THC:</span>
+                <span className="ml-2 text-amber-400 font-semibold">
+                  {session.total_thc_mg.toFixed(1)}mg
                 </span>
               </div>
-              <div className="text-xs sm:text-sm">
-                <span className="font-medium text-doser-text-muted">
-                  Temperature:
-                </span>{" "}
-                <span className="truncate block text-doser-text">
-                  {getTemperatureDisplay(session)}
+              <div>
+                <span className="font-medium text-doser-text-muted">CBD:</span>
+                <span className="ml-2 text-blue-400 font-semibold">
+                  {session.total_cbd_mg.toFixed(1)}mg
                 </span>
               </div>
-              <div className="text-xs sm:text-sm">
+              <div>
                 <span className="font-medium text-doser-text-muted">
-                  Draws:
-                </span>{" "}
-                <span className="text-doser-text">
-                  {session.total_session_inhalations !== null
-                    ? session.total_session_inhalations
-                    : "N/A"}
-                </span>
-              </div>
-              <div className="text-xs sm:text-sm">
-                <span className="font-medium text-doser-text-muted">
-                  Material:
-                </span>{" "}
-                <span className="truncate block text-doser-text">
-                  {getMaterialDisplay(session)}
-                </span>
-              </div>
-              <div className="text-xs sm:text-sm">
-                <span className="font-medium text-doser-primary">
                   Duration:
-                </span>{" "}
-                <span className="text-doser-text">
+                </span>
+                <span className="ml-2 text-doser-text font-semibold">
                   {session.duration_minutes}min
                 </span>
               </div>
-            </div>
-
-            {/* Enhanced Calculations Display */}
-            <div className="mb-3 sm:mb-4 text-xs sm:text-sm">
-              {renderEnhancedCalculations(session)}
-            </div>
-
-            {/* Effects */}
-            {session.effects && session.effects.length > 0 && (
-              <div className="mt-3 sm:mt-4">
-                <div className="text-xs sm:text-sm font-medium text-doser-primary mb-2">
-                  Effects
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {session.effects.map((effect: string, index: number) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="text-xs border-doser-primary/30 text-doser-primary"
-                    >
-                      {effect}
-                    </Badge>
-                  ))}
-                </div>
+              <div>
+                <span className="font-medium text-doser-text-muted">
+                  Method:
+                </span>
+                <span className="ml-2 text-doser-text font-semibold">
+                  {session.unit_type === "capsule" ? "Capsule" : "Chamber"}
+                </span>
               </div>
-            )}
+            </div>
+
+            {/* Device and Temperature */}
+            <div className="mt-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-doser-text-muted">
+                  Device:
+                </span>
+                <span className="text-doser-text font-medium">
+                  {session.device_name}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <span className="font-medium text-doser-text-muted">
+                  Temperature:
+                </span>
+                <span className="text-doser-text font-medium">
+                  {getTemperatureDisplay(session)}
+                </span>
+              </div>
+            </div>
 
             {/* Higher Accuracy Badge */}
             {session.higher_accuracy_mode && (
               <div className="mt-3">
-                <Badge className="bg-green-100 text-green-800 text-xs">
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-2 py-1">
                   High Accuracy Mode
                 </Badge>
               </div>
             )}
-          </Card>
-        ))
-      )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Content */}
+      {viewMode === "cards" ? renderCardView() : renderListView()}
     </div>
   );
 };
