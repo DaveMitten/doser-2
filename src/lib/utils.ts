@@ -74,3 +74,17 @@ export const formatDecimalInput = (value: string): string => {
 
   return value;
 };
+
+/**
+ * Get the site URL for the current environment
+ * Falls back to localhost:3000 for development
+ */
+
+/**
+ * Get the full callback URL for authentication
+ */
+export function getAuthCallbackUrl(): string {
+  return `${
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  }/auth/callback`;
+}

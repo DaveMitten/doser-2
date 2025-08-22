@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getAuthCallbackUrl } from "@/lib/utils";
 
 export async function login(formData: FormData) {
   const supabase = await createSupabaseServerClient();
@@ -33,9 +34,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${
-        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-      }/auth/callback`,
+      emailRedirectTo: getAuthCallbackUrl(),
     },
   });
 
@@ -66,9 +65,7 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get("email") as string;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-    }/auth/callback?next=/auth/reset-password`,
+    redirectTo: `${getAuthCallbackUrl()}?next=/auth/reset-password`,
   });
 
   if (error) {
