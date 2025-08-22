@@ -13,6 +13,7 @@ type FormActionsProps = {
   form: UseFormReturn<SessionFormSchema>;
   handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
   onSaveAsDraft: () => void;
+  isEditMode?: boolean; // New prop for edit mode
 };
 
 const FormActions = ({
@@ -20,6 +21,7 @@ const FormActions = ({
   onSaveAsDraft,
   form,
   handleSubmit,
+  isEditMode = false, // Default to false for backward compatibility
 }: FormActionsProps) => {
   const handleSubmitClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -65,12 +67,12 @@ const FormActions = ({
           {isSubmitting ? (
             <>
               <span className="mr-2 animate-spin">⏳</span>
-              Saving...
+              {isEditMode ? "Updating..." : "Saving..."}
             </>
           ) : (
             <>
-              <span className="mr-2">💾</span>
-              Log Session
+              <span className="mr-2">{isEditMode ? "💾" : "💾"}</span>
+              {isEditMode ? "Update Session" : "Log Session"}
             </>
           )}
         </Button>

@@ -27,6 +27,8 @@ export default function SessionsPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
+  const [isEditSessionOpen, setIsEditSessionOpen] = useState(false); // New state for edit mode
+  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null); // New state for session to edit
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
@@ -57,6 +59,15 @@ export default function SessionsPage() {
   const handleNewSessionCreated = useCallback(() => {
     fetchSessions();
     setIsNewSessionOpen(false);
+    setIsEditSessionOpen(false);
+    setSessionToEdit(null);
+  }, [fetchSessions]);
+
+  // Handle session editing - refresh sessions list
+  const handleSessionEdited = useCallback(() => {
+    fetchSessions();
+    setIsEditSessionOpen(false);
+    setSessionToEdit(null);
   }, [fetchSessions]);
 
   // Filter sessions based on active filter
@@ -91,6 +102,12 @@ export default function SessionsPage() {
   const handleSessionClick = (session: Session) => {
     setSelectedSession(session);
     setIsSheetOpen(true);
+  };
+
+  const handleEditSession = (session: Session) => {
+    setSessionToEdit(session);
+    setIsEditSessionOpen(true);
+    setIsSheetOpen(false); // Close the detail sheet
   };
 
   const renderEnhancedCalculations = (session: Session) => {
@@ -386,6 +403,7 @@ export default function SessionsPage() {
                 <Button
                   variant="outline"
                   className="bg-doser-surface-hover border-doser-border text-doser-text hover:bg-doser-surface-hover/80"
+                  onClick={() => handleEditSession(selectedSession)}
                 >
                   <span className="mr-2">✏️</span>
                   Edit Session
@@ -401,6 +419,14 @@ export default function SessionsPage() {
         isOpen={isNewSessionOpen}
         setSessionFormOpen={setIsNewSessionOpen}
         onSessionCreated={handleNewSessionCreated}
+      />
+
+      {/* Edit Session Form */}
+      <NewSessionForm
+        isOpen={isEditSessionOpen}
+        setSessionFormOpen={setIsEditSessionOpen}
+        onSessionCreated={handleSessionEdited}
+        sessionToEdit={sessionToEdit}
       />
     </div>
   );
