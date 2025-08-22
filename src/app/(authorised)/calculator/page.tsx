@@ -287,6 +287,7 @@ export default function CalculatorPage() {
           />
         )}
         {/* Recent Calculations */}
+
         {results && selectedVaporizer && (
           <ResultsCalculations
             results={results}

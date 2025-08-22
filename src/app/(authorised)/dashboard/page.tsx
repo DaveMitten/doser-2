@@ -2,8 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
-import ComingSoon from "../../../components/ComingSoon";
 import { useAuth } from "@/context/AuthContext";
 import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
@@ -201,7 +199,95 @@ export default function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="md:hidden">
+        {/* Mobile: Horizontal scrolling cards */}
+        <div className="mb-3">
+          <p className="text-xs text-doser-text-muted text-center">
+            ← Scroll to see all stats →
+          </p>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+          {/* Total Sessions */}
+          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-doser-text mb-2">
+                  {stats?.totalSessions || 0}
+                </div>
+                <div className="text-doser-text-muted text-sm mb-2">
+                  Total Sessions
+                </div>
+                {stats && stats.lastWeekSessions > 0 && (
+                  <div className="text-doser-primary text-xs">
+                    +{stats.thisWeekSessions - stats.lastWeekSessions} from last
+                    week
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Avg THC Dose */}
+          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-doser-text mb-2">
+                  {stats?.avgThcDose || 0}mg
+                </div>
+                <div className="text-doser-text-muted text-sm mb-2">
+                  Avg THC Dose
+                </div>
+                {stats && stats.totalThcConsumed > 0 && (
+                  <div className="text-doser-primary text-xs">
+                    {stats.totalThcConsumed}mg total consumed
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Avg CBD Dose */}
+          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-doser-text mb-2">
+                  {stats?.avgCbdDose || 0}mg
+                </div>
+                <div className="text-doser-text-muted text-sm mb-2">
+                  Avg CBD Dose
+                </div>
+                {stats && stats.totalCbdConsumed > 0 && (
+                  <div className="text-doser-primary text-xs">
+                    {stats.totalCbdConsumed}mg total consumed
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Days Tracked */}
+          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-doser-text mb-2">
+                  {stats?.totalDaysTracked || 0}
+                </div>
+                <div className="text-doser-text-muted text-sm mb-2">
+                  Days Tracked
+                </div>
+                {stats && stats.thisWeekSessions > 0 && (
+                  <div className="text-doser-primary text-xs">
+                    {stats.thisWeekSessions} this week
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Desktop: Grid layout */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Sessions */}
         <Card className="bg-doser-surface border-doser-border">
           <CardContent className="p-6">
