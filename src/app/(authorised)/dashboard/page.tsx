@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
-import ListViewSessionCard from "@/components/sessions/ListViewSessionCard";
+import SessionCard from "@/components/sessions/SessionCard";
 
 interface DashboardStats {
   totalSessions: number;
@@ -286,9 +286,9 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold text-doser-text">
             Recent Sessions
           </h2>
-          <div className="bg-doser-surface border border-doser-border rounded-xl overflow-hidden">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {recentSessions.map((session) => (
-              <ListViewSessionCard
+              <SessionCard
                 key={session.id}
                 session={session}
                 onClick={handleSessionClick}
