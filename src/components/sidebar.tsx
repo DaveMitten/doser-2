@@ -120,7 +120,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   );
 
   return (
-    <aside className="w-64 min-h-screen bg-doser-surface border-r border-doser-border p-4 flex flex-col">
+    <aside className="w-full min-h-screen p-4 flex flex-col">
       <div className="space-y-6 flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center space-x-3 pb-6 border-b border-doser-border">
