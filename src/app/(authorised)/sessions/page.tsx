@@ -189,7 +189,7 @@ export default function SessionsPage() {
 
       {/* Responsive Filters */}
       <div className="mb-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide min-w-0">
             {filters.map((filter) => (
               <Badge
@@ -208,7 +208,7 @@ export default function SessionsPage() {
           </div>
 
           {/* View Toggle */}
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="hidden sm:flex gap-2 flex-shrink-0">
             <Badge
               variant={viewMode === "cards" ? "default" : "outline"}
               className={`cursor-pointer whitespace-nowrap ${
