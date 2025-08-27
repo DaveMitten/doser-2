@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { signup } from "@/app/(public)/auth/actions";
+import { signup, checkEmailExists } from "@/app/(public)/auth/actions";
 
 interface SignUpFormProps {
   onToggleMode: () => void;
@@ -21,21 +21,128 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailValid, setEmailValid] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const { signUp } = useAuth();
+
+  // Debounced email validation
+  useEffect(() => {
+    if (!email) {
+      setEmailError(null);
+      setEmailValid(false);
+      return;
+    }
+
+    // Clear previous error and reset valid state while typing
+    setEmailError(null);
+    setEmailValid(false);
+
+    // Debounce both format validation and existence check - only run after user stops typing
+    const timeoutId = setTimeout(async () => {
+      // Only check if the email is still the same (user hasn't continued typing)
+      if (email) {
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setEmailError("Please enter a valid email address");
+          setEmailValid(false);
+          return;
+        }
+
+        // If format is valid, check existence
+        setIsCheckingEmail(true);
+        try {
+          const result = await checkEmailExists(email);
+          if (result.exists) {
+            setEmailError(
+              "An account with this email already exists. Please sign in instead."
+            );
+            setEmailValid(false);
+          } else {
+            setEmailError(null);
+            setEmailValid(true);
+          }
+        } catch (error) {
+          console.error("Error checking email:", error);
+          // Don't show error for network issues, just log them
+          setEmailValid(false);
+        } finally {
+          setIsCheckingEmail(false);
+        }
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [email]);
+
+  // Helper function to get user-friendly error messages
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+
+      if (
+        message.includes("user already registered") ||
+        message.includes("already exists") ||
+        message.includes("duplicate key") ||
+        message.includes("23505")
+      ) {
+        return "An account with this email already exists. Please sign in instead.";
+      }
+
+      if (message.includes("invalid email")) {
+        return "Please enter a valid email address.";
+      }
+
+      if (message.includes("password")) {
+        return "Password must be at least 6 characters long.";
+      }
+
+      if (
+        message.includes("rate limit") ||
+        message.includes("too many requests")
+      ) {
+        return "Too many signup attempts. Please wait a moment and try again.";
+      }
+
+      if (message.includes("network") || message.includes("connection")) {
+        return "Network error. Please check your connection and try again.";
+      }
+
+      // Return the original error message for other cases
+      return error.message;
+    }
+
+    return "An unexpected error occurred. Please try again.";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with:", { email, password, confirmPassword });
+
+    // Clear any previous errors
+    setError(null);
 
     if (!email || !password || !confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
 
-    // Simple email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
+    // Check if there's an email validation error
+    if (emailError) {
+      setError("Please fix the email validation errors before submitting");
+      return;
+    }
+
+    // Wait for email validation to complete if it's still checking
+    if (isCheckingEmail) {
+      setError("Please wait for email validation to complete");
+      return;
+    }
+
+    // Ensure email has been validated and is available
+    if (!emailValid) {
+      setError("Please enter a valid email address that hasn't been used");
       return;
     }
 
@@ -60,6 +167,14 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
       setSuccess(true);
     } catch (err) {
       console.error("Client-side signup failed:", err);
+
+      // Check if this is a duplicate email error
+      const errorMessage = getErrorMessage(err);
+      if (errorMessage.includes("already exists")) {
+        setError(errorMessage);
+        return;
+      }
+
       // If client-side fails, try server action
       try {
         const formData = new FormData();
@@ -69,11 +184,10 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
         setSuccess(true);
       } catch (serverErr) {
         console.error("Server-side signup failed:", serverErr);
-        const errorMessage =
-          serverErr instanceof Error
-            ? serverErr.message
-            : "An error occurred during sign up";
-        setError(errorMessage);
+
+        // Use the helper function for server errors too
+        const finalErrorMessage = getErrorMessage(serverErr);
+        setError(finalErrorMessage);
       }
     } finally {
       setLoading(false);
@@ -114,8 +228,25 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
             className="bg-doser-background border-doser-border text-doser-text"
+            aria-invalid={!!emailError}
             required
           />
+          {isCheckingEmail && (
+            <p className="text-blue-500 text-xs mt-1">
+              Checking email availability...
+            </p>
+          )}
+          {emailError && (
+            <p className="text-red-500 text-xs mt-1">{emailError}</p>
+          )}
+          {emailValid && !emailError && !isCheckingEmail && email && (
+            <p className="text-green-500 text-xs mt-1">✓ Email is available</p>
+          )}
+          {email && !emailError && !emailValid && !isCheckingEmail && (
+            <p className="text-gray-500 text-xs mt-1">
+              Type to check email availability
+            </p>
+          )}
         </div>
 
         <div className="relative">
@@ -159,15 +290,38 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
         </div>
 
         {error && (
-          <div className="text-red-500 text-sm text-center">{error}</div>
+          <div className="text-red-500 text-sm text-center p-3 bg-red-50 border border-red-200 rounded-md">
+            {error}
+            {error.includes("already exists") && (
+              <div className="mt-2">
+                <button
+                  onClick={onToggleMode}
+                  className="text-blue-600 hover:text-blue-800 underline font-medium"
+                >
+                  Click here to sign in instead
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         <Button
           type="submit"
-          disabled={loading || !email || !password || !confirmPassword}
+          disabled={
+            loading ||
+            !email ||
+            !password ||
+            !confirmPassword ||
+            isCheckingEmail ||
+            !emailValid
+          }
           className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
         >
-          {loading ? "Creating account..." : "Sign Up"}
+          {loading
+            ? "Creating account..."
+            : isCheckingEmail
+            ? "Validating email..."
+            : "Sign Up"}
         </Button>
       </form>
 

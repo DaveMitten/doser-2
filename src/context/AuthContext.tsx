@@ -14,6 +14,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = createSupabaseBrowserClient();
 
+  // Helper function to get user-friendly error messages
+  const getErrorMessage = (
+    error: { message?: string } | null | undefined
+  ): string => {
+    if (error?.message) {
+      const message = error.message.toLowerCase();
+
+      if (
+        message.includes("user already registered") ||
+        message.includes("already exists") ||
+        message.includes("duplicate key") ||
+        message.includes("23505")
+      ) {
+        return "An account with this email already exists. Please sign in instead.";
+      }
+
+      if (message.includes("invalid email")) {
+        return "Please enter a valid email address.";
+      }
+
+      if (message.includes("password")) {
+        return "Password must be at least 6 characters long.";
+      }
+
+      if (
+        message.includes("rate limit") ||
+        message.includes("too many requests")
+      ) {
+        return "Too many signup attempts. Please wait a moment and try again.";
+      }
+
+      if (message.includes("network") || message.includes("connection")) {
+        return "Network error. Please check your connection and try again.";
+      }
+
+      // Return the original error message for other cases
+      return error.message;
+    }
+
+    return "An unexpected error occurred. Please try again.";
+  };
+
   useEffect(() => {
     // Check for email verification cookie
     const checkVerificationCookie = () => {
@@ -110,7 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           status: error.status,
           code: error.code || "No code provided",
         });
-        throw error;
+
+        // Use the helper function to get user-friendly error messages
+        throw new Error(getErrorMessage(error));
       }
     } catch (error) {
       console.error("Sign up error:", error);
@@ -125,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      if (error) throw error;
+      if (error) throw new Error(getErrorMessage(error));
 
       // Clear any verification cookies on successful sign in
       deleteCookie("email_verified");
@@ -146,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
+      if (error) throw new Error(getErrorMessage(error));
     } catch (error) {
       console.error("Reset password error:", error);
       throw error;
