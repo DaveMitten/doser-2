@@ -1,95 +1,70 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { FeaturesSection } from "@/components/features-section";
+import Image from "next/image";
 
 export default function Home() {
   return (
     <>
       {/* Main Content */}
-      <main className="relative z-10 min-h-screen">
+      <main className="relative z-10">
         {/* Hero Section */}
-        <div className="container mx-auto px-6 py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Content */}
-            <div className="space-y-8">
-              {/* Main Headline */}
-              <h1 className="text-4xl lg:text-6xl font-bold text-doser-text leading-tight">
-                The <span className="text-doser-primary">smartest</span>{" "}
-                cannabis calculator you&apos;ve been waiting for.
-              </h1>
+        <div className="bg-doser-background relative overflow-hidden min-h-screen">
+          {/* Green Aura Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-doser-primary/5 via-doser-primary/3 to-transparent"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-doser-primary/8 rounded-full blur-3xl"></div>
 
-              {/* Description */}
-              <p className="text-xl text-doser-text-muted leading-relaxed">
-                Take control of your cannabis experience with precision dosing,
-                personalized recommendations, and comprehensive tracking—all in
-                one intelligent platform.
-              </p>
+          <div className="container mx-auto px-6 min-h-screen flex items-center relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+              {/* Left Column - Content */}
+              <div className="space-y-8">
+                {/* Main Headline */}
+                <h1 className="text-4xl lg:text-6xl font-bold text-doser-text leading-tight">
+                  <span className="text-doser-primary">Optimize </span> your
+                  cannabis treatment with data-driven insights
+                </h1>
 
-              {/* Email Input */}
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md">
-                <Input
+                {/* Description */}
+                <p className="text-xl text-doser-text-muted leading-relaxed">
+                  Take control of your cannabis experience with precision
+                  dosing, personalized recommendations, and comprehensive
+                  tracking—all in one intelligent platform.
+                </p>
+
+                {/* Email Input */}
+                <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+                  {/* <Input
                   type="email"
                   placeholder="Enter your email address"
                   className="flex-1 bg-doser-surface border-doser-border text-doser-text placeholder-gray-400 focus:ring-doser-primary"
                 />
                 <Button className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text">
                   Join Waitlist
-                </Button>
+                </Button> */}
+                </div>
               </div>
-            </div>
 
-            {/* Right Column - Mobile App Mockup */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                {/* Phone Frame */}
-                <div className="w-64 h-96 bg-doser-surface rounded-3xl border-4 border-doser-border p-4 transform rotate-6">
-                  {/* App Header */}
-                  <div className="flex items-center space-x-2 mb-6">
-                    <div className="w-6 h-6 bg-doser-primary rounded flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 12a2 2 0 114 0 2 2 0 01-4 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-doser-text font-bold">Doser</div>
-                      <div className="text-xs text-gray-400">
-                        Your personalized cannabis companion
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* App Cards */}
-                  <div className="space-y-4">
-                    <Card className="bg-doser-primary border-0">
-                      <CardContent className="p-4">
-                        <div className="text-doser-text text-sm">
-                          Recommended dose
-                        </div>
-                        <div className="text-doser-text text-2xl font-bold">
-                          2.5mg
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-doser-accent border-0">
-                      <CardContent className="p-4">
-                        <div className="text-doser-text text-sm">
-                          Tolerance match
-                        </div>
-                        <div className="text-doser-text text-2xl font-bold">
-                          85%
-                        </div>
-                      </CardContent>
-                    </Card>
+              {/* Right Column - Dashboard Screenshot */}
+              <div className="flex justify-center lg:justify-end">
+                <div className="relative">
+                  {/* Dashboard Screenshot */}
+                  <div className="w-full max-w-2xl">
+                    <Image
+                      src="/dashboard-macbook-screenshot.svg"
+                      alt="Doser Dashboard - Cannabis Dosing App"
+                      width={800}
+                      height={600}
+                      className="w-full h-auto rounded-lg shadow-2xl"
+                      priority
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Features Section */}
+        <FeaturesSection />
       </main>
     </>
   );

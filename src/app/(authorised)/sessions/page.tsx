@@ -190,7 +190,7 @@ export default function SessionsPage() {
       {/* Responsive Filters */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide min-w-0">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-doser min-w-0">
             {filters.map((filter) => (
               <Badge
                 key={filter}
@@ -244,7 +244,7 @@ export default function SessionsPage() {
 
       {/* Session Detail Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-2xl bg-doser-surface border-l border-doser-border overflow-y-auto p-0">
+        <SheetContent className="w-full sm:max-w-2xl bg-doser-surface border-l border-doser-border overflow-y-auto p-0 scrollbar-doser">
           <SheetHeader className="border-b border-doser-border p-6">
             <SheetTitle className="text-doser-text text-xl font-semibold">
               Session Details

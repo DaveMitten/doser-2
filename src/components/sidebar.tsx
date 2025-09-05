@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { signOut as serverSignOut } from "@/app/(public)/auth/actions";
+import { LogOut } from "lucide-react";
 
 interface SidebarProps {
   currentPage?: string;
@@ -21,7 +22,7 @@ interface NavigationItem {
 interface SettingsItem {
   href: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   pageKey: string;
 }
 
@@ -142,6 +143,15 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
           </div>
           <nav className="space-y-2">
             {settingsItems.map(renderSettingsItem)}
+            <Link
+              key="logout"
+              href="#"
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm`}
+              onClick={handleSignOut}
+            >
+              <span className="text-base">{<LogOut />}</span>
+              <span>Logout</span>
+            </Link>
           </nav>
         </div>
 
@@ -167,7 +177,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
         </div>
       </div>
       {/* User Profile - Bottom */}
-      <div className="space-y-3 mt-auto">
+      {/* <div className="space-y-3 mt-auto">
         <div className="flex items-center gap-3 p-3 bg-doser-surface-hover rounded-lg">
           <div className="w-4 h-4 bg-gradient-to-br from-doser-accent to-purple-500 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-medium">
@@ -175,8 +185,9 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
             </span>
           </div>
           <div className="">
-            <div className="text-doser-text text-sm font-semibold">
-              {user?.email?.split("@")[0] || "User"}
+            <div className="text-doser-text text-sm font-semibold"> */}
+      {/* {user?.email?.split("@")[0] || "User"} */}
+      {/* Luke
             </div>
             <div className="text-doser-text-muted text-xs">Free Plan</div>
           </div>
@@ -189,8 +200,8 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
           >
             {isLoggingOut ? "..." : "🚪"}
           </Button>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
     </aside>
   );
 }

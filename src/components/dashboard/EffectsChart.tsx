@@ -1,0 +1,53 @@
+"use client";
+
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { EffectData } from "@/lib/chartDataUtils";
+import { CHART_COLORS } from "@/lib/chartColors";
+
+interface EffectsChartProps {
+  data: EffectData[];
+}
+
+export function EffectsChart({ data }: EffectsChartProps) {
+  return (
+    <div className="w-full h-64">
+      <h3 className="text-lg font-semibold text-doser-text mb-4">
+        Effects Experienced
+      </h3>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) =>
+              `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+            }
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: CHART_COLORS.tooltip.background,
+              border: `1px solid ${CHART_COLORS.tooltip.border}`,
+              borderRadius: "8px",
+              color: CHART_COLORS.tooltip.text,
+            }}
+            labelStyle={{
+              color: CHART_COLORS.tooltip.text,
+            }}
+            itemStyle={{
+              color: CHART_COLORS.tooltip.text,
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

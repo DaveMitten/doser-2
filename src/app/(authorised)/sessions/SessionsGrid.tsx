@@ -5,6 +5,7 @@ import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import ListViewSessionCard from "../../../components/sessions/ListViewSessionCard";
 import SessionCard from "../../../components/sessions/SessionCard";
+import { EmptyState } from "../../../components/ui/empty-state";
 
 type Props = {
   sessions: Session[];
@@ -21,17 +22,13 @@ const SessionsGrid = ({
 }: Props) => {
   if (sessions.length === 0) {
     return (
-      <div className="col-span-full text-center py-6 sm:py-8 lg:py-12 px-4">
-        <div className="text-doser-text-muted mb-4 text-sm sm:text-base">
-          No sessions recorded yet
-        </div>
-        <Button
-          onClick={() => setIsNewSessionOpen(true)}
-          className="bg-doser-primary hover:bg-doser-primary-hover w-full sm:w-auto max-w-xs"
-        >
-          Record Your First Session
-        </Button>
-      </div>
+      <EmptyState
+        title="No sessions recorded yet"
+        description="Start tracking your cannabis consumption to see your dosing patterns and effects"
+        buttonText="Record Your First Session"
+        onButtonClick={() => setIsNewSessionOpen(true)}
+        icon="📊"
+      />
     );
   }
 

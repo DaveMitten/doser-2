@@ -1,0 +1,41 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e9] [cursor=pointer]:
+    - img [ref=e10] [cursor=pointer]
+  - alert [ref=e14]
+  - navigation [ref=e15]:
+    - generic [ref=e16]:
+      - img [ref=e18]
+      - generic [ref=e20]: Doser
+    - generic [ref=e21]:
+      - link "Home" [ref=e22] [cursor=pointer]:
+        - /url: /
+      - link "Pricing" [ref=e23] [cursor=pointer]:
+        - /url: /pricing
+    - generic [ref=e24]:
+      - link "Sign In" [ref=e25] [cursor=pointer]:
+        - /url: /auth
+        - button "Sign In" [ref=e26]
+      - link "Get Started" [ref=e27] [cursor=pointer]:
+        - /url: /auth
+        - button "Get Started" [ref=e28]
+  - main [ref=e29]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - heading "Welcome Back" [level=2] [ref=e35]
+        - paragraph [ref=e36]: Sign in to your account
+      - generic [ref=e37]:
+        - textbox "Email" [ref=e39]
+        - generic [ref=e40]:
+          - textbox "Password" [ref=e41]
+          - button [ref=e42]:
+            - img [ref=e43]
+        - button "Sign In" [disabled]
+      - paragraph [ref=e47]:
+        - text: Don't have an account?
+        - button "Sign up" [ref=e48]
+  - contentinfo [ref=e49]:
+    - paragraph [ref=e52]: © 2025 Doser.
+```

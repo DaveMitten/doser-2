@@ -1,0 +1,50 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+      - img [ref=e8] [cursor=pointer]
+    - generic [ref=e11] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13] [cursor=pointer]:
+          - generic [ref=e14] [cursor=pointer]: "0"
+          - generic [ref=e15] [cursor=pointer]: "1"
+        - generic [ref=e16] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e17] [cursor=pointer]:
+        - img [ref=e18] [cursor=pointer]
+  - alert [ref=e22]
+  - navigation [ref=e23]:
+    - generic [ref=e24]:
+      - img [ref=e26]
+      - generic [ref=e28]: Doser
+    - generic [ref=e29]:
+      - link "Home" [ref=e30] [cursor=pointer]:
+        - /url: /
+      - link "Pricing" [ref=e31] [cursor=pointer]:
+        - /url: /pricing
+    - generic [ref=e32]:
+      - link "Sign In" [ref=e33] [cursor=pointer]:
+        - /url: /auth
+        - button "Sign In" [ref=e34]
+      - link "Get Started" [ref=e35] [cursor=pointer]:
+        - /url: /auth
+        - button "Get Started" [ref=e36]
+  - main [ref=e37]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - heading "Welcome Back" [level=2] [ref=e43]
+        - paragraph [ref=e44]: Sign in to your account
+      - generic [ref=e45]:
+        - textbox "Email" [ref=e47]
+        - generic [ref=e48]:
+          - textbox "Password" [ref=e49]
+          - button [ref=e50]:
+            - img [ref=e51]
+        - button "Sign In" [disabled]
+      - paragraph [ref=e55]:
+        - text: Don't have an account?
+        - button "Sign up" [ref=e56]
+  - contentinfo [ref=e57]:
+    - paragraph [ref=e60]: © 2025 Doser.
+```

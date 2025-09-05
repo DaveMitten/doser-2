@@ -7,6 +7,14 @@ import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import SessionCard from "@/components/sessions/SessionCard";
+import { EmptyState } from "@/components/ui/empty-state";
+import { NewSessionForm } from "@/components/new-session/new-session-form";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import {
+  processDosingTrends,
+  processEffectsData,
+  processUsagePattern,
+} from "@/lib/chartDataUtils";
 
 interface DashboardStats {
   totalSessions: number;
@@ -33,9 +41,11 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
+  const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -68,6 +78,7 @@ export default function DashboardPage() {
         }
 
         if (sessions) {
+          setAllSessions(sessions);
           setRecentSessions(sessions.slice(0, 3)); // Get 3 most recent sessions
 
           // Calculate statistics
@@ -143,6 +154,11 @@ export default function DashboardPage() {
     console.log("Session clicked:", session);
   };
 
+  const handleNewSessionCreated = () => {
+    // Refresh dashboard data
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="space-y-8">
@@ -190,12 +206,21 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-doser-text mb-2">
-            Welcome back, {getDisplayName()}
+            {/* Welcome back, {getDisplayName()} */}
+            Welcome back, Luke!
           </h1>
           <p className="text-doser-text-muted">
             Here&apos;s your cannabis dosing overview for today
           </p>
         </div>
+        {recentSessions.length > 0 && (
+          <Button
+            onClick={() => setIsNewSessionOpen(true)}
+            className="bg-doser-primary hover:bg-doser-primary-hover"
+          >
+            + New Session
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -206,7 +231,7 @@ export default function DashboardPage() {
             ← Scroll to see all stats →
           </p>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-doser">
           {/* Total Sessions */}
           <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
             <CardContent className="p-4">
@@ -366,8 +391,22 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Analytics Charts */}
+      {stats && stats.totalSessions > 0 && allSessions.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-doser-text">
+            Analytics & Insights
+          </h2>
+          <DashboardCharts
+            dosingTrends={processDosingTrends(allSessions)}
+            effects={processEffectsData(allSessions)}
+            usagePattern={processUsagePattern(allSessions)}
+          />
+        </div>
+      )}
+
       {/* Recent Sessions */}
-      {recentSessions.length > 0 && (
+      {recentSessions.length > 0 ? (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-doser-text">
             Recent Sessions
@@ -382,7 +421,27 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      ) : (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-doser-text">
+            Recent Sessions
+          </h2>
+          <EmptyState
+            title="No sessions recorded yet"
+            description="Start tracking your cannabis consumption to see your dosing patterns and effects"
+            buttonText="Record Your First Session"
+            onButtonClick={() => setIsNewSessionOpen(true)}
+            icon="📊"
+          />
+        </div>
       )}
+
+      {/* New Session Form */}
+      <NewSessionForm
+        isOpen={isNewSessionOpen}
+        setSessionFormOpen={setIsNewSessionOpen}
+        onSessionCreated={handleNewSessionCreated}
+      />
     </div>
   );
 }

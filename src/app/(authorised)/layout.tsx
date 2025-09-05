@@ -27,7 +27,7 @@ export default function AuthorisedLayout({
       </div>
 
       {/* Main Layout */}
-      <div className="relative z-10 flex md:max-h-screen">
+      <div className="relative z-10 flex h-screen">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <Sidebar currentPage={currentPage} />
@@ -73,7 +73,7 @@ export default function AuthorisedLayout({
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-8 mt-16 md:mt-0 overflow-x-hidden">
+        <main className="flex-1 p-4 md:p-8 mt-16 md:mt-0 overflow-x-hidden overflow-y-auto scrollbar-doser h-screen">
           {children}
         </main>
       </div>
