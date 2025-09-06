@@ -10,9 +10,13 @@ import { signup, checkEmailExists } from "@/app/(public)/auth/actions";
 
 interface SignUpFormProps {
   onToggleMode: () => void;
+  selectedPlan?: string;
 }
 
-export function SignUpForm({ onToggleMode }: SignUpFormProps) {
+export function SignUpForm({
+  onToggleMode,
+  selectedPlan = "pro",
+}: SignUpFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -201,8 +205,12 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
           <h2 className="text-2xl font-bold text-doser-text mb-4">
             Check Your Email
           </h2>
-          <p className="text-doser-text-muted mb-6">
+          <p className="text-doser-text-muted mb-4">
             We&apos;ve sent you a confirmation link at <strong>{email}</strong>
+          </p>
+          <p className="text-doser-text-muted mb-6">
+            Once verified, you&apos;ll have access to the {selectedPlan} plan
+            with your 7-day free trial!
           </p>
           <Button onClick={onToggleMode} variant="doser">
             Back to Sign In

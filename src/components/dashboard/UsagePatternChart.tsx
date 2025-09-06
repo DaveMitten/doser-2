@@ -18,8 +18,8 @@ interface UsagePatternChartProps {
 
 export function UsagePatternChart({ data }: UsagePatternChartProps) {
   return (
-    <div className="w-full h-64">
-      <h3 className="text-lg font-semibold text-doser-text mb-4">
+    <div className="w-full h-56 sm:h-64 md:h-56">
+      <h3 className="text-lg font-semibold text-doser-text mb-2">
         Weekly Usage Pattern
       </h3>
       <ResponsiveContainer width="100%" height="100%">

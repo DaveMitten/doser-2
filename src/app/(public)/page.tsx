@@ -26,21 +26,9 @@ export default function Home() {
                 {/* Description */}
                 <p className="text-xl text-doser-text-muted leading-relaxed">
                   Take control of your cannabis experience with precision
-                  dosing, personalized recommendations, and comprehensive
-                  tracking—all in one intelligent platform.
+                  dosing, session analytics, and comprehensive tracking—all in
+                  one intelligent platform.
                 </p>
-
-                {/* Email Input */}
-                <div className="flex flex-col sm:flex-row gap-4 max-w-md">
-                  {/* <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="flex-1 bg-doser-surface border-doser-border text-doser-text placeholder-gray-400 focus:ring-doser-primary"
-                />
-                <Button className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text">
-                  Join Waitlist
-                </Button> */}
-                </div>
               </div>
 
               {/* Right Column - Dashboard Screenshot */}

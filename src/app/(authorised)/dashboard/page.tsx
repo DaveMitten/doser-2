@@ -201,7 +201,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -393,7 +393,7 @@ export default function DashboardPage() {
 
       {/* Analytics Charts */}
       {stats && stats.totalSessions > 0 && allSessions.length > 0 && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <h2 className="text-xl font-semibold text-doser-text">
             Analytics & Insights
           </h2>

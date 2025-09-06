@@ -19,8 +19,8 @@ interface DosingTrendsChartProps {
 
 export function DosingTrendsChart({ data }: DosingTrendsChartProps) {
   return (
-    <div className="w-full h-64">
-      <h3 className="text-lg font-semibold text-doser-text mb-4">
+    <div className="w-full h-64 sm:h-72 md:h-64">
+      <h3 className="text-lg font-semibold text-doser-text mb-2">
         Dosing Trends (7 days)
       </h3>
       <ResponsiveContainer width="100%" height="100%">
@@ -42,7 +42,7 @@ export function DosingTrendsChart({ data }: DosingTrendsChartProps) {
               color: CHART_COLORS.tooltip.text,
             }}
           />
-          <Legend />
+          <Legend wrapperStyle={{ fontSize: "12px" }} />
           <Line
             type="monotone"
             dataKey="thc"

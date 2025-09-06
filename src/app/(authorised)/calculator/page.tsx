@@ -8,9 +8,11 @@ import {
 } from "@/lib/calculator";
 import { dryHerbVaporizers } from "@/data/vapes";
 import { calculateDosage } from "@/lib/calculator";
-import ResultsPanel from "./(comps)/ResultsPanel";
 import { validateNumberInput, formatDecimalInput } from "../../../lib/utils";
-import ResultsCalculations from "./(comps)/ResultsCalculations";
+import RecentCalculations from "./(comps)/ResultsCalculations";
+import ResultsPanel from "./(comps)/ResultsPanel";
+import CalculationDetails from "./(comps)/CalculationDetails";
+import SafetyGuidelines from "./(comps)/SafetyGuidelines";
 import SelectYourVapourizer from "../../../components/calculator/comps/SelectYourVapourizer";
 import MeasurementMethod from "../../../components/calculator/comps/MeasurementMethod";
 import HigherAccuracyToggle from "../../../components/calculator/comps/HigherAccuracyToggle";
@@ -200,7 +202,7 @@ export default function CalculatorPage() {
       </div>
 
       {/* Calculator Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
         {/* Input Form */}
         <div className="lg:col-span-2 xl:col-span-2 space-y-6">
           <Card className="bg-doser-surface border-doser-border">
@@ -209,7 +211,7 @@ export default function CalculatorPage() {
                 Calculator Settings
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent noTopPadding className="space-y-6">
               {/* Vaporizer Selection */}
               <SelectYourVapourizer
                 inputs={inputs}
@@ -278,23 +280,35 @@ export default function CalculatorPage() {
           </Card>
         </div>
 
-        {/* Results Panel */}
-        {results && selectedVaporizer && (
-          <ResultsPanel
+        {/* Right Side Content - 3 Rows */}
+        <div className="col-span-1 xl:col-span-3 space-y-6">
+          {/* Row 1: Calculation Details - Full Width */}
+          <CalculationDetails
             results={results}
             inputs={inputs}
-            selectedVaporizer={selectedVaporizer}
+            selectedVaporizer={selectedVaporizer ?? null}
           />
-        )}
-        {/* Recent Calculations */}
 
-        {results && selectedVaporizer && (
-          <ResultsCalculations
-            results={results}
-            inputs={inputs}
-            selectedVaporizer={selectedVaporizer}
-          />
-        )}
+          {/* Row 2: Safety Guidelines and Results Calculations */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Safety Guidelines - 1 column */}
+            <div className="col-span-1">
+              <SafetyGuidelines />
+            </div>
+
+            {/* Quick Results - remaining space */}
+            {/* <div className="col-span-1">
+              {results && selectedVaporizer && (
+                <ResultsPanel
+                  results={results}
+                  inputs={inputs}
+                  selectedVaporizer={selectedVaporizer}
+                />
+              )}
+            </div> */}
+            <RecentCalculations />
+          </div>
+        </div>
       </div>
     </div>
   );

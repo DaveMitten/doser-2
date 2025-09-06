@@ -231,6 +231,33 @@ export function calculateConfidence(
   return 85; // Placeholder
 }
 
+// Calculate dose per unit (capsule or chamber) for display purposes
+export const calculateDosePerUnitDisplay = (
+  inputs: CalculatorInputs,
+  selectedVaporizer: {
+    dosingCapsuleCapacity?: number;
+    extractionEfficiency?: number;
+  } | null
+): { thc: number; cbd: number; efficiency: number } => {
+  const weight =
+    inputs.measurementMethod === "capsule"
+      ? selectedVaporizer?.dosingCapsuleCapacity || 0.15
+      : inputs.chamberWeight;
+
+  const efficiency = selectedVaporizer?.extractionEfficiency || 65;
+
+  const thcDose =
+    (inputs.thcPercentage / 100) * 1000 * weight * (efficiency / 100);
+  const cbdDose =
+    (inputs.cbdPercentage / 100) * 1000 * weight * (efficiency / 100);
+
+  return {
+    thc: thcDose,
+    cbd: cbdDose,
+    efficiency,
+  };
+};
+
 export const calculateConsumedAmount = (formData: SessionFormData) => {
   if (
     !formData.totalSessionInhalations ||

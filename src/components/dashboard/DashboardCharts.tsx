@@ -20,19 +20,19 @@ export function DashboardCharts({
   usagePattern,
 }: DashboardChartsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Dosing Trends Chart */}
         <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
+          <CardContent noTopPadding className="px-4 pb-4 sm:px-6 sm:pb-6">
             <DosingTrendsChart data={dosingTrends} />
           </CardContent>
         </Card>
 
         {/* Effects Chart */}
         <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
+          <CardContent noTopPadding className="px-4 pb-4 sm:px-6 sm:pb-6">
             <EffectsChart data={effects} />
           </CardContent>
         </Card>
@@ -40,7 +40,7 @@ export function DashboardCharts({
 
       {/* Usage Pattern Chart - Full Width */}
       <Card className="bg-doser-surface border-doser-border">
-        <CardContent className="p-6">
+        <CardContent noTopPadding className="px-4 pb-4 sm:px-6 sm:pb-6">
           <UsagePatternChart data={usagePattern} />
         </CardContent>
       </Card>

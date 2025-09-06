@@ -1,0 +1,96 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { SubscriptionButton } from "@/components/subscription/SubscriptionButton";
+import { SubscriptionPlan } from "@/lib/mollie-types";
+import Link from "next/link";
+
+interface PricingCardProps {
+  plan: SubscriptionPlan;
+  isYearly: boolean;
+  isPopular?: boolean;
+  description: string;
+  onPriceChange: (planId: string) => number;
+  onIntervalChange: (planId: string) => string;
+  isAuthenticated?: boolean;
+}
+
+export function PricingCard({
+  plan,
+  isYearly,
+  isPopular = false,
+  description,
+  onPriceChange,
+  onIntervalChange,
+  isAuthenticated = false,
+}: PricingCardProps) {
+  return (
+    <Card
+      className={`bg-doser-surface border-doser-border ${
+        isPopular ? "border-2 border-doser-primary relative" : ""
+      }`}
+    >
+      {isPopular && (
+        <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-doser-primary text-doser-text">
+          Most Popular
+        </Badge>
+      )}
+      <CardHeader className="text-center">
+        <h3 className="text-2xl font-bold text-doser-text">{plan.name}</h3>
+        <p className="text-doser-text-muted">{description}</p>
+        <div className="mt-4">
+          <span className="text-4xl font-bold text-doser-primary">
+            {plan.currency === "GBP" ? "£" : "€"}
+            {onPriceChange(plan.id)}
+          </span>
+          <span className="text-doser-text-muted">
+            /{onIntervalChange(plan.id)}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          {plan.features.map((feature, featureIndex) => (
+            <div key={featureIndex} className="flex items-center space-x-3">
+              <svg
+                className="w-5 h-5 text-doser-primary"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-doser-text">{feature}</span>
+            </div>
+          ))}
+        </div>
+        {isAuthenticated ? (
+          <SubscriptionButton
+            planId={plan.id}
+            isYearly={isYearly}
+            className={`w-full ${
+              isPopular
+                ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+                : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
+            }`}
+          />
+        ) : (
+          <Link href="/signup" className="block">
+            <Button
+              className={`w-full ${
+                isPopular
+                  ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+                  : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
+              }`}
+            >
+              {plan.price === 0 ? "Get Started Free" : "Start 7-Day Free Trial"}
+            </Button>
+          </Link>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

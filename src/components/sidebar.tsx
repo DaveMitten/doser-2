@@ -55,6 +55,12 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   // Settings configuration
   const settingsItems: SettingsItem[] = [
     {
+      href: "/pricing",
+      label: "Pricing",
+      icon: "💳",
+      pageKey: "pricing",
+    },
+    {
       href: "/preferences",
       label: "Preferences",
       icon: "⚙️",
