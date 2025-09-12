@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserSubscription } from "./mollie-types";
+import { UserSubscription } from "./dodo-types";
 
 interface UseSubscriptionReturn {
   subscription: UserSubscription | null;
@@ -8,7 +8,8 @@ interface UseSubscriptionReturn {
   error: string | null;
   createSubscription: (
     planId: string,
-    trialDays?: number
+    trialDays?: number,
+    isYearly?: boolean
   ) => Promise<{ success: boolean; checkoutUrl?: string; error?: string }>;
   cancelSubscription: () => Promise<{ success: boolean; error?: string }>;
   hasFeatureAccess: (feature: string) => boolean;
@@ -47,19 +48,31 @@ export function useSubscription(): UseSubscriptionReturn {
     }
   };
 
-  const createSubscription = async (planId: string, trialDays?: number) => {
+  const createSubscription = async (
+    planId: string,
+    trialDays?: number,
+    isYearly?: boolean
+  ) => {
     try {
+      console.log("Making API call to create subscription", {
+        planId,
+        trialDays,
+        isYearly,
+      });
       const response = await fetch("/api/subscriptions/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ planId, trialDays }),
+        body: JSON.stringify({ planId, trialDays, isYearly }),
       });
 
+      console.log("API response status:", response.status);
       const data = await response.json();
       console.log("createSubscription data", data);
+
       if (!response.ok) {
+        console.error("API error:", data);
         return {
           success: false,
           error: data.error || "Failed to create subscription",
@@ -73,6 +86,7 @@ export function useSubscription(): UseSubscriptionReturn {
 
       return data;
     } catch (err) {
+      console.error("Error in createSubscription:", err);
       return {
         success: false,
         error: err instanceof Error ? err.message : "Unknown error",
@@ -110,8 +124,8 @@ export function useSubscription(): UseSubscriptionReturn {
   const hasFeatureAccess = (feature: string): boolean => {
     if (!subscription) return false;
 
-    // Free plan has limited access
-    if (subscription.planId === "starter") {
+    // Learn plan has limited access
+    if (subscription.planId === "learn") {
       return [
         "basic_calculator",
         "safety_guidelines",
@@ -120,20 +134,20 @@ export function useSubscription(): UseSubscriptionReturn {
       ].includes(feature);
     }
 
-    // Pro plan features
-    if (subscription.planId === "pro") {
-      const proFeatures = [
+    // Track plan features
+    if (subscription.planId === "track") {
+      const trackFeatures = [
         "basic_calculator",
         "unlimited_calculations",
         "unlimited_session_history",
         "session_tracking",
         "weekly_insights",
       ];
-      return proFeatures.includes(feature);
+      return trackFeatures.includes(feature);
     }
 
-    // Expert plan has all features
-    if (subscription.planId === "expert") {
+    // Optimize plan has all features
+    if (subscription.planId === "optimize") {
       return true;
     }
 

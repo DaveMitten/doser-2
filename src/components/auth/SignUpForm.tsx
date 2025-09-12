@@ -15,7 +15,7 @@ interface SignUpFormProps {
 
 export function SignUpForm({
   onToggleMode,
-  selectedPlan = "pro",
+  selectedPlan = "track",
 }: SignUpFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

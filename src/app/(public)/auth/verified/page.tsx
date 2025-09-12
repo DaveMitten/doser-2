@@ -22,7 +22,7 @@ export default function EmailVerified() {
     const createUserSubscription = async () => {
       if (user) {
         const selectedPlan = localStorage.getItem("selectedPlan");
-        if (selectedPlan && selectedPlan !== "starter") {
+        if (selectedPlan && selectedPlan !== "learn") {
           setIsCreatingSubscription(true);
           try {
             await createSubscription(selectedPlan, 7); // 7-day trial
@@ -32,11 +32,11 @@ export default function EmailVerified() {
           } finally {
             setIsCreatingSubscription(false);
           }
-        } else if (selectedPlan === "starter") {
+        } else if (selectedPlan === "learn") {
           // Create free subscription
           setIsCreatingSubscription(true);
           try {
-            await createSubscription("starter", 0);
+            await createSubscription("learn", 0);
             localStorage.removeItem("selectedPlan");
           } catch (error) {
             console.error("Error creating free subscription:", error);

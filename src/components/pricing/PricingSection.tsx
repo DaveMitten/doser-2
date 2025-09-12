@@ -4,14 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { FAQ } from "@/components/FAQ";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/mollie-types";
+import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/dodo-types";
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+export type RouteType = "public" | "auth";
 
-export default function PricingPage() {
+interface PricingSectionProps {
+  routeType: RouteType;
+}
+
+export function PricingSection({ routeType }: PricingSectionProps) {
+  // Use Router
+  const router = useRouter();
+
+  // Use State
   const [isYearly, setIsYearly] = useState(false);
-  const { user } = useAuth();
 
+  // Plans
   const plans = Object.values(SUBSCRIPTION_PLANS);
   const annualPlans = Object.values(ANNUAL_PLANS);
 
@@ -25,7 +34,7 @@ export default function PricingPage() {
 
   const getPlanInterval = (planId: string) => {
     if (isYearly) {
-      const annualPlan = annualPlans.find((p) => p.id === planId);
+      const annualPlan = annualPlans.find((plan) => plan.id === planId);
       return annualPlan
         ? annualPlan.interval
         : SUBSCRIPTION_PLANS[planId]?.interval;
@@ -35,45 +44,65 @@ export default function PricingPage() {
 
   const getPlanDescription = (planId: string) => {
     const descriptions: Record<string, string> = {
-      starter: "Perfect for occasional users",
-      pro: "For regular users and enthusiasts",
-      expert: "For medical users and professionals",
+      learn: "Perfect for occasional users",
+      track: "For regular users and enthusiasts",
+      optimize: "For medical users and professionals",
     };
     return descriptions[planId] || "";
   };
 
   const faqItems = [
     {
-      value: "item-1",
-      question: "Is there really a free plan?",
+      question: "Is there really a free trial?",
       answer:
-        "Yes! Our Starter plan is completely free and includes basic dosage calculations, safety guidelines, and 5 calculations per day. Perfect for occasional users.",
+        "Yes! We offer a 7-day free trial on all our plans. You can cancel anytime before the trial ends and you won't be charged.",
     },
+    // {
+    //   value: "item-2",
+    //   question: "Can I change plans anytime?",
+    //   answer:
+    //     "Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate your billing accordingly.",
+    // },
     {
-      value: "item-2",
-      question: "Can I change plans anytime?",
-      answer:
-        "Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate your billing accordingly.",
-    },
-    {
-      value: "item-3",
       question: "What's included in the free trial?",
       answer:
         "Our 7-day free trial gives you full access to all Pro features, including unlimited calculations, session tracking, and AI recommendations.",
     },
     {
-      value: "item-4",
       question: "Is my data private and secure?",
       answer:
         "Your privacy is our top priority. All data is encrypted, stored securely, and never shared with third parties. You can export or delete your data anytime.",
     },
     {
-      value: "item-5",
       question: "Do you offer refunds?",
       answer:
         "We offer a 30-day money-back guarantee on all paid plans. If you're not satisfied, contact our support team for a full refund.",
     },
   ];
+
+  const handleCardClick = (planId: string) => {
+    if (routeType === "auth") {
+      // For authenticated users, the SubscriptionButton will handle the subscription creation
+      // This is just a placeholder - the actual logic is in SubscriptionButton
+      console.log("Plan selected:", planId);
+    } else {
+      // we need to redirect to the signup page
+      router.push("/signup?plan=" + planId);
+    }
+  };
+
+  const handleSubscriptionSuccess = (checkoutUrl: string) => {
+    if (checkoutUrl) {
+      console.log("Redirecting to payment...");
+      // The SubscriptionButton will handle the redirect
+    } else {
+      console.log("Subscription activated successfully!");
+    }
+  };
+
+  const handleSubscriptionError = (error: string) => {
+    console.error(`Failed to create subscription: ${error}`);
+  };
 
   return (
     <>
@@ -86,7 +115,7 @@ export default function PricingPage() {
               Choose Your Perfect Plan
             </h2>
             <p className="text-xl text-doser-text-muted mb-8">
-              Upgrade your experience with our premium features
+              Upgrade your experience
             </p>
 
             {/* Billing Toggle */}
@@ -111,15 +140,19 @@ export default function PricingPage() {
                 key={plan.id}
                 plan={plan}
                 isYearly={isYearly}
-                isPopular={plan.id === "pro"}
+                isPopular={plan.id === "track"}
                 description={getPlanDescription(plan.id)}
                 onPriceChange={getPlanPrice}
                 onIntervalChange={getPlanInterval}
-                isAuthenticated={true}
+                isAuthenticated={routeType === "auth"}
+                onClick={() => handleCardClick(plan.id)}
+                onSuccess={handleSubscriptionSuccess}
+                onError={handleSubscriptionError}
               />
             ))}
           </div>
         </section>
+
         <FAQ
           title="Frequently Asked Questions"
           subtitle="Everything you need to know about Doser pricing and features"

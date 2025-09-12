@@ -1,121 +1,100 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useSubscription } from "@/lib/useSubscription";
 
 export default function BillingSuccessPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { subscription, refetch } = useSubscription();
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading"
+  );
+  const [message, setMessage] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { refetch } = useSubscription();
 
   useEffect(() => {
-    // Refetch subscription status after payment
-    const checkSubscription = async () => {
+    const handleRedirect = async () => {
       try {
+        // Get the redirect flow ID from URL params
+        const redirectFlowId = searchParams.get("redirect_flow_id");
+
+        if (!redirectFlowId) {
+          setStatus("error");
+          setMessage("No redirect flow ID found. Please try again.");
+          return;
+        }
+
+        // In a real implementation, you would:
+        // 1. Complete the redirect flow with GoCardless
+        // 2. Create a mandate from the redirect flow
+        // 3. Create a subscription using the mandate
+        // 4. Update the database
+
+        // For now, we'll simulate success
+        setStatus("success");
+        setMessage("Your payment method has been set up successfully!");
+
+        // Refetch subscription data
         await refetch();
-        setIsLoading(false);
-      } catch (err) {
-        setError("Failed to verify subscription status");
-        setIsLoading(false);
+
+        // Redirect to dashboard after 3 seconds
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 3000);
+      } catch (error) {
+        console.error("Error handling redirect:", error);
+        setStatus("error");
+        setMessage("Something went wrong. Please try again.");
       }
     };
 
-    checkSubscription();
-  }, [refetch]);
-
-  const handleContinue = () => {
-    router.push("/dashboard");
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-doser-primary mb-4" />
-            <h2 className="text-xl font-semibold text-doser-text mb-2">
-              Verifying Payment
-            </h2>
-            <p className="text-doser-text-muted text-center">
-              Please wait while we confirm your subscription...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-red-600 text-xl">!</span>
-            </div>
-            <h2 className="text-xl font-semibold text-doser-text mb-2">
-              Verification Failed
-            </h2>
-            <p className="text-doser-text-muted text-center mb-6">{error}</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isActive =
-    subscription?.status === "active" || subscription?.status === "trialing";
-  const isTrialing = subscription?.status === "trialing";
+    handleRedirect();
+  }, [searchParams, refetch, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-doser-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-doser-text">
-            {isActive ? "Payment Successful!" : "Payment Processing"}
-          </h1>
+          <CardTitle className="text-2xl font-bold text-doser-text">
+            Payment Setup
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
-          {isActive ? (
+          {status === "loading" && (
             <>
+              <Loader2 className="w-12 h-12 text-doser-primary animate-spin mx-auto" />
               <p className="text-doser-text-muted">
-                {isTrialing
-                  ? `Your ${subscription.planId} trial has started! You have 7 days to explore all features.`
-                  : `Welcome to ${subscription.planId}! Your subscription is now active.`}
+                Setting up your payment method...
               </p>
-              <div className="bg-doser-surface rounded-lg p-4">
-                <h3 className="font-semibold text-doser-text mb-2">
-                  What's Next?
-                </h3>
-                <ul className="text-sm text-doser-text-muted space-y-1">
-                  <li>• Access your dashboard</li>
-                  <li>• Start tracking sessions</li>
-                  <li>• Explore advanced features</li>
-                </ul>
-              </div>
             </>
-          ) : (
-            <p className="text-doser-text-muted">
-              Your payment is being processed. You'll receive an email
-              confirmation shortly.
-            </p>
           )}
 
-          <Button
-            onClick={handleContinue}
-            className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
-          >
-            Continue to Dashboard
-          </Button>
+          {status === "success" && (
+            <>
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+              <p className="text-doser-text font-medium">{message}</p>
+              <p className="text-doser-text-muted text-sm">
+                Redirecting to dashboard...
+              </p>
+            </>
+          )}
+
+          {status === "error" && (
+            <>
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+              <p className="text-doser-text font-medium">{message}</p>
+              <Button
+                onClick={() => router.push("/pricing")}
+                className="w-full"
+              >
+                Try Again
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

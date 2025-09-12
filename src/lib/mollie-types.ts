@@ -104,6 +104,28 @@ export interface MollieSubscription {
   metadata?: Record<string, unknown>;
 }
 
+export interface MollieMandate {
+  id: string;
+  mode: "test" | "live";
+  status: "valid" | "invalid" | "pending";
+  method: string;
+  details: {
+    consumerName?: string;
+    consumerAccount?: string;
+    consumerBic?: string;
+    cardHolder?: string;
+    cardNumber?: string;
+    cardAudience?: string;
+    cardLabel?: string;
+    cardFingerprint?: string;
+    cardExpiryDate?: string;
+    wallet?: string;
+  };
+  customerId: string;
+  createdAt: string;
+  mandateReference?: string;
+}
+
 // Pricing plans configuration
 export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
   starter: {

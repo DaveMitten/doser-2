@@ -55,10 +55,10 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   // Settings configuration
   const settingsItems: SettingsItem[] = [
     {
-      href: "/pricing",
-      label: "Pricing",
+      href: "/upgrade",
+      label: "Upgrade",
       icon: "💳",
-      pageKey: "pricing",
+      pageKey: "upgrade",
     },
     {
       href: "/preferences",
@@ -175,7 +175,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
           <div className="text-doser-text-muted text-xs mb-3">
             Need more? Upgrade your plan
           </div>
-          <Link href="/pricing">
+          <Link href="/upgrade">
             <Button variant="dashboard" size="sm" className="w-full text-xs">
               Upgrade now
             </Button>

@@ -52,8 +52,6 @@ export function Navigation({ currentPage }: NavigationProps) {
   if (!currentPage) {
     if (pathname === "/pricing") {
       currentPage = "pricing";
-    } else if (pathname === "/auth" || pathname.startsWith("/auth/")) {
-      currentPage = "auth";
     } else {
       currentPage = "home";
     }

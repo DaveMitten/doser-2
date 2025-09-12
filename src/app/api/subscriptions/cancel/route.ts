@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMollieService } from "@/lib/mollie-service";
-import { createClient } from "@supabase/supabase-js";
+import { DodoService } from "@/lib/dodo-service";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = await createSupabaseServerClient();
+
     // Get the current user
     const {
       data: { user },
@@ -17,9 +15,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Cancel subscription
-    const mollieService = getMollieService();
-    const success = await mollieService.cancelSubscription(user.id);
+    // Get user's subscription to find Dodo subscription ID
+    const { data: subscription } = await supabase
+      .from("user_subscriptions")
+      .select("dodo_subscription_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!subscription?.dodo_subscription_id) {
+      return NextResponse.json(
+        { error: "No active subscription found" },
+        { status: 404 }
+      );
+    }
+
+    // Cancel subscription using Dodo Payments
+    const dodoService = new DodoService();
+    const success = await dodoService.cancelSubscription(
+      subscription.dodo_subscription_id
+    );
 
     if (!success) {
       return NextResponse.json(

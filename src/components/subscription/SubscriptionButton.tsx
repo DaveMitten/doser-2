@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/lib/useSubscription";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/mollie-types";
+import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/dodo-types";
 
 interface SubscriptionButtonProps {
   planId: string;
@@ -11,6 +11,7 @@ interface SubscriptionButtonProps {
   className?: string;
   onSuccess?: (checkoutUrl: string) => void;
   onError?: (error: string) => void;
+  onClick?: () => void;
 }
 
 export function SubscriptionButton({
@@ -19,6 +20,7 @@ export function SubscriptionButton({
   className,
   onSuccess,
   onError,
+  onClick,
 }: SubscriptionButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { subscription, createSubscription } = useSubscription();
@@ -35,29 +37,38 @@ export function SubscriptionButton({
     subscription?.status === "active" || subscription?.status === "trialing";
 
   const handleClick = async () => {
-    console.log("handleClick", isCurrentPlan, isActive);
+    // Call the external onClick handler first
+    onClick?.();
+
+    console.log("handleClick", { isCurrentPlan, isActive, planId, plan });
     if (isCurrentPlan && isActive) {
+      console.log("Already subscribed to this plan, returning");
       return; // Already subscribed to this plan
     }
 
     setIsLoading(true);
-    console.log("createSubscription", planId, plan.trialDays);
+    console.log("Creating subscription", { planId, trialDays: plan.trialDays });
     try {
-      const result = await createSubscription(planId, plan.trialDays);
+      const result = await createSubscription(planId, plan.trialDays, isYearly);
+      console.log("createSubscription result:", result);
 
       if (result.success) {
         if (result.checkoutUrl) {
-          // Redirect to Mollie checkout
+          console.log("Redirecting to checkout URL:", result.checkoutUrl);
+          // Redirect to Dodo Payments checkout
           window.location.href = result.checkoutUrl;
           onSuccess?.(result.checkoutUrl);
         } else {
+          console.log("Free plan - no checkout needed");
           // Free plan - no checkout needed
           onSuccess?.("");
         }
       } else {
+        console.error("Subscription creation failed:", result.error);
         onError?.(result.error || "Failed to create subscription");
       }
     } catch (error) {
+      console.error("Error in handleClick:", error);
       onError?.(error instanceof Error ? error.message : "Unknown error");
     } finally {
       setIsLoading(false);
@@ -77,7 +88,7 @@ export function SubscriptionButton({
       return `Start ${plan.trialDays}-Day Trial`;
     }
 
-    return `Subscribe to ${plan.name}`;
+    return `Start ${plan.trialDays}-Day Trial`;
   };
 
   const getButtonVariant = () => {
@@ -85,8 +96,8 @@ export function SubscriptionButton({
       return "secondary";
     }
 
-    if (planId === "pro") {
-      return "default"; // Primary for Pro plan
+    if (planId === "track") {
+      return "default"; // Primary for Track plan
     }
 
     return "outline";

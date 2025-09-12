@@ -6,7 +6,6 @@ import {
 } from "@/components/ui/accordion";
 
 interface FAQItem {
-  value: string;
   question: string;
   answer: string;
 }
@@ -32,8 +31,8 @@ export function FAQ({ title, subtitle, items, className = "" }: FAQProps) {
         <Accordion type="single" collapsible className="space-y-4">
           {items.map((item) => (
             <AccordionItem
-              key={item.value}
-              value={item.value}
+              key={item.question}
+              value={item.question}
               className="bg-doser-surface border-doser-border rounded-lg"
             >
               <AccordionTrigger className="text-doser-text px-6 py-4 hover:no-underline">

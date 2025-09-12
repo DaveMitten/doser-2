@@ -1,11 +1,16 @@
-import createMollieClient from "@mollie/api-client";
+import createMollieClient, { Locale } from "@mollie/api-client";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getBaseUrl } from "@/lib/utils";
 import {
   MollieConfig,
   UserSubscription,
   CreateSubscriptionRequest,
   SubscriptionResponse,
   MollieCustomer,
+  MollieSubscription,
+  MolliePayment,
+  MollieMandate,
+  SubscriptionPlan,
   SUBSCRIPTION_PLANS,
   ANNUAL_PLANS,
 } from "./mollie-types";
@@ -35,7 +40,7 @@ export class MollieService {
       const customer = await this.client.customers.create({
         name,
         email,
-        locale: "en_US" as any,
+        locale: "en_US" as unknown as Locale,
         metadata: {
           ...metadata,
           created_via: "doser_app",
@@ -94,7 +99,7 @@ export class MollieService {
   }
 
   /**
-   * Create a subscription payment
+   * Create a subscription payment (simplified approach)
    */
   async createSubscriptionPayment(
     request: CreateSubscriptionRequest
@@ -122,36 +127,96 @@ export class MollieService {
         customerName
       );
 
-      // Create payment for subscription
-      const payment = await this.client.payments.create({
-        amount: {
-          value: plan.price.toFixed(2),
-          currency: plan.currency,
-        },
-        description: `${plan.name} subscription - ${plan.interval}`,
-        customerId: customer.id,
-        redirectUrl: `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        }/billing/success`,
-        webhookUrl: `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        }/api/webhooks/mollie`,
-        metadata: {
-          user_id: userId,
-          plan_id: planId,
-          subscription_type: "recurring",
-          trial_days: trialDays || plan.trialDays || 0,
-        },
-      });
-
-      return {
-        success: true,
-        checkoutUrl: payment.getCheckoutUrl(),
-      };
+      // Create initial payment to establish mandate and subscription
+      return await this.createInitialPaymentForMandate(
+        customer.id,
+        plan,
+        userId,
+        planId,
+        trialDays
+      );
     } catch (error) {
       console.error("Error creating subscription payment:", error);
       return { success: false, error: "Failed to create subscription payment" };
     }
+  }
+
+  /**
+   * Create initial payment to establish mandate
+   */
+  private async createInitialPaymentForMandate(
+    customerId: string,
+    plan: SubscriptionPlan,
+    userId: string,
+    planId: string,
+    trialDays?: number
+  ): Promise<SubscriptionResponse> {
+    const payment = await this.client.payments.create({
+      amount: {
+        value: plan.price.toFixed(2),
+        currency: plan.currency,
+      },
+      description: `${plan.name} subscription - Initial payment`,
+      customerId: customerId,
+      redirectUrl: `${getBaseUrl()}/billing/success`,
+      webhookUrl: `${getBaseUrl()}/api/webhooks/mollie`,
+      metadata: {
+        user_id: userId,
+        plan_id: planId,
+        subscription_type: "initial_payment",
+        trial_days: trialDays || plan.trialDays || 0,
+      },
+    });
+
+    return {
+      success: true,
+      checkoutUrl: payment.getCheckoutUrl() || undefined,
+    };
+  }
+
+  /**
+   * Create subscription using existing mandate (placeholder for future implementation)
+   */
+  private async createSubscriptionWithMandate(
+    _customerId: string,
+    _plan: SubscriptionPlan,
+    _userId: string,
+    _planId: string,
+    _trialDays?: number
+  ): Promise<SubscriptionResponse> {
+    // This would be implemented when proper subscription API is available
+    return {
+      success: false,
+      error: "Subscription creation not yet implemented",
+    };
+  }
+
+  /**
+   * Get valid mandate for customer
+   */
+  private async getValidMandate(
+    _customerId: string
+  ): Promise<MollieMandate | null> {
+    try {
+      // For now, we'll assume no existing mandate and create initial payment
+      // In a full implementation, you would check for existing mandates here
+      return null;
+    } catch (error) {
+      console.error("Error getting customer mandates:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Store subscription in database (placeholder for future implementation)
+   */
+  private async storeSubscription(
+    _userId: string,
+    _planId: string,
+    _mollieSubscription: unknown
+  ): Promise<UserSubscription> {
+    // This would be implemented when proper subscription API is available
+    throw new Error("Subscription storage not yet implemented");
   }
 
   /**
@@ -221,7 +286,7 @@ export class MollieService {
     // Get payment details from Mollie
     const payment = await this.client.payments.get(paymentId);
     const metadata = (payment.metadata as Record<string, unknown>) || {};
-    const { user_id: userId, plan_id: planId, trial_days } = metadata;
+    const { user_id: userId, plan_id: planId, subscription_type } = metadata;
 
     if (!userId || !planId) {
       console.log("Payment metadata missing user_id or plan_id");
@@ -229,36 +294,74 @@ export class MollieService {
     }
 
     if (status === "paid") {
-      const supabase = await this.getSupabase();
-
-      // Create active subscription
-      const now = new Date();
-      const trialDays = parseInt(trial_days as string) || 0;
-      const trialEnd =
-        trialDays > 0
-          ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
-          : null;
-
-      const subscription: UserSubscription = {
-        id: crypto.randomUUID(),
-        userId: userId as string,
-        planId: planId as string,
-        mollieCustomerId: payment.customerId || "",
-        status: trialDays > 0 ? "trialing" : "active",
-        currentPeriodStart: now,
-        currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        trialStart: trialDays > 0 ? now : undefined,
-        trialEnd: trialEnd || undefined,
-        cancelAtPeriodEnd: false,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      // Update or create subscription in database
-      await supabase
-        .from("user_subscriptions")
-        .upsert(subscription, { onConflict: "user_id" });
+      if (subscription_type === "initial_payment") {
+        // Initial payment completed, now create the subscription
+        await this.createSubscriptionAfterInitialPayment(
+          userId as string,
+          planId as string,
+          payment.customerId!
+        );
+      } else {
+        // Handle regular subscription payment
+        await this.handleSubscriptionPayment(
+          payment as unknown as MolliePayment
+        );
+      }
     }
+  }
+
+  /**
+   * Create subscription after initial payment establishes mandate (placeholder)
+   */
+  private async createSubscriptionAfterInitialPayment(
+    _userId: string,
+    _planId: string,
+    _customerId: string
+  ): Promise<void> {
+    // This would be implemented when proper subscription API is available
+    console.log(
+      "Subscription creation after initial payment not yet implemented"
+    );
+  }
+
+  /**
+   * Handle subscription payment
+   */
+  private async handleSubscriptionPayment(
+    payment: MolliePayment
+  ): Promise<void> {
+    const supabase = await this.getSupabase();
+    const metadata = (payment.metadata as Record<string, unknown>) || {};
+    const { user_id: userId, plan_id: planId, trial_days } = metadata;
+
+    if (!userId || !planId) return;
+
+    const now = new Date();
+    const trialDays = parseInt(trial_days as string) || 0;
+    const trialEnd =
+      trialDays > 0
+        ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+        : null;
+
+    const subscription: UserSubscription = {
+      id: crypto.randomUUID(),
+      userId: userId as string,
+      planId: planId as string,
+      mollieCustomerId: payment.customerId || "",
+      status: trialDays > 0 ? "trialing" : "active",
+      currentPeriodStart: now,
+      currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      trialStart: trialDays > 0 ? now : undefined,
+      trialEnd: trialEnd || undefined,
+      cancelAtPeriodEnd: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // Update or create subscription in database
+    await supabase
+      .from("user_subscriptions")
+      .upsert(subscription, { onConflict: "user_id" });
   }
 
   /**
@@ -313,10 +416,11 @@ export class MollieService {
 
       const supabase = await this.getSupabase();
 
-      // Update subscription to cancel at period end
+      // Update subscription status in database
       await supabase
         .from("user_subscriptions")
         .update({
+          status: "canceled",
           cancel_at_period_end: true,
           updated_at: new Date().toISOString(),
         })
@@ -327,6 +431,22 @@ export class MollieService {
       console.error("Error canceling subscription:", error);
       return false;
     }
+  }
+
+  /**
+   * Get subscription from Mollie (placeholder)
+   */
+  async getMollieSubscription(_subscriptionId: string) {
+    // This would be implemented when proper subscription API is available
+    return null;
+  }
+
+  /**
+   * Update subscription in Mollie (placeholder)
+   */
+  async updateMollieSubscription(_subscriptionId: string, _updates: unknown) {
+    // This would be implemented when proper subscription API is available
+    return null;
   }
 
   /**

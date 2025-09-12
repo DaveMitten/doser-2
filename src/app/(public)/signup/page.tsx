@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PricingCard } from "@/components/subscription/PricingCard";
-import { SUBSCRIPTION_PLANS } from "@/lib/mollie-types";
+import { SUBSCRIPTION_PLANS } from "@/lib/gocardless-types";
 import { Badge } from "@/components/ui/badge";
 
 export default function SignUpPage() {
-  const [selectedPlan, setSelectedPlan] = useState<string>("pro");
+  const [selectedPlan, setSelectedPlan] = useState<string>("track");
   const [isSignUp, setIsSignUp] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function SignUpPage() {
   // Get plan from URL params if provided
   useEffect(() => {
     const plan = searchParams.get("plan");
-    if (plan && ["starter", "pro", "expert"].includes(plan)) {
+    if (plan && ["learn", "track", "optimize"].includes(plan)) {
       setSelectedPlan(plan);
     }
   }, [searchParams]);
@@ -48,9 +48,9 @@ export default function SignUpPage() {
 
   const getPlanDescription = (planId: string) => {
     const descriptions: Record<string, string> = {
-      starter: "Perfect for occasional users",
-      pro: "For regular users and enthusiasts",
-      expert: "For medical users and professionals",
+      learn: "Perfect for occasional users",
+      track: "For regular users",
+      optimize: "For everyday and heightened use",
     };
     return descriptions[planId] || "";
   };
@@ -88,7 +88,7 @@ export default function SignUpPage() {
                   <PricingCard
                     plan={plan}
                     isYearly={false}
-                    isPopular={plan.id === "pro"}
+                    isPopular={plan.id === "track"}
                     description={getPlanDescription(plan.id)}
                     onPriceChange={(planId) =>
                       SUBSCRIPTION_PLANS[planId]?.price || 0
@@ -134,7 +134,7 @@ export default function SignUpPage() {
                       {SUBSCRIPTION_PLANS[selectedPlan]?.name} Plan
                     </h3>
                     <p className="text-sm text-doser-text-muted">
-                      {selectedPlan === "starter"
+                      {selectedPlan === "learn"
                         ? "Free forever"
                         : "7-day free trial, then £" +
                           SUBSCRIPTION_PLANS[selectedPlan]?.price +

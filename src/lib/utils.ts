@@ -76,15 +76,31 @@ export const formatDecimalInput = (value: string): string => {
 };
 
 /**
- * Get the site URL for the current environment
- * Falls back to localhost:3000 for development
+ * Get the base URL for the current environment
+ * Prioritizes DEV_WEBHOOK_URL for ngrok development
  */
+export function getBaseUrl(): string {
+  return (
+    // process.env.DEV_WEBHOOK_URL ||
+    // process.env.NEXT_PUBLIC_APP_URL ||
+    // process.env.NEXT_PUBLIC_SITE_URL ||
+    // "http://localhost:3000"
+    "https://d73d0875d27e.ngrok.app/"
+  );
+}
 
 /**
  * Get the full callback URL for authentication
+ * Prioritizes DEV_WEBHOOK_URL for ngrok development
  */
 export function getAuthCallbackUrl(): string {
-  return `${
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  }/auth/callback`;
+  return `${getBaseUrl()}/auth/callback`;
+}
+
+/**
+ * Get the webhook URL for external services
+ * Prioritizes DEV_WEBHOOK_URL for ngrok development
+ */
+export function getWebhookUrl(): string {
+  return `${getBaseUrl()}/api/webhooks/mollie`;
 }

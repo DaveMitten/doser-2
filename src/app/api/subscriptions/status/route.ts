@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMollieService } from "@/lib/mollie-service";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
 export async function GET(request: NextRequest) {
@@ -15,11 +14,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's subscription
-    const mollieService = getMollieService();
-    const subscription = await mollieService.getUserSubscription(user.id);
+    // Get user's subscription from database
+    const { data: subscription, error } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
 
-    if (!subscription) {
+    if (error || !subscription) {
       return NextResponse.json({
         subscription: null,
         hasActiveSubscription: false,

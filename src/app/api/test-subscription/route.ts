@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMollieService } from "@/lib/mollie-service";
-import { CreateSubscriptionRequest } from "@/lib/mollie-types";
+import { getGoCardlessService } from "@/lib/gocardless-service";
+import { CreateSubscriptionRequest } from "@/lib/gocardless-types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { planId, trialDays, customerEmail, customerName } = body;
 
     // Validate plan ID
-    if (!planId || !["starter", "pro", "expert"].includes(planId)) {
+    if (!planId || !["learn", "track", "optimize"].includes(planId)) {
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
     }
 
@@ -29,21 +29,39 @@ export async function POST(request: NextRequest) {
       trialDays: trialDays || 0,
     };
 
-    // Create subscription using Mollie service
-    const mollieService = getMollieService();
-    const result = await mollieService.createSubscriptionPayment(
+    // Create subscription using GoCardless service
+    console.log("Creating GoCardless service...");
+    const gocardlessService = getGoCardlessService();
+    console.log(
+      "GoCardless service created, calling createSubscriptionPayment..."
+    );
+
+    const result = await gocardlessService.createSubscriptionPayment(
       subscriptionRequest
     );
 
+    console.log("GoCardless result:", result);
+
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      console.error("GoCardless subscription creation failed:", result.error);
+      return NextResponse.json(
+        {
+          error: result.error,
+          details: "GoCardless subscription creation failed",
+        },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error creating test subscription:", error);
     return NextResponse.json(
-      { error: "Failed to create test subscription" },
+      {
+        error: "Failed to create test subscription",
+        details: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      },
       { status: 500 }
     );
   }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/lib/useSubscription";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/mollie-types";
+import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/gocardless-types";
 import { Calendar, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function BillingPage() {
@@ -53,7 +53,7 @@ export default function BillingPage() {
               No Active Subscription
             </h2>
             <p className="text-doser-text-muted mb-6">
-              You're currently on the free plan. Upgrade to unlock more
+              You&apos;re currently on the free plan. Upgrade to unlock more
               features.
             </p>
             <Button
@@ -69,11 +69,11 @@ export default function BillingPage() {
   }
 
   const plan =
-    subscription.planId === "starter"
-      ? SUBSCRIPTION_PLANS.starter
-      : subscription.planId === "pro"
-      ? SUBSCRIPTION_PLANS.pro
-      : SUBSCRIPTION_PLANS.expert;
+    subscription.planId === "learn"
+      ? SUBSCRIPTION_PLANS.learn
+      : subscription.planId === "track"
+      ? SUBSCRIPTION_PLANS.track
+      : SUBSCRIPTION_PLANS.optimize;
 
   const isActive =
     subscription.status === "active" || subscription.status === "trialing";
@@ -141,7 +141,8 @@ export default function BillingPage() {
                       ).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-yellow-700">
-                      You'll retain access until the end of your billing period
+                      You&apos;ll retain access until the end of your billing
+                      period
                     </p>
                   </div>
                 </div>

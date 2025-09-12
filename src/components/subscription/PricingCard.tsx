@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SubscriptionButton } from "@/components/subscription/SubscriptionButton";
-import { SubscriptionPlan } from "@/lib/mollie-types";
-import Link from "next/link";
+import { SubscriptionPlan } from "@/lib/dodo-types";
 
 interface PricingCardProps {
   plan: SubscriptionPlan;
@@ -13,6 +12,9 @@ interface PricingCardProps {
   onPriceChange: (planId: string) => number;
   onIntervalChange: (planId: string) => string;
   isAuthenticated?: boolean;
+  onClick?: () => void;
+  onSuccess?: (checkoutUrl: string) => void;
+  onError?: (error: string) => void;
 }
 
 export function PricingCard({
@@ -23,6 +25,9 @@ export function PricingCard({
   onPriceChange,
   onIntervalChange,
   isAuthenticated = false,
+  onClick,
+  onSuccess,
+  onError,
 }: PricingCardProps) {
   return (
     <Card
@@ -76,19 +81,21 @@ export function PricingCard({
                 ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
                 : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
             }`}
+            onClick={onClick}
+            onSuccess={onSuccess}
+            onError={onError}
           />
         ) : (
-          <Link href="/signup" className="block">
-            <Button
-              className={`w-full ${
-                isPopular
-                  ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
-                  : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
-              }`}
-            >
-              {plan.price === 0 ? "Get Started Free" : "Start 7-Day Free Trial"}
-            </Button>
-          </Link>
+          <Button
+            className={`w-full ${
+              isPopular
+                ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+                : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
+            }`}
+            onClick={onClick}
+          >
+            {plan.price === 0 ? "Get Started Free" : "Start 7-Day Free Trial"}
+          </Button>
         )}
       </CardContent>
     </Card>
