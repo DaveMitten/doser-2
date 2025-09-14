@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       planId,
       customerEmail: profile.email,
-      customerName: profile.full_name || "",
+      customerName: profile.full_name || profile.email.split("@")[0], // Use email prefix as fallback
       isYearly,
     });
 
