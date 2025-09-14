@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PricingCard } from "@/components/subscription/PricingCard";
-import { SUBSCRIPTION_PLANS } from "@/lib/gocardless-types";
+import { PlanService } from "@/lib/plan-service";
 import { Badge } from "@/components/ui/badge";
 
 export default function SignUpPage() {
@@ -43,17 +43,8 @@ export default function SignUpPage() {
   if (user) {
     return null; // Will redirect
   }
-
-  const plans = Object.values(SUBSCRIPTION_PLANS);
-
-  const getPlanDescription = (planId: string) => {
-    const descriptions: Record<string, string> = {
-      learn: "Perfect for occasional users",
-      track: "For regular users",
-      optimize: "For everyday and heightened use",
-    };
-    return descriptions[planId] || "";
-  };
+  //we want to change passing a boolean to something more human readable
+  const plans = PlanService.getAllPlans(false); // Get monthly plans
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -75,38 +66,34 @@ export default function SignUpPage() {
 
             {/* Pricing Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`relative cursor-pointer transition-all duration-200 ${
-                    selectedPlan === plan.id
-                      ? "transform scale-105"
-                      : "hover:transform hover:scale-102"
-                  }`}
-                  onClick={() => setSelectedPlan(plan.id)}
-                >
-                  <PricingCard
-                    plan={plan}
-                    isYearly={false}
-                    isPopular={plan.id === "track"}
-                    description={getPlanDescription(plan.id)}
-                    onPriceChange={(planId) =>
-                      SUBSCRIPTION_PLANS[planId]?.price || 0
-                    }
-                    onIntervalChange={(planId) =>
-                      SUBSCRIPTION_PLANS[planId]?.interval || "month"
-                    }
-                    isAuthenticated={false}
-                  />
-                  {selectedPlan === plan.id && (
-                    <div className="absolute -top-2 -right-2">
-                      <Badge className="bg-doser-primary text-doser-text">
-                        Selected
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {plans.map((plan) => {
+                const planKey = plan.name.toLowerCase();
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative cursor-pointer transition-all duration-200 ${
+                      selectedPlan === planKey
+                        ? "transform scale-105"
+                        : "hover:transform hover:scale-102"
+                    }`}
+                    onClick={() => setSelectedPlan(planKey)}
+                  >
+                    <PricingCard
+                      plan={plan}
+                      isYearly={false}
+                      isPopular={PlanService.isPopularPlan(planKey)}
+                      isAuthenticated={false}
+                    />
+                    {selectedPlan === planKey && (
+                      <div className="absolute -top-2 -right-2">
+                        <Badge className="bg-doser-primary text-doser-text">
+                          Selected
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Continue Button */}
@@ -115,7 +102,8 @@ export default function SignUpPage() {
                 onClick={() => setIsSignUp(true)}
                 className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text px-8 py-3 rounded-lg font-semibold text-lg transition-colors"
               >
-                Continue with {SUBSCRIPTION_PLANS[selectedPlan]?.name} Plan
+                Continue with {PlanService.getPlanDetails(selectedPlan)?.name}{" "}
+                Plan
               </button>
               <p className="text-doser-text-muted mt-4">
                 You can change your plan anytime after signing up
@@ -131,13 +119,13 @@ export default function SignUpPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-doser-text">
-                      {SUBSCRIPTION_PLANS[selectedPlan]?.name} Plan
+                      {PlanService.getPlanDetails(selectedPlan)?.name} Plan
                     </h3>
                     <p className="text-sm text-doser-text-muted">
                       {selectedPlan === "learn"
                         ? "Free forever"
                         : "7-day free trial, then £" +
-                          SUBSCRIPTION_PLANS[selectedPlan]?.price +
+                          PlanService.getPlanDetails(selectedPlan)?.price +
                           "/month"}
                     </p>
                   </div>

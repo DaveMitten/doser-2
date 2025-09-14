@@ -2,15 +2,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SubscriptionButton } from "@/components/subscription/SubscriptionButton";
-import { SubscriptionPlan } from "@/lib/dodo-types";
+import { PlanDetails } from "@/lib/plan-service";
 
 interface PricingCardProps {
-  plan: SubscriptionPlan;
+  plan: PlanDetails;
   isYearly: boolean;
   isPopular?: boolean;
-  description: string;
-  onPriceChange: (planId: string) => number;
-  onIntervalChange: (planId: string) => string;
   isAuthenticated?: boolean;
   onClick?: () => void;
   onSuccess?: (checkoutUrl: string) => void;
@@ -21,9 +18,6 @@ export function PricingCard({
   plan,
   isYearly,
   isPopular = false,
-  description,
-  onPriceChange,
-  onIntervalChange,
   isAuthenticated = false,
   onClick,
   onSuccess,
@@ -42,15 +36,13 @@ export function PricingCard({
       )}
       <CardHeader className="text-center">
         <h3 className="text-2xl font-bold text-doser-text">{plan.name}</h3>
-        <p className="text-doser-text-muted">{description}</p>
+        <p className="text-doser-text-muted">{plan.description}</p>
         <div className="mt-4">
           <span className="text-4xl font-bold text-doser-primary">
             {plan.currency === "GBP" ? "£" : "€"}
-            {onPriceChange(plan.id)}
+            {plan.price}
           </span>
-          <span className="text-doser-text-muted">
-            /{onIntervalChange(plan.id)}
-          </span>
+          <span className="text-doser-text-muted">/{plan.interval}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

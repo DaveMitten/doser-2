@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { FAQ } from "@/components/FAQ";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/dodo-types";
+import { PlanService } from "@/lib/plan-service";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 export type RouteType = "public" | "auth";
@@ -20,37 +20,9 @@ export function PricingSection({ routeType }: PricingSectionProps) {
   // Use State
   const [isYearly, setIsYearly] = useState(false);
 
-  // Plans
-  const plans = Object.values(SUBSCRIPTION_PLANS);
-  const annualPlans = Object.values(ANNUAL_PLANS);
-
-  const getPlanPrice = (planId: string) => {
-    if (isYearly) {
-      const annualPlan = annualPlans.find((p) => p.id === planId);
-      return annualPlan ? annualPlan.price : SUBSCRIPTION_PLANS[planId]?.price;
-    }
-    return SUBSCRIPTION_PLANS[planId]?.price;
-  };
-
-  const getPlanInterval = (planId: string) => {
-    if (isYearly) {
-      const annualPlan = annualPlans.find((plan) => plan.id === planId);
-      return annualPlan
-        ? annualPlan.interval
-        : SUBSCRIPTION_PLANS[planId]?.interval;
-    }
-    return SUBSCRIPTION_PLANS[planId]?.interval;
-  };
-
-  const getPlanDescription = (planId: string) => {
-    const descriptions: Record<string, string> = {
-      learn: "Perfect for occasional users",
-      track: "For regular users and enthusiasts",
-      optimize: "For medical users and professionals",
-    };
-    return descriptions[planId] || "";
-  };
-
+  // Get plans using PlanService
+  const plans = PlanService.getAllPlans(isYearly);
+  console.log("plans", plans);
   const faqItems = [
     {
       question: "Is there really a free trial?",
@@ -80,14 +52,14 @@ export function PricingSection({ routeType }: PricingSectionProps) {
     },
   ];
 
-  const handleCardClick = (planId: string) => {
+  const handleCardClick = (planKey: string) => {
     if (routeType === "auth") {
       // For authenticated users, the SubscriptionButton will handle the subscription creation
       // This is just a placeholder - the actual logic is in SubscriptionButton
-      console.log("Plan selected:", planId);
+      console.log("Plan selected:", planKey);
     } else {
       // we need to redirect to the signup page
-      router.push("/signup?plan=" + planId);
+      router.push("/signup?plan=" + planKey);
     }
   };
 
@@ -135,21 +107,22 @@ export function PricingSection({ routeType }: PricingSectionProps) {
 
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan) => (
-              <PricingCard
-                key={plan.id}
-                plan={plan}
-                isYearly={isYearly}
-                isPopular={plan.id === "track"}
-                description={getPlanDescription(plan.id)}
-                onPriceChange={getPlanPrice}
-                onIntervalChange={getPlanInterval}
-                isAuthenticated={routeType === "auth"}
-                onClick={() => handleCardClick(plan.id)}
-                onSuccess={handleSubscriptionSuccess}
-                onError={handleSubscriptionError}
-              />
-            ))}
+            {plans.map((plan) => {
+              // Get the plan key from the plan name for routing
+
+              return (
+                <PricingCard
+                  key={plan.id}
+                  plan={plan}
+                  isYearly={isYearly}
+                  isPopular={PlanService.isPopularPlan(plan.id)}
+                  isAuthenticated={routeType === "auth"}
+                  onClick={() => handleCardClick(plan.id)}
+                  onSuccess={handleSubscriptionSuccess}
+                  onError={handleSubscriptionError}
+                />
+              );
+            })}
           </div>
         </section>
 

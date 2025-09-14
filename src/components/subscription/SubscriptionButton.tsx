@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/lib/useSubscription";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/dodo-types";
+import { PlanService } from "../../lib/plan-service";
+import { subscriptionIdToName } from "../../lib/utils";
 
 interface SubscriptionButtonProps {
   planId: string;
@@ -22,34 +23,36 @@ export function SubscriptionButton({
   onError,
   onClick,
 }: SubscriptionButtonProps) {
+  console.log("plan key", planId);
   const [isLoading, setIsLoading] = useState(false);
   const { subscription, createSubscription } = useSubscription();
 
-  const plan = isYearly ? ANNUAL_PLANS[planId] : SUBSCRIPTION_PLANS[planId];
+  const isCurrentPlan = subscription?.plan_id === planId;
+  const isActive = subscription?.status === "active";
 
-  if (!plan) {
-    return null;
-  }
-
-  const isCurrentPlan = subscription?.planId === planId;
-  const isFreePlan = plan.price === 0;
-  const isActive =
-    subscription?.status === "active" || subscription?.status === "trialing";
+  const plan = PlanService.getPlanDetails(planId, isYearly);
 
   const handleClick = async () => {
     // Call the external onClick handler first
     onClick?.();
 
-    console.log("handleClick", { isCurrentPlan, isActive, planId, plan });
+    console.log("handleClick", { isCurrentPlan, isActive, planId });
     if (isCurrentPlan && isActive) {
       console.log("Already subscribed to this plan, returning");
       return; // Already subscribed to this plan
     }
 
     setIsLoading(true);
-    console.log("Creating subscription", { planId, trialDays: plan.trialDays });
+    console.log("Creating subscription", {
+      planId,
+      trialDays: plan?.trialDays,
+    });
     try {
-      const result = await createSubscription(planId, plan.trialDays, isYearly);
+      const result = await createSubscription(
+        planId,
+        plan?.trialDays,
+        isYearly
+      );
       console.log("createSubscription result:", result);
 
       if (result.success) {
@@ -80,15 +83,11 @@ export function SubscriptionButton({
       return "Current Plan";
     }
 
-    if (isFreePlan) {
-      return "Get Started Free";
+    if (plan?.trialDays && plan.trialDays > 0) {
+      return `Start ${plan?.trialDays}-Day Trial`;
     }
 
-    if (plan.trialDays && plan.trialDays > 0) {
-      return `Start ${plan.trialDays}-Day Trial`;
-    }
-
-    return `Start ${plan.trialDays}-Day Trial`;
+    return `Start ${plan?.trialDays}-Day Trial`;
   };
 
   const getButtonVariant = () => {
@@ -96,7 +95,7 @@ export function SubscriptionButton({
       return "secondary";
     }
 
-    if (planId === "track") {
+    if (subscriptionIdToName[planId] === "Track") {
       return "default"; // Primary for Track plan
     }
 

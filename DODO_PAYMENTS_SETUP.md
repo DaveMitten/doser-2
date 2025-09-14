@@ -119,7 +119,7 @@ Run the database migration to add Dodo Payments fields:
 2. For local testing with webhooks, use ngrok:
 
    ```bash
-   npx ngrok http 3000
+   npx ngrok http 3001
    ```
 
 3. Update your webhook URL in Dodo Payments dashboard to use the ngrok URL

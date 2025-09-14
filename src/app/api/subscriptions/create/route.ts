@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/utils";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/dodo-types";
+import { DodoService } from "@/lib/dodo-service";
+import { PlanService } from "../../../../lib/plan-service";
+import { SUBSCRIPTION_PLANS } from "../../../../lib/dodo-types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,10 +29,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { planId, trialDays, isYearly = false } = body;
-
+    const { planId, isYearly = false } = body;
+    console.log("planId", planId);
+    console.log("isYearly", isYearly);
     // Validate plan ID
-    if (!planId || !["learn", "track", "optimize"].includes(planId)) {
+    if (!planId || !SUBSCRIPTION_PLANS.find((plan) => plan.id === planId)) {
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
     }
 
@@ -49,59 +52,49 @@ export async function POST(request: NextRequest) {
     }
 
     // Get plan configuration
-    const plan = isYearly ? ANNUAL_PLANS[planId] : SUBSCRIPTION_PLANS[planId];
+    const plan = PlanService.getPlanDetails(planId, isYearly);
+
     console.log("Plan found:", plan);
 
     if (!plan) {
       console.error("Invalid plan ID:", planId);
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
     }
+    // For paid plans, create checkout session using DodoService
+    console.log("Creating DodoService instance...");
+    const dodoService = new DodoService();
 
-    // Free plan - no payment needed
-    if (plan.price === 0) {
-      console.log("Free plan detected, creating free subscription");
-      // Create free subscription directly in database
-      const now = new Date().toISOString();
-      const subscription = {
-        id: crypto.randomUUID(),
-        user_id: user.id,
-        plan_id: planId,
-        status: "active",
-        current_period_start: now,
-        current_period_end: new Date(
-          Date.now() + 365 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 1 year from now
-        created_at: now,
-        updated_at: now,
-      };
+    console.log("Calling createSubscriptionPayment with:", {
+      userId: user.id,
+      planId,
+      customerEmail: profile.email,
+      customerName: profile.full_name || "",
+      isYearly,
+    });
 
-      const { error } = await supabase
-        .from("user_subscriptions")
-        .upsert(subscription, { onConflict: "user_id" });
+    const result = await dodoService.createSubscriptionPayment({
+      userId: user.id,
+      planId,
+      customerEmail: profile.email,
+      customerName: profile.full_name || "",
+      isYearly,
+    });
 
-      if (error) {
-        throw new Error(`Failed to create free subscription: ${error.message}`);
-      }
+    console.log("DodoService result:", result);
 
-      return NextResponse.json({ success: true, subscription });
+    if (!result.success) {
+      console.error("DodoService failed:", result.error);
+      return NextResponse.json(
+        { error: result.error || "Failed to create checkout session" },
+        { status: 500 }
+      );
     }
 
-    // For paid plans, redirect to Dodo Payments checkout
-    // Use the static checkout with productId parameter
-    const productId =
-      plan.dodo_product_id ||
-      `pdt_${planId}_${isYearly ? "yearly" : "monthly"}`;
-    const checkoutUrl = `${getBaseUrl()}/api/checkout?productId=${productId}&quantity=1&email=${encodeURIComponent(
-      profile.email
-    )}&fullName=${encodeURIComponent(
-      profile.full_name || ""
-    )}&metadata_planId=${planId}&metadata_isYearly=${isYearly}&metadata_trialDays=${trialDays}`;
-
-    console.log("Redirecting to checkout URL:", checkoutUrl);
+    console.log("Checkout session created:", result.checkoutUrl);
 
     return NextResponse.json({
       success: true,
-      checkoutUrl: checkoutUrl,
+      checkoutUrl: result.checkoutUrl,
     });
   } catch (error) {
     console.error("Error creating subscription:", error);

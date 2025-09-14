@@ -1,19 +1,20 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import DodoPayments from "dodopayments";
+
 import {
   DodoConfig,
   CreateSubscriptionRequest,
   SubscriptionResponse,
   UserSubscription,
-  CheckoutSessionRequest,
   CheckoutSessionResponse,
-  DodoCustomer,
   SUBSCRIPTION_PLANS,
-  ANNUAL_PLANS,
 } from "./dodo-types";
+import { PlanService } from "./plan-service";
 
 export class DodoService {
   private config: DodoConfig;
   private supabase?: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  private dodoClient: DodoPayments;
 
   constructor() {
     this.config = {
@@ -24,6 +25,19 @@ export class DodoService {
       webhookSecret: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
       returnUrl: process.env.DODO_PAYMENTS_RETURN_URL,
     };
+
+    // Initialize the Dodo Payments client
+    this.dodoClient = new DodoPayments({
+      bearerToken: this.config.apiKey,
+      environment: this.config.environment,
+    });
+
+    console.log("DodoService config:", {
+      hasApiKey: !!this.config.apiKey,
+      environment: this.config.environment,
+      hasWebhookSecret: !!this.config.webhookSecret,
+      returnUrl: this.config.returnUrl,
+    });
   }
 
   private getApiBaseUrl(): string {
@@ -40,13 +54,14 @@ export class DodoService {
   }
 
   /**
-   * Get or create a Dodo Payments customer
+   * Get or create a Dodo Payments customer using the official SDK
    */
   async getOrCreateCustomer(
     userId: string,
     email: string,
     name?: string
-  ): Promise<DodoCustomer> {
+  ): Promise<DodoPayments.Customer> {
+    console.log("getOrCreateCustomer", { userId, email, name });
     try {
       // First check if we already have a customer for this user
       const supabase = await this.getSupabase();
@@ -58,47 +73,20 @@ export class DodoService {
         .single();
 
       if (existingSubscription?.dodo_customer_id) {
-        // Fetch customer details from Dodo Payments API
-        const response = await fetch(
-          `${this.getApiBaseUrl()}/v1/customers/${
-            existingSubscription.dodo_customer_id
-          }`,
-          {
-            headers: {
-              Authorization: `Bearer ${this.config.apiKey}`,
-              "Content-Type": "application/json",
-            },
-          }
+        // Fetch customer details using the SDK
+        const customer = await this.dodoClient.customers.retrieve(
+          existingSubscription.dodo_customer_id
         );
-
-        if (response.ok) {
-          const customer = await response.json();
-          return customer.data;
-        }
+        return customer;
       }
 
-      // Create new customer via Dodo Payments API
-      const response = await fetch(`${this.getApiBaseUrl()}/v1/customers`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          name,
-          metadata: {
-            user_id: userId,
-          },
-        }),
+      // Create new customer using the SDK
+      const customer = await this.dodoClient.customers.create({
+        email,
+        name: name || "",
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to create customer: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return result.data;
+      return customer;
     } catch (error) {
       console.error("Error getting or creating customer:", error);
       throw new Error("Failed to get or create customer");
@@ -125,16 +113,18 @@ export class DodoService {
         isYearly = false,
       } = request;
 
-      // Get plan configuration
-      const plan = isYearly ? ANNUAL_PLANS[planId] : SUBSCRIPTION_PLANS[planId];
-      console.log("Plan found:", plan);
-      if (!plan) {
+      // Get plan configuration using PlanService
+      console.log("Looking up plan details for:", { planId, isYearly });
+      const planDetails = PlanService.getPlanDetails(planId, isYearly);
+      console.log("Plan found:", planDetails);
+      if (!planDetails) {
         console.error("Invalid plan ID:", planId);
-        return { success: false, error: "Invalid plan ID" };
+        console.error("Available plans:", Object.keys(SUBSCRIPTION_PLANS));
+        return { success: false, error: `Invalid plan ID: ${planId}` };
       }
 
       // Free plan - no payment needed
-      if (plan.price === 0) {
+      if (planDetails.price === 0) {
         console.log("Free plan detected, creating free subscription");
         const subscription = await this.createFreeSubscription(userId, planId);
         return { success: true, subscription };
@@ -147,27 +137,42 @@ export class DodoService {
         customerEmail,
         customerName
       );
-      console.log("Customer obtained:", customer.id);
+      console.log("customer", customer);
+      console.log("customerEmail", customerEmail);
+      console.log("userId", userId);
+      console.log("customerName", customerName);
+      console.log("Customer obtained:", customer.customer_id);
 
       // Create checkout session for subscription
-      const checkoutSession = await this.createCheckoutSession({
+      const customerRequest: DodoPayments.NewCustomer = {
+        email: customerEmail,
+        name: customerName || "", // DodoPayments requires name to be a string, not optional
+      };
+
+      const checkoutRequest: DodoPayments.CheckoutSessionCreateParams = {
         product_cart: [
           {
-            product_id: plan.dodo_product_id || `pdt_${planId}`, // Use configured product ID or generate one
+            product_id: planDetails.id, // Use the Dodo product ID from plan details
             quantity: 1,
           },
         ],
-        customer: {
-          email: customerEmail,
-          name: customerName,
-        },
-        return_url: `${this.config.returnUrl}?subscription_id={subscription_id}`,
+        customer: customerRequest,
+        return_url:
+          this.config.returnUrl ||
+          `${process.env.NEXT_PUBLIC_APP_URL}/billing/success`,
         metadata: {
           user_id: userId,
           plan_id: planId,
-          is_yearly: isYearly,
+          is_yearly: isYearly.toString(),
         },
-      });
+      };
+
+      console.log(
+        "Creating checkout session with request:",
+        JSON.stringify(checkoutRequest, null, 2)
+      );
+
+      const checkoutSession = await this.createCheckoutSession(checkoutRequest);
 
       console.log("Checkout session created:", checkoutSession.checkout_url);
 
@@ -181,40 +186,38 @@ export class DodoService {
         message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
-      return { success: false, error: "Failed to create subscription payment" };
+
+      // Return more specific error message
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        success: false,
+        error: `Failed to create subscription payment: ${errorMessage}`,
+      };
     }
   }
 
   /**
-   * Create a checkout session
+   * Create a checkout session using the official SDK
    */
   async createCheckoutSession(
-    request: CheckoutSessionRequest
+    request: DodoPayments.CheckoutSessionCreateParams
   ): Promise<CheckoutSessionResponse> {
     try {
-      const response = await fetch(
-        `${this.getApiBaseUrl()}/v1/checkout/sessions`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
+      console.log(
+        "Creating checkout session with request:",
+        JSON.stringify(request, null, 2)
       );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to create checkout session: ${response.statusText} - ${errorText}`
-        );
-      }
+      // Use the SDK to create checkout session
+      const checkoutSession = await this.dodoClient.checkoutSessions.create(
+        request
+      );
 
-      const result = await response.json();
+      console.log("Checkout session created:", checkoutSession);
       return {
-        checkout_url: result.checkout_url,
-        session_id: result.id,
+        checkout_url: checkoutSession.checkout_url,
+        session_id: checkoutSession.session_id,
       };
     } catch (error) {
       console.error("Error creating checkout session:", error);

@@ -85,7 +85,7 @@ export function getBaseUrl(): string {
     // process.env.NEXT_PUBLIC_APP_URL ||
     // process.env.NEXT_PUBLIC_SITE_URL ||
     // "http://localhost:3000"
-    "https://d73d0875d27e.ngrok.app/"
+    "https://635a26b66c11.ngrok.app"
   );
 }
 
@@ -96,6 +96,12 @@ export function getBaseUrl(): string {
 export function getAuthCallbackUrl(): string {
   return `${getBaseUrl()}/auth/callback`;
 }
+
+export const subscriptionIdToName: Record<string, string> = {
+  pdt_euP6KahnWde9Ew1jvhIJj: "Learn",
+  pdt_QT8CsZEYopzV38iWlE0Sb: "Track",
+  pdt_cseHYcjUQrkC7iti2ysVR: "Optimize",
+};
 
 /**
  * Get the webhook URL for external services

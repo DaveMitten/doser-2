@@ -13,14 +13,8 @@ export interface DodoProduct {
   metadata?: Record<string, unknown>;
 }
 
-export interface DodoCustomer {
-  id: string;
-  email: string;
-  name?: string;
-  created_at: string;
-  updated_at: string;
-  metadata?: Record<string, unknown>;
-}
+// Using official DodoPayments Customer type instead of custom DodoCustomer
+// Import from: import { Customer } from "dodopayments";
 
 export interface DodoSubscription {
   id: string;
@@ -92,22 +86,21 @@ export interface UserSubscription {
 }
 
 export interface SubscriptionPlan {
-  id: string;
+  id: string; // This is the Dodo product ID
   name: string;
-  price: number;
+  price: { monthly: number; yearly: number };
   currency: string;
   interval: "month" | "year";
   trialDays?: number;
   features: string[];
-  dodo_product_id?: string; // Dodo Payments product ID
 }
 
 // Pricing plans configuration
-export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
-  learn: {
-    id: "learn",
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: "pdt_euP6KahnWde9Ew1jvhIJj",
     name: "Learn",
-    price: 4.99,
+    price: { monthly: 4.99, yearly: 54.89 },
     currency: "GBP",
     interval: "month",
     features: [
@@ -117,10 +110,10 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
       "Safety guidelines",
     ],
   },
-  track: {
-    id: "track",
+  {
+    id: "pdt_QT8CsZEYopzV38iWlE0Sb",
     name: "Track",
-    price: 9.99,
+    price: { monthly: 9.99, yearly: 109.89 },
     currency: "GBP",
     interval: "month",
     trialDays: 7,
@@ -133,10 +126,10 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
       "Export data (PDF/CSV)",
     ],
   },
-  optimize: {
-    id: "optimize",
+  {
+    id: "pdt_cseHYcjUQrkC7iti2ysVR",
     name: "Optimize",
-    price: 19.99,
+    price: { monthly: 19.99, yearly: 219.89 },
     currency: "GBP",
     interval: "month",
     trialDays: 7,
@@ -146,26 +139,7 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
       "Priority support",
     ],
   },
-};
-
-// Annual pricing (1 month free - pay for 11 months)
-export const ANNUAL_PLANS: Record<string, SubscriptionPlan> = {
-  learn: {
-    ...SUBSCRIPTION_PLANS.learn,
-    price: 54.89, // 4.99 * 11 months (1 month free)
-    interval: "year",
-  },
-  track: {
-    ...SUBSCRIPTION_PLANS.track,
-    price: 109.89, // 9.99 * 11 months (1 month free)
-    interval: "year",
-  },
-  optimize: {
-    ...SUBSCRIPTION_PLANS.optimize,
-    price: 219.89, // 19.99 * 11 months (1 month free)
-    interval: "year",
-  },
-};
+];
 
 // Dodo Payments API configuration
 export interface DodoConfig {

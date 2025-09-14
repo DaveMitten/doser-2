@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { UserSubscription } from "./dodo-types";
+import { subscriptionIdToName } from "./utils";
 
 interface UseSubscriptionReturn {
   subscription: UserSubscription | null;
@@ -125,7 +126,7 @@ export function useSubscription(): UseSubscriptionReturn {
     if (!subscription) return false;
 
     // Learn plan has limited access
-    if (subscription.planId === "learn") {
+    if (subscriptionIdToName[subscription.id] === "Learn") {
       return [
         "basic_calculator",
         "safety_guidelines",
@@ -135,7 +136,7 @@ export function useSubscription(): UseSubscriptionReturn {
     }
 
     // Track plan features
-    if (subscription.planId === "track") {
+    if (subscriptionIdToName[subscription.id] === "Track") {
       const trackFeatures = [
         "basic_calculator",
         "unlimited_calculations",
@@ -147,7 +148,7 @@ export function useSubscription(): UseSubscriptionReturn {
     }
 
     // Optimize plan has all features
-    if (subscription.planId === "optimize") {
+    if (subscriptionIdToName[subscription.id] === "Optimize") {
       return true;
     }
 
