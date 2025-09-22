@@ -122,7 +122,6 @@ export function SignUpForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with:", { email, password, confirmPassword });
 
     // Clear any previous errors
     setError(null);
@@ -164,10 +163,8 @@ export function SignUpForm({
     setError(null);
 
     try {
-      console.log("Attempting to sign up with email:", email);
       // Try client-side auth first for better UX
       await signUp(email, password);
-      console.log("Sign up successful!");
       setSuccess(true);
     } catch (err) {
       console.error("Client-side signup failed:", err);

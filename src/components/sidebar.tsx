@@ -27,8 +27,8 @@ interface SettingsItem {
 }
 
 export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
-  const { user, signOut } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { signOut } = useAuth();
+  const [, setIsLoggingOut] = useState(false);
 
   // Navigation configuration
   const navigationItems: NavigationItem[] = [
@@ -66,12 +66,6 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       icon: "⚙️",
       pageKey: "preferences",
     },
-    // {
-    //   href: "/profile",
-    //   label: "Profile",
-    //   icon: "👥",
-    //   pageKey: "profile",
-    // },
   ];
 
   const handleSignOut = async () => {

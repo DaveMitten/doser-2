@@ -5,7 +5,17 @@ import { Session } from "@/lib/sessionService";
 
 // Mock the EmptyState component
 jest.mock("@/components/ui/empty-state", () => ({
-  EmptyState: ({ title, description, buttonText, onButtonClick }: any) => (
+  EmptyState: ({
+    title,
+    description,
+    buttonText,
+    onButtonClick,
+  }: {
+    title: string;
+    description: string;
+    buttonText: string;
+    onButtonClick: () => void;
+  }) => (
     <div data-testid="empty-state">
       <div>{title}</div>
       <div>{description}</div>
@@ -17,7 +27,13 @@ jest.mock("@/components/ui/empty-state", () => ({
 // Mock the SessionCard components
 jest.mock("@/components/sessions/SessionCard", () => ({
   __esModule: true,
-  default: ({ session, onClick }: any) => (
+  default: ({
+    session,
+    onClick,
+  }: {
+    session: Session;
+    onClick: (session: Session) => void;
+  }) => (
     <div
       data-testid={`session-card-${session.id}`}
       onClick={() => onClick(session)}
@@ -29,7 +45,13 @@ jest.mock("@/components/sessions/SessionCard", () => ({
 
 jest.mock("@/components/sessions/ListViewSessionCard", () => ({
   __esModule: true,
-  default: ({ session, onClick }: any) => (
+  default: ({
+    session,
+    onClick,
+  }: {
+    session: Session;
+    onClick: (session: Session) => void;
+  }) => (
     <div
       data-testid={`list-session-card-${session.id}`}
       onClick={() => onClick(session)}
@@ -61,6 +83,13 @@ describe("SessionsGrid", () => {
       notes: "Great session",
       created_at: "2024-01-01T10:00:00Z",
       updated_at: "2024-01-01T10:00:00Z",
+      temperature_fahrenheit: null,
+      unit_amount: 0,
+      unit_capacity_grams: 0,
+      thc_percentage: 0,
+      cbd_percentage: 0,
+      higher_accuracy_mode: false,
+      inhalations_per_capsule: null,
     },
   ];
 

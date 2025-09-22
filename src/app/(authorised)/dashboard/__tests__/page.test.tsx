@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import DashboardPage from "../page";
-import { Session } from "@/lib/sessionService";
+import { Session, sessionService } from "@/lib/sessionService";
 
 // Mock the AuthContext
 jest.mock("@/context/AuthContext", () => ({
@@ -93,9 +93,7 @@ jest.mock("@/components/sessions/SessionCard", () => ({
 // Skip the reload test for now to avoid mocking issues
 
 describe("DashboardPage", () => {
-  const mockGetUserSessions = jest.mocked(
-    require("@/lib/sessionService").sessionService.getUserSessions
-  );
+  const mockGetUserSessions = jest.mocked(sessionService.getUserSessions);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -145,6 +143,13 @@ describe("DashboardPage", () => {
           notes: "Great session",
           created_at: "2024-01-01T10:00:00Z",
           updated_at: "2024-01-01T10:00:00Z",
+          temperature_fahrenheit: null,
+          unit_amount: 0,
+          unit_capacity_grams: 0,
+          thc_percentage: 0,
+          cbd_percentage: 0,
+          higher_accuracy_mode: false,
+          inhalations_per_capsule: null,
         },
       ],
       error: null,
@@ -173,7 +178,7 @@ describe("DashboardPage", () => {
     render(<DashboardPage />);
 
     // Wait for loading to complete
-    const emptyState = await screen.findByTestId("empty-state");
+    await screen.findByTestId("empty-state");
 
     const button = screen.getByText("Record Your First Session");
     fireEvent.click(button);
@@ -202,6 +207,13 @@ describe("DashboardPage", () => {
           notes: "Great session",
           created_at: "2024-01-01T10:00:00Z",
           updated_at: "2024-01-01T10:00:00Z",
+          temperature_fahrenheit: null,
+          unit_amount: 0,
+          unit_capacity_grams: 0,
+          thc_percentage: 0,
+          cbd_percentage: 0,
+          higher_accuracy_mode: false,
+          inhalations_per_capsule: null,
         },
       ],
       error: null,

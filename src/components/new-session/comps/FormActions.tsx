@@ -36,7 +36,6 @@ const FormActions = ({
       return;
     }
     console.log("Form is valid, submitting...");
-    console.log(form.getValues());
     // If validation passes, call the parent form's handleSubmit function
     // This will trigger the onSubmit function with the validated data
     await handleSubmit();

@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [allSessions, setAllSessions] = useState<Session[]>([]);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
@@ -142,12 +142,12 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [user]);
 
-  const getDisplayName = () => {
-    if (profile?.full_name) {
-      return profile.full_name.split(" ")[0]; // First name only
-    }
-    return user?.email?.split("@")[0] || "User";
-  };
+  // const getDisplayName = () => {
+  //   if (profile?.full_name) {
+  //     return profile.full_name.split(" ")[0]; // First name only
+  //   }
+  //   return user?.email?.split("@")[0] || "User";
+  // };
 
   const handleSessionClick = (session: Session) => {
     // For now, just log the session. In a real app, you might want to navigate to a detail view

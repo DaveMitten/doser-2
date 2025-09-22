@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/lib/useSubscription";
-import { SUBSCRIPTION_PLANS, ANNUAL_PLANS } from "@/lib/gocardless-types";
+import { SUBSCRIPTION_PLANS } from "@/lib/dodo-types";
 import { Calendar, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function BillingPage() {
@@ -25,7 +25,7 @@ export default function BillingPage() {
         alert(result.error || "Failed to cancel subscription");
       }
     } catch (error) {
-      alert("An error occurred while canceling your subscription");
+      console.error("Error canceling subscription:", error);
     } finally {
       setIsCanceling(false);
     }
@@ -69,16 +69,16 @@ export default function BillingPage() {
   }
 
   const plan =
-    subscription.planId === "learn"
-      ? SUBSCRIPTION_PLANS.learn
-      : subscription.planId === "track"
-      ? SUBSCRIPTION_PLANS.track
-      : SUBSCRIPTION_PLANS.optimize;
+    subscription.plan_id === "learn"
+      ? SUBSCRIPTION_PLANS.find((plan) => plan.id === subscription.plan_id)
+      : subscription.plan_id === "track"
+      ? SUBSCRIPTION_PLANS.find((plan) => plan.id === subscription.plan_id)
+      : SUBSCRIPTION_PLANS.find((plan) => plan.id === subscription.plan_id);
 
   const isActive =
-    subscription.status === "active" || subscription.status === "trialing";
-  const isTrialing = subscription.status === "trialing";
-  const isCanceled = subscription.cancelAtPeriodEnd;
+    subscription.status === "active" || subscription.status === "on_hold";
+  const isTrialing = subscription.status === "active";
+  const isCanceled = subscription.status === "cancelled";
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -96,8 +96,6 @@ export default function BillingPage() {
               >
                 {subscription.status === "active"
                   ? "Active"
-                  : subscription.status === "trialing"
-                  ? "Trial"
                   : subscription.status}
               </Badge>
             </CardTitle>
@@ -105,21 +103,23 @@ export default function BillingPage() {
           <CardContent className="space-y-4">
             <div>
               <h3 className="text-2xl font-bold text-doser-text">
-                {plan.name}
+                {plan?.name}
               </h3>
               <p className="text-doser-text-muted">
-                {plan.price === 0 ? "Free" : `€${plan.price}/${plan.interval}`}
+                {plan?.price?.monthly === 0
+                  ? "Free"
+                  : `€${plan?.price}/${plan?.interval}`}
               </p>
             </div>
 
-            {isTrialing && subscription.trialEnd && (
+            {isTrialing && subscription.trial_end && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <Calendar className="h-5 w-5 text-blue-600 mr-2" />
                   <div>
                     <p className="text-sm font-medium text-blue-900">
                       Trial ends{" "}
-                      {new Date(subscription.trialEnd).toLocaleDateString()}
+                      {new Date(subscription.trial_end).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-blue-700">
                       Your subscription will automatically renew
@@ -137,7 +137,7 @@ export default function BillingPage() {
                     <p className="text-sm font-medium text-yellow-900">
                       Subscription will cancel on{" "}
                       {new Date(
-                        subscription.currentPeriodEnd
+                        subscription.current_period_end
                       ).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-yellow-700">
@@ -152,15 +152,15 @@ export default function BillingPage() {
             <div className="space-y-2">
               <h4 className="font-semibold text-doser-text">Plan Features:</h4>
               <ul className="text-sm text-doser-text-muted space-y-1">
-                {plan.features.slice(0, 5).map((feature, index) => (
+                {plan?.features?.slice(0, 5).map((feature, index) => (
                   <li key={index} className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                     {feature}
                   </li>
                 ))}
-                {plan.features.length > 5 && (
+                {plan?.features?.length && plan?.features?.length > 5 && (
                   <li className="text-xs text-doser-text-muted">
-                    +{plan.features.length - 5} more features
+                    +{plan?.features?.length - 5} more features
                   </li>
                 )}
               </ul>
@@ -182,10 +182,12 @@ export default function BillingPage() {
                 <p className="text-sm text-doser-text-muted">Current Period</p>
                 <p className="font-medium text-doser-text">
                   {new Date(
-                    subscription.currentPeriodStart
+                    subscription.current_period_start
                   ).toLocaleDateString()}{" "}
                   -{" "}
-                  {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  {new Date(
+                    subscription.current_period_end
+                  ).toLocaleDateString()}
                 </p>
               </div>
               <div>
@@ -194,7 +196,7 @@ export default function BillingPage() {
                   {isCanceled
                     ? "N/A"
                     : new Date(
-                        subscription.currentPeriodEnd
+                        subscription.current_period_end
                       ).toLocaleDateString()}
                 </p>
               </div>
@@ -208,16 +210,20 @@ export default function BillingPage() {
             </div>
 
             <div className="pt-4 border-t border-doser-border">
-              {!isCanceled && plan.price > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={handleCancelSubscription}
-                  disabled={isCanceling}
-                  className="w-full"
-                >
-                  {isCanceling ? "Canceling..." : "Cancel Subscription"}
-                </Button>
-              )}
+              {!isCanceled &&
+                plan?.price?.monthly &&
+                plan?.price?.yearly &&
+                plan?.price?.monthly > 0 &&
+                plan?.price?.yearly > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelSubscription}
+                    disabled={isCanceling}
+                    className="w-full"
+                  >
+                    {isCanceling ? "Canceling..." : "Cancel Subscription"}
+                  </Button>
+                )}
 
               <Button
                 variant="outline"

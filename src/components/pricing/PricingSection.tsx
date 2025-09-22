@@ -22,7 +22,6 @@ export function PricingSection({ routeType }: PricingSectionProps) {
 
   // Get plans using PlanService
   const plans = PlanService.getAllPlans(isYearly);
-  console.log("plans", plans);
   const faqItems = [
     {
       question: "Is there really a free trial?",

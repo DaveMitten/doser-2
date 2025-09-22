@@ -7,13 +7,6 @@ import { SUBSCRIPTION_PLANS } from "../../../../lib/dodo-types";
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug: Check if environment variables are loaded
-    console.log("Environment check:", {
-      hasDodoApiKey: !!process.env.DODO_PAYMENTS_API_KEY,
-      dodoEnvironment: process.env.DODO_PAYMENTS_ENVIRONMENT,
-      baseUrl: getBaseUrl(),
-    });
-
     const supabase = await createSupabaseServerClient();
 
     // Get the current user
@@ -22,16 +15,12 @@ export async function POST(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    console.log("authError", authError);
-    console.log("user", user);
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const { planId, isYearly = false } = body;
-    console.log("planId", planId);
-    console.log("isYearly", isYearly);
     // Validate plan ID
     if (!planId || !SUBSCRIPTION_PLANS.find((plan) => plan.id === planId)) {
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
@@ -54,23 +43,12 @@ export async function POST(request: NextRequest) {
     // Get plan configuration
     const plan = PlanService.getPlanDetails(planId, isYearly);
 
-    console.log("Plan found:", plan);
-
     if (!plan) {
       console.error("Invalid plan ID:", planId);
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
     }
     // For paid plans, create checkout session using DodoService
-    console.log("Creating DodoService instance...");
     const dodoService = new DodoService();
-
-    console.log("Calling createSubscriptionPayment with:", {
-      userId: user.id,
-      planId,
-      customerEmail: profile.email,
-      customerName: profile.full_name || "",
-      isYearly,
-    });
 
     const result = await dodoService.createSubscriptionPayment({
       userId: user.id,
@@ -80,8 +58,6 @@ export async function POST(request: NextRequest) {
       isYearly,
     });
 
-    console.log("DodoService result:", result);
-
     if (!result.success) {
       console.error("DodoService failed:", result.error);
       return NextResponse.json(
@@ -89,8 +65,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log("Checkout session created:", result.checkoutUrl);
 
     return NextResponse.json({
       success: true,

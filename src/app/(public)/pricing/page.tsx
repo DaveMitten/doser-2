@@ -1,5 +1,5 @@
 import { PricingSection } from "@/components/pricing/PricingSection";
 
-export function PublicPricingHOC() {
+export default function PublicPricingHOC() {
   return <PricingSection routeType="public" />;
 }

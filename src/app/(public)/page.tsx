@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { FeaturesSection } from "@/components/features-section";
 import Image from "next/image";
 

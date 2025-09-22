@@ -27,7 +27,6 @@ const DosageBreakdown = ({
   selectedDevice,
 }: DosageBreakdownProps) => {
   const calculateTotalInhalations = (formData: SessionFormData) => {
-    console.log(formData);
     if (
       (formData.higherAccuracy && !formData.totalSessionInhalations) ||
       !formData.inhalationsPerCapsule

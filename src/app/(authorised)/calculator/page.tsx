@@ -10,7 +10,6 @@ import { dryHerbVaporizers } from "@/data/vapes";
 import { calculateDosage } from "@/lib/calculator";
 import { validateNumberInput, formatDecimalInput } from "../../../lib/utils";
 import RecentCalculations from "./(comps)/ResultsCalculations";
-import ResultsPanel from "./(comps)/ResultsPanel";
 import CalculationDetails from "./(comps)/CalculationDetails";
 import SafetyGuidelines from "./(comps)/SafetyGuidelines";
 import SelectYourVapourizer from "../../../components/calculator/comps/SelectYourVapourizer";
@@ -121,17 +120,11 @@ export default function CalculatorPage() {
   // Note: Display values are managed by handleDecimalInput to avoid race conditions
 
   const handleCalculate = () => {
-    console.log("Calculate button clicked!");
-    console.log("Calculator inputs:", inputs);
-    console.log("Selected vaporizer:", selectedVaporizer);
-
     try {
       setErrors([]);
       const result = calculateDosage(inputs);
-      console.log("Calculation result:", result);
       setResults(result);
     } catch (error) {
-      console.error("Calculation error:", error);
       setErrors([
         error instanceof Error ? error.message : "Calculation failed",
       ]);

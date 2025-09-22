@@ -110,55 +110,24 @@ export default function SessionsPage() {
     setIsSheetOpen(false); // Close the detail sheet
   };
 
-  const renderEnhancedCalculations = (session: Session) => {
-    const enhanced = sessionService.parseEnhancedCalculations(session);
+  // const renderEnhancedCalculations = (session: Session) => {
+  //   const enhanced = sessionService.parseEnhancedCalculations(session);
 
-    if (!enhanced.hasEnhancedData) {
-      return (
-        <div className="text-xs sm:text-sm text-doser-text-muted">
-          <div className="font-medium text-doser-text">
-            Total THC: {session.total_thc_mg.toFixed(1)}mg
-          </div>
-          <div className="font-medium text-doser-text">
-            Total CBD: {session.total_cbd_mg.toFixed(1)}mg
-          </div>
-          <div className="text-xs text-doser-text-muted">
-            Standard calculation
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="text-xs sm:text-sm">
-        <div className="font-medium text-doser-success mb-1 sm:mb-2">
-          Enhanced Calculations
-        </div>
-
-        {/* Consumed Values (Primary Display) */}
-        <div className="mb-1 sm:mb-2">
-          <div className="font-medium text-doser-text">
-            Consumed THC: {enhanced.consumedThc?.toFixed(1)}mg
-          </div>
-          <div className="font-medium text-doser-text">
-            Consumed CBD: {enhanced.consumedCbd?.toFixed(1)}mg
-          </div>
-          <div className="text-xs text-doser-text-muted">
-            Based on {Math.round((enhanced.consumptionRatio || 0) * 100)}%
-            consumption
-          </div>
-        </div>
-
-        {/* Original Values (Secondary Display) */}
-        <div className="text-xs text-doser-text-muted border-t border-doser-border pt-1 sm:pt-2">
-          <div>Original THC: {enhanced.originalThc?.toFixed(1)}mg</div>
-          <div>Original CBD: {enhanced.originalCbd?.toFixed(1)}mg</div>
-          <div>Remaining: {enhanced.remainingMaterial?.toFixed(2)}g</div>
-        </div>
-      </div>
-    );
-  };
-
+  //   if (!enhanced.hasEnhancedData) {
+  //     return (
+  //       <div className="text-xs sm:text-sm text-doser-text-muted">
+  //         <div className="font-medium text-doser-text">
+  //           Total THC: {session.total_thc_mg.toFixed(1)}mg
+  //         </div>
+  //         <div className="font-medium text-doser-text">
+  //           Total CBD: {session.total_cbd_mg.toFixed(1)}mg
+  //         </div>
+  //         <div className="text-xs text-doser-text-muted">
+  //           Standard calculation
+  //         </div>
+  //       </div>
+  //     );
+  //   }
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -166,6 +135,35 @@ export default function SessionsPage() {
       </div>
     );
   }
+  //   return (
+  //     <div className="text-xs sm:text-sm">
+  //       <div className="font-medium text-doser-success mb-1 sm:mb-2">
+  //         Enhanced Calculations
+  //       </div>
+
+  //       {/* Consumed Values (Primary Display) */}
+  //       <div className="mb-1 sm:mb-2">
+  //         <div className="font-medium text-doser-text">
+  //           Consumed THC: {enhanced.consumedThc?.toFixed(1)}mg
+  //         </div>
+  //         <div className="font-medium text-doser-text">
+  //           Consumed CBD: {enhanced.consumedCbd?.toFixed(1)}mg
+  //         </div>
+  //         <div className="text-xs text-doser-text-muted">
+  //           Based on {Math.round((enhanced.consumptionRatio || 0) * 100)}%
+  //           consumption
+  //         </div>
+  //       </div>
+
+  //       {/* Original Values (Secondary Display) */}
+  //       <div className="text-xs text-doser-text-muted border-t border-doser-border pt-1 sm:pt-2">
+  //         <div>Original THC: {enhanced.originalThc?.toFixed(1)}mg</div>
+  //         <div>Original CBD: {enhanced.originalCbd?.toFixed(1)}mg</div>
+  //         <div>Remaining: {enhanced.remainingMaterial?.toFixed(2)}g</div>
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">

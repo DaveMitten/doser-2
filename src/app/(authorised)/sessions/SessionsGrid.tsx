@@ -1,8 +1,5 @@
 import React from "react";
 import { Session } from "../../../lib/sessionService";
-import { Badge } from "../../../components/ui/badge";
-import { Button } from "../../../components/ui/button";
-import { Card } from "../../../components/ui/card";
 import ListViewSessionCard from "../../../components/sessions/ListViewSessionCard";
 import SessionCard from "../../../components/sessions/SessionCard";
 import { EmptyState } from "../../../components/ui/empty-state";
