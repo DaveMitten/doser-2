@@ -1,5 +1,7 @@
 import { FeaturesSection } from "@/components/features-section";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "../../components/ui/button";
 
 export default function Home() {
   return (
@@ -18,16 +20,26 @@ export default function Home() {
               <div className="space-y-8">
                 {/* Main Headline */}
                 <h1 className="text-4xl lg:text-6xl font-bold text-doser-text leading-tight">
-                  <span className="text-doser-primary">Optimize </span> your
-                  cannabis treatment with data-driven insights
+                  <span className="text-doser-primary">Dosing </span> is hard,
+                  we make it easy.
                 </h1>
 
                 {/* Description */}
                 <p className="text-xl text-doser-text-muted leading-relaxed">
-                  Take control of your cannabis experience with precision
-                  dosing, session analytics, and comprehensive tracking—all in
-                  one intelligent platform.
+                  Take control of your cannabis prescription and learn how to
+                  get the most out of your cannabis.
                 </p>
+                <div className="text-center mt-16 text-left">
+                  <Link key="Get Started" href="/auth" className="mt-16 ">
+                    <Button
+                      variant="default"
+                      className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold "
+                      size="xl"
+                    >
+                      Get Started
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
               {/* Right Column - Dashboard Screenshot */}

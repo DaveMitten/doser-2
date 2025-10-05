@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
+import DoserSVG from "./svgs/DoserSVG";
 
 interface NavigationProps {
   currentPage?: string;
@@ -40,7 +41,8 @@ const ctaButtons: CTAButton[] = [
     href: "/auth",
     label: "Get Started",
     variant: "default",
-    className: "bg-doser-primary hover:bg-doser-primary-hover text-doser-text ",
+    className:
+      "bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold",
   },
 ];
 
@@ -108,16 +110,7 @@ export function Navigation({ currentPage }: NavigationProps) {
     <nav className="relative z-10 flex items-center justify-between px-6 py-4 lg:px-8">
       {/* Logo */}
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-doser-primary rounded flex items-center justify-center">
-          <svg
-            className="w-5 h-5 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 12a2 2 0 114 0 2 2 0 01-4 0z" />
-          </svg>
-        </div>
-        <span className="text-xl font-bold text-doser-text">Doser</span>
+        <DoserSVG width={75} height={75} />
       </div>
 
       {/* Desktop Navigation Links */}
