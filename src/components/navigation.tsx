@@ -7,6 +7,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 import DoserSVG from "./svgs/DoserSVG";
+import { useAuth } from "@/context/AuthContext";
 
 interface NavigationProps {
   currentPage?: string;
@@ -30,25 +31,40 @@ interface CTAButton {
   className?: string;
 }
 
-const ctaButtons: CTAButton[] = [
-  {
-    href: "/auth",
-    label: "Sign In",
-    variant: "ghost",
-    className: "text-doser-text-muted ",
-  },
-  {
-    href: "/auth",
-    label: "Get Started",
-    variant: "default",
-    className:
-      "bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold",
-  },
-];
+const getCtaButtons = (isAuthenticated: boolean): CTAButton[] => {
+  if (isAuthenticated) {
+    return [
+      {
+        href: "/dashboard",
+        label: "Dashboard",
+        variant: "default",
+        className:
+          "bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold",
+      },
+    ];
+  }
+
+  return [
+    {
+      href: "/auth",
+      label: "Sign In",
+      variant: "ghost",
+      className: "text-doser-text-muted ",
+    },
+    {
+      href: "/auth?signup=true",
+      label: "Get Started",
+      variant: "default",
+      className:
+        "bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold",
+    },
+  ];
+};
 
 export function Navigation({ currentPage }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   // Auto-determine current page if not provided
   if (!currentPage) {
@@ -120,7 +136,8 @@ export function Navigation({ currentPage }: NavigationProps) {
 
       {/* Desktop CTA Buttons */}
       <div className="hidden md:flex items-center space-x-4">
-        {ctaButtons.map((button) => renderCTAButton(button))}
+        {!loading &&
+          getCtaButtons(!!user).map((button) => renderCTAButton(button))}
       </div>
 
       {/* Mobile Menu Button */}
@@ -161,7 +178,10 @@ export function Navigation({ currentPage }: NavigationProps) {
 
               {/* Mobile CTA Buttons */}
               <div className="pt-6 border-t border-doser-border space-y-2">
-                {ctaButtons.map((button) => renderCTAButton(button, true))}
+                {!loading &&
+                  getCtaButtons(!!user).map((button) =>
+                    renderCTAButton(button, true)
+                  )}
               </div>
             </div>
           </SheetContent>

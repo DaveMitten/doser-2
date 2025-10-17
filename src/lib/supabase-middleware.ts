@@ -63,6 +63,40 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check trial status for authenticated users on protected routes
+  if (user && isProtectedPath) {
+    try {
+      // Get user profile to check trial status
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("trial_start_date, trial_expired, subscription_status")
+        .eq("id", user.id)
+        .single();
+
+      if (!error && profile) {
+        const isTrialExpired =
+          profile.trial_expired ||
+          (profile.trial_start_date &&
+            new Date() >
+              new Date(
+                new Date(profile.trial_start_date).getTime() +
+                  7 * 24 * 60 * 60 * 1000
+              ));
+
+        // If trial is expired and user is trying to access protected routes, redirect to pricing
+        if (isTrialExpired && profile.subscription_status === "expired") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/pricing";
+          url.searchParams.set("trial_expired", "true");
+          return NextResponse.redirect(url);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking trial status in middleware:", error);
+      // Don't block access on error, just log it
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:

@@ -86,7 +86,7 @@ export function PricingCard({
             }`}
             onClick={onClick}
           >
-            {plan.price === 0 ? "Get Started Free" : "Start 7-Day Free Trial"}
+            Start 7-Day Free Trial
           </Button>
         )}
       </CardContent>

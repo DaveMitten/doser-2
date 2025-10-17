@@ -10,13 +10,10 @@ import { signup, checkEmailExists } from "@/app/(public)/auth/actions";
 
 interface SignUpFormProps {
   onToggleMode: () => void;
-  selectedPlan?: string;
+  selectedPlan: string | null;
 }
 
-export function SignUpForm({
-  onToggleMode,
-  selectedPlan = "track",
-}: SignUpFormProps) {
+export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,7 +25,10 @@ export function SignUpForm({
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailValid, setEmailValid] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const { signUp } = useAuth();
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const { signUp, resendVerificationEmail } = useAuth();
 
   // Debounced email validation
   useEffect(() => {
@@ -79,6 +79,23 @@ export function SignUpForm({
 
     return () => clearTimeout(timeoutId);
   }, [email]);
+
+  // Countdown timer for resend cooldown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [resendCooldown]);
 
   // Helper function to get user-friendly error messages
   const getErrorMessage = (error: unknown): string => {
@@ -164,7 +181,7 @@ export function SignUpForm({
 
     try {
       // Try client-side auth first for better UX
-      await signUp(email, password);
+      await signUp(email, password, selectedPlan || undefined);
       setSuccess(true);
     } catch (err) {
       console.error("Client-side signup failed:", err);
@@ -181,6 +198,9 @@ export function SignUpForm({
         const formData = new FormData();
         formData.append("email", email);
         formData.append("password", password);
+        if (selectedPlan) {
+          formData.append("selectedPlan", selectedPlan);
+        }
         await signup(formData);
         setSuccess(true);
       } catch (serverErr) {
@@ -192,6 +212,23 @@ export function SignUpForm({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    setResendMessage(null);
+
+    try {
+      await resendVerificationEmail(email);
+      setResendMessage("Verification email sent! Please check your inbox.");
+      // Start 60-second cooldown timer
+      setResendCooldown(60);
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      setResendMessage("Failed to send verification email. Please try again.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -209,9 +246,36 @@ export function SignUpForm({
             Once verified, you&apos;ll have access to the {selectedPlan} plan
             with your 7-day free trial!
           </p>
-          <Button onClick={onToggleMode} variant="doser">
-            Back to Sign In
-          </Button>
+
+          {resendMessage && (
+            <div
+              className={`text-sm mb-4 p-3 rounded-md ${
+                resendMessage.includes("sent")
+                  ? "text-green-600 bg-green-50 border border-green-200"
+                  : "text-red-600 bg-red-50 border border-red-200"
+              }`}
+            >
+              {resendMessage}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <Button
+              onClick={handleResendVerification}
+              variant="outline"
+              disabled={isResending || resendCooldown > 0}
+              className="w-full"
+            >
+              {isResending
+                ? "Sending..."
+                : resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : "Resend Verification Email"}
+            </Button>
+            <Button onClick={onToggleMode} variant="doser">
+              Back to Sign In
+            </Button>
+          </div>
         </div>
       </Card>
     );

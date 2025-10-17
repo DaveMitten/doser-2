@@ -4,8 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
-import { getAuthCallbackUrl } from "@/lib/utils";
-import { getCookie, deleteCookie } from "@/lib/cookie-utils";
+import { getBaseUrl } from "@/lib/utils";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -57,20 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Check for email verification cookie
-    const checkVerificationCookie = () => {
-      const verifiedCookie = getCookie("email_verified");
-
-      if (verifiedCookie) {
-        // Clear the cookie
-        deleteCookie("email_verified");
-
-        // Refresh the session to ensure we have the latest user state
-        supabase.auth.refreshSession();
-      }
-    };
-
-    checkVerificationCookie();
     // Get initial session
     const getSession = async () => {
       try {
@@ -111,8 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         case "SIGNED_OUT":
           setUser(null);
           setLoading(false);
-          // Clear any remaining cookies
-          deleteCookie("email_verified");
           break;
         case "USER_UPDATED":
           setUser(session?.user ?? null);
@@ -128,8 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signUp = async (email: string, password: string) => {
-    console.log("Attempting Supabase signUp with:", { email });
+  const signUp = async (
+    email: string,
+    password: string,
+    selectedPlan?: string
+  ) => {
+    console.log("Attempting Supabase signUp with:", { email, selectedPlan });
 
     try {
       // For development: try with additional options to bypass strict validation
@@ -137,9 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: getAuthCallbackUrl(),
+          emailRedirectTo: `${getBaseUrl()}/auth/verify`,
           data: {
             email_verified: process.env.NODE_ENV === "development", // Auto-verify in dev
+            selected_plan: selectedPlan,
           },
         },
       });
@@ -170,9 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) throw new Error(getErrorMessage(error));
-
-      // Clear any verification cookies on successful sign in
-      deleteCookie("email_verified");
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
@@ -182,9 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-
-    // Clear any verification cookies on sign out
-    deleteCookie("email_verified");
   };
 
   const resetPassword = async (email: string) => {
@@ -193,6 +175,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw new Error(getErrorMessage(error));
     } catch (error) {
       console.error("Reset password error:", error);
+      throw error;
+    }
+  };
+
+  const resendVerificationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+        },
+      });
+      if (error) throw new Error(getErrorMessage(error));
+    } catch (error) {
+      console.error("Resend verification email error:", error);
       throw error;
     }
   };
@@ -245,6 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    resendVerificationEmail,
     refreshSession,
     checkSessionValidity,
   };

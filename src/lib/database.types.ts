@@ -7,6 +7,10 @@ export interface Database {
           email: string;
           full_name: string | null;
           avatar_url: string | null;
+          selected_plan: string | null;
+          trial_start_date: string | null;
+          trial_expired: boolean;
+          subscription_status: string;
           created_at: string;
           updated_at: string;
         };
@@ -15,6 +19,10 @@ export interface Database {
           email: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          selected_plan?: string | null;
+          trial_start_date?: string | null;
+          trial_expired?: boolean;
+          subscription_status?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -23,6 +31,10 @@ export interface Database {
           email?: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          selected_plan?: string | null;
+          trial_start_date?: string | null;
+          trial_expired?: boolean;
+          subscription_status?: string;
           updated_at?: string;
         };
       };

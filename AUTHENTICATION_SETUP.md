@@ -37,14 +37,16 @@
 
 ### 2. **Configure Email Templates**
 
-**IMPORTANT**: For email confirmations to work with your auth callback:
+**IMPORTANT**: For email confirmations to work with Gmail redirects and other email providers:
 
 1. Go to **Authentication > Email Templates** in your Supabase dashboard
 2. Edit the **Confirm signup** template:
-   - Change `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`
+   - Change `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/verify?token_hash={{ .TokenHash }}&type=email`
 3. Edit the **Magic Link** template:
-   - Change `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`
+   - Change `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/verify?token_hash={{ .TokenHash }}&type=email`
 4. The **Reset Password** template should already use the correct callback URL
+
+**Note**: The new `/auth/verify` page handles Gmail redirects and other email provider URL wrapping automatically.
 
 ### 3. **Test Authentication Flow**
 

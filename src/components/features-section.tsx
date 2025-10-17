@@ -5,8 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import Link from "next/link";
-import { Button } from "./ui/button";
+import { CTAButton } from "./CTAButton";
 
 const features = [
   {
@@ -159,19 +158,10 @@ export function FeaturesSection() {
 
         {/* Bottom CTA */}
         <div className="text-center mt-16">
-          <Link key="Get Started" href="/auth" className="text-center mt-16 ">
-            <h3 className="text-3xl text-doser-text mb-6 font-bold">
-              Ready to take control of your cannabis journey?
-            </h3>
-
-            <Button
-              variant="default"
-              className="bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold"
-              size="xl"
-            >
-              Get Started
-            </Button>
-          </Link>
+          <h3 className="text-3xl text-doser-text mb-6 font-bold">
+            Ready to take control of your cannabis journey?
+          </h3>
+          <CTAButton variant="features" />
         </div>
       </div>
     </section>

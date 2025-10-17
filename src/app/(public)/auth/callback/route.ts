@@ -25,27 +25,22 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const supabase = await createSupabaseServerClient();
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type: type as EmailOtpType,
       token_hash,
     });
 
-    if (!error) {
-      // Redirect to success page first
-      const successUrl = new URL("/auth/verified", request.nextUrl.origin);
-      successUrl.searchParams.set("next", next);
+    if (!error && data.session) {
+      // Session is automatically created and stored in cookies by verifyOtp
+      // Redirect directly to the intended destination
+      const redirectUrl = new URL(next, request.nextUrl.origin);
 
-      // Set a secure, httpOnly cookie to indicate successful verification
-      const response = NextResponse.redirect(successUrl);
-      response.cookies.set("email_verified", "true", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 5, // 5 minutes
-        path: "/",
-      });
+      // Clean up any auth-related query parameters
+      redirectUrl.searchParams.delete("token_hash");
+      redirectUrl.searchParams.delete("type");
+      redirectUrl.searchParams.delete("next");
 
-      return response;
+      return NextResponse.redirect(redirectUrl);
     }
 
     // Handle verification error

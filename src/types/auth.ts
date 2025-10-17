@@ -3,10 +3,15 @@ import { Session, User } from "@supabase/supabase-js";
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    selectedPlan?: string
+  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
   refreshSession: () => Promise<Session | null>;
   checkSessionValidity: () => Promise<boolean>;
 }

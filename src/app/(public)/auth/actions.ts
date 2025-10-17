@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { getAuthCallbackUrl } from "@/lib/utils";
+import { getBaseUrl } from "@/lib/utils";
 
 // Helper function to get user-friendly error messages
 const getErrorMessage = (
@@ -69,10 +69,15 @@ export async function signup(formData: FormData) {
     password: formData.get("password") as string,
   };
 
+  const selectedPlan = formData.get("selectedPlan") as string;
+
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: getAuthCallbackUrl(),
+      emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+      data: {
+        selected_plan: selectedPlan,
+      },
     },
   });
 
@@ -104,7 +109,7 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get("email") as string;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getAuthCallbackUrl()}?next=/auth/reset-password`,
+    redirectTo: `${getBaseUrl()}/auth/reset-password`,
   });
 
   if (error) {
@@ -112,6 +117,24 @@ export async function resetPassword(formData: FormData) {
   }
 
   return { message: "Password reset email sent" };
+}
+
+export async function resendVerificationEmail(email: string) {
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+    },
+  });
+
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+
+  return { message: "Verification email sent" };
 }
 
 export async function checkEmailExists(email: string) {

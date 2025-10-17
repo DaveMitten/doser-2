@@ -10,6 +10,8 @@ import SessionCard from "@/components/sessions/SessionCard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NewSessionForm } from "@/components/new-session/new-session-form";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { TrialStatusBanner } from "@/components/trial/TrialStatusBanner";
+import { TrialExpirationHandler } from "@/components/trial/TrialExpirationHandler";
 import {
   processDosingTrends,
   processEffectsData,
@@ -202,6 +204,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* Trial Expiration Handler */}
+      <TrialExpirationHandler />
+
+      {/* Trial Status Banner */}
+      <TrialStatusBanner />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
