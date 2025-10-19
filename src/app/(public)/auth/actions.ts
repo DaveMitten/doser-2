@@ -74,7 +74,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+      emailRedirectTo: `${getBaseUrl()}/auth/callback`,
       data: {
         selected_plan: selectedPlan,
       },
@@ -126,7 +126,7 @@ export async function resendVerificationEmail(email: string) {
     type: "signup",
     email,
     options: {
-      emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+      emailRedirectTo: `${getBaseUrl()}/auth/callback`,
     },
   });
 

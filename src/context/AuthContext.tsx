@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
           data: {
             email_verified: process.env.NODE_ENV === "development", // Auto-verify in dev
             selected_plan: selectedPlan,
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: "signup",
         email,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/verify`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
         },
       });
       if (error) throw new Error(getErrorMessage(error));

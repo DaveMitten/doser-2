@@ -81,11 +81,10 @@ export const formatDecimalInput = (value: string): string => {
  */
 export function getBaseUrl(): string {
   return (
-    // process.env.DEV_WEBHOOK_URL ||
-    // process.env.NEXT_PUBLIC_APP_URL ||
-    // process.env.NEXT_PUBLIC_SITE_URL ||
-    // "http://localhost:3000"
-    "https://635a26b66c11.ngrok.app"
+    process.env.DEV_WEBHOOK_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "http://localhost:3000"
   );
 }
 

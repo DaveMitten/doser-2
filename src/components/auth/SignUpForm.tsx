@@ -232,6 +232,18 @@ export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
     }
   };
 
+  const resetForm = () => {
+    setSuccess(false);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setError(null);
+    setEmailError(null);
+    setEmailValid(false);
+    setResendMessage(null);
+    setResendCooldown(0);
+  };
+
   if (success) {
     return (
       <Card className="w-full max-w-md mx-auto p-6 bg-doser-card border-doser-border">
@@ -272,7 +284,13 @@ export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
                 ? `Resend in ${resendCooldown}s`
                 : "Resend Verification Email"}
             </Button>
-            <Button onClick={onToggleMode} variant="doser">
+            <Button
+              onClick={() => {
+                resetForm();
+                onToggleMode();
+              }}
+              variant="doser"
+            >
               Back to Sign In
             </Button>
           </div>

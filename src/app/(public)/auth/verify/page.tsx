@@ -8,6 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
+/**
+ * This page is used to verify the email address of the user.
+ * @returns A page that verifies the email address of the user.
+ */
 export default function VerifyPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"

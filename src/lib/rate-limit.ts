@@ -31,9 +31,17 @@ export async function checkRateLimit(
   identifier: string
 ): Promise<RateLimitResult> {
   try {
-    const { success, limit, reset, remaining } = await rateLimiter.limit(
-      identifier
-    );
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Rate limit check timeout")), 2000); // 2 second timeout
+    });
+
+    const limitPromise = rateLimiter.limit(identifier);
+
+    const { success, limit, reset, remaining } = await Promise.race([
+      limitPromise,
+      timeoutPromise,
+    ]);
 
     return {
       success,
@@ -42,7 +50,7 @@ export async function checkRateLimit(
       remaining,
     };
   } catch (error) {
-    console.error("Rate limiting error:", error);
+    console.error("Rate limiting error (falling back to allow):", error);
     // If rate limiting fails, allow the request (fail open for better UX)
     return {
       success: true,
