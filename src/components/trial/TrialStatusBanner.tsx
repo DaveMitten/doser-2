@@ -1,6 +1,6 @@
 "use client";
 
-import { useTrialStatus } from "@/lib/useTrialStatus";
+import { useSubscription } from "@/lib/useSubscription";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock, CheckCircle } from "lucide-react";
@@ -15,16 +15,40 @@ export function TrialStatusBanner({
   showUpgradeButton = true,
   className = "",
 }: TrialStatusBannerProps) {
-  const { trialStatus, loading, isTrialExpired, daysRemaining, selectedPlan } =
-    useTrialStatus();
+  const {
+    subscription,
+    isLoading,
+    isTrialExpired,
+    isTrialActive,
+    daysRemaining,
+  } = useSubscription();
   const router = useRouter();
 
-  if (loading || !trialStatus) {
+  if (isLoading) {
+    return (
+      <Card className={`bg-gray-50 border-gray-200 ${className}`}>
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+            <div className="flex-1">
+              <div className="h-5 bg-gray-200 rounded w-32 mb-2 animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded w-64 animate-pulse" />
+            </div>
+          </div>
+          {showUpgradeButton && (
+            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse" />
+          )}
+        </div>
+      </Card>
+    );
+  }
+
+  if (!subscription) {
     return null;
   }
 
-  // Don't show banner if user has an active subscription
-  if (trialStatus.subscriptionStatus === "active") {
+  // Don't show banner if user has an active paid subscription
+  if (subscription.status === "active") {
     return null;
   }
 
@@ -59,7 +83,7 @@ export function TrialStatusBanner({
     );
   }
 
-  if (daysRemaining <= 2 && daysRemaining > 0) {
+  if (isTrialActive && daysRemaining <= 2 && daysRemaining > 0) {
     return (
       <Card className={`bg-yellow-50 border-yellow-200 ${className}`}>
         <div className="flex items-center justify-between p-4">
@@ -73,7 +97,6 @@ export function TrialStatusBanner({
                 {daysRemaining === 1
                   ? "Your trial expires tomorrow"
                   : `${daysRemaining} days remaining in your trial`}
-                {selectedPlan && ` for the ${selectedPlan} plan`}
               </p>
             </div>
           </div>
@@ -90,7 +113,7 @@ export function TrialStatusBanner({
     );
   }
 
-  if (daysRemaining > 2) {
+  if (isTrialActive && daysRemaining > 2) {
     return (
       <Card className={`bg-green-50 border-green-200 ${className}`}>
         <div className="flex items-center space-x-3 p-4">
@@ -99,7 +122,6 @@ export function TrialStatusBanner({
             <h3 className="text-green-800 font-semibold">Free Trial Active</h3>
             <p className="text-green-600 text-sm">
               {daysRemaining} days remaining in your trial
-              {selectedPlan && ` for the ${selectedPlan} plan`}
             </p>
           </div>
         </div>

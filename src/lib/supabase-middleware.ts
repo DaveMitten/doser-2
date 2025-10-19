@@ -66,30 +66,33 @@ export async function updateSession(request: NextRequest) {
   // Check trial status for authenticated users on protected routes
   if (user && isProtectedPath) {
     try {
-      // Get user profile to check trial status
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("trial_start_date, trial_expired, subscription_status")
-        .eq("id", user.id)
+      // Get user subscription to check trial status
+      const { data: subscription, error } = await supabase
+        .from("user_subscriptions")
+        .select("status, trial_end")
+        .eq("user_id", user.id)
         .single();
 
-      if (!error && profile) {
-        const isTrialExpired =
-          profile.trial_expired ||
-          (profile.trial_start_date &&
-            new Date() >
-              new Date(
-                new Date(profile.trial_start_date).getTime() +
-                  7 * 24 * 60 * 60 * 1000
-              ));
+      // If no subscription exists, redirect to pricing
+      if (error || !subscription) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/pricing";
+        url.searchParams.set("trial_expired", "true");
+        return NextResponse.redirect(url);
+      }
 
-        // If trial is expired and user is trying to access protected routes, redirect to pricing
-        if (isTrialExpired && profile.subscription_status === "expired") {
-          const url = request.nextUrl.clone();
-          url.pathname = "/pricing";
-          url.searchParams.set("trial_expired", "true");
-          return NextResponse.redirect(url);
-        }
+      // Check if trial has expired
+      const isTrialExpired =
+        subscription.status === "trialing" &&
+        subscription.trial_end &&
+        new Date(subscription.trial_end) <= new Date();
+
+      // If trial is expired, redirect to pricing
+      if (isTrialExpired) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/pricing";
+        url.searchParams.set("trial_expired", "true");
+        return NextResponse.redirect(url);
       }
     } catch (error) {
       console.error("Error checking trial status in middleware:", error);

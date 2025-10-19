@@ -111,12 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signUp = async (
-    email: string,
-    password: string,
-    selectedPlan?: string
-  ) => {
-    console.log("Attempting Supabase signUp with:", { email, selectedPlan });
+  const signUp = async (email: string, password: string) => {
+    console.log("Attempting Supabase signUp with:", { email });
 
     try {
       // For development: try with additional options to bypass strict validation
@@ -127,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: `${getBaseUrl()}/auth/callback`,
           data: {
             email_verified: process.env.NODE_ENV === "development", // Auto-verify in dev
-            selected_plan: selectedPlan,
           },
         },
       });

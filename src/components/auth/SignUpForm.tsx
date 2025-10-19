@@ -10,10 +10,9 @@ import { signup, checkEmailExists } from "@/app/(public)/auth/actions";
 
 interface SignUpFormProps {
   onToggleMode: () => void;
-  selectedPlan: string | null;
 }
 
-export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
+export function SignUpForm({ onToggleMode }: SignUpFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -181,7 +180,7 @@ export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
 
     try {
       // Try client-side auth first for better UX
-      await signUp(email, password, selectedPlan || undefined);
+      await signUp(email, password);
       setSuccess(true);
     } catch (err) {
       console.error("Client-side signup failed:", err);
@@ -198,9 +197,6 @@ export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
         const formData = new FormData();
         formData.append("email", email);
         formData.append("password", password);
-        if (selectedPlan) {
-          formData.append("selectedPlan", selectedPlan);
-        }
         await signup(formData);
         setSuccess(true);
       } catch (serverErr) {
@@ -255,8 +251,7 @@ export function SignUpForm({ onToggleMode, selectedPlan }: SignUpFormProps) {
             We&apos;ve sent you a confirmation link at <strong>{email}</strong>
           </p>
           <p className="text-doser-text-muted mb-6">
-            Once verified, you&apos;ll have access to the {selectedPlan} plan
-            with your 7-day free trial!
+            Once verified, you&apos;ll have access to your 7-day free trial!
           </p>
 
           {resendMessage && (

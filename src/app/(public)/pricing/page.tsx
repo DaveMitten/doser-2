@@ -102,8 +102,8 @@ export default function PricingPage() {
                     isPopular={PlanService.isPopularPlan(planKey)}
                     isAuthenticated={false}
                     onClick={() => {
-                      // Redirect to signup with selected plan
-                      window.location.href = `/auth?signup=true&plan=${plan.name}`;
+                      // Redirect to signup for free trial
+                      window.location.href = "/auth?signup=true";
                     }}
                   />
                 </div>

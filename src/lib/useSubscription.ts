@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { UserSubscription } from "./dodo-types";
 import { subscriptionIdToName } from "./utils";
+import { useUserData } from "@/context/UserDataContext";
 
 interface UseSubscriptionReturn {
   subscription: UserSubscription | null;
@@ -15,39 +15,25 @@ interface UseSubscriptionReturn {
   cancelSubscription: () => Promise<{ success: boolean; error?: string }>;
   hasFeatureAccess: (feature: string) => boolean;
   refetch: () => Promise<void>;
+  // Trial-related helpers
+  isTrialActive: boolean;
+  isTrialExpired: boolean;
+  daysRemaining: number;
+  trialEndsAt: Date | null;
 }
 
 export function useSubscription(): UseSubscriptionReturn {
-  const [subscription, setSubscription] = useState<UserSubscription | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Get subscription data from context
+  const {
+    subscription,
+    isLoading,
+    error,
+    refetch: refetchContext,
+  } = useUserData();
 
   const hasActiveSubscription = subscription
     ? ["active", "trialing"].includes(subscription.status)
     : false;
-
-  const fetchSubscription = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch("/api/subscriptions/status");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch subscription");
-      }
-
-      setSubscription(data.subscription);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-      console.error("Error fetching subscription:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const createSubscription = async (
     planId: string,
@@ -80,9 +66,9 @@ export function useSubscription(): UseSubscriptionReturn {
         };
       }
 
-      // If successful, refetch subscription status
+      // If successful, refetch subscription status from context
       if (data.success) {
-        await fetchSubscription();
+        await refetchContext();
       }
 
       return data;
@@ -110,8 +96,8 @@ export function useSubscription(): UseSubscriptionReturn {
         };
       }
 
-      // Refetch subscription status after cancellation
-      await fetchSubscription();
+      // Refetch subscription status after cancellation from context
+      await refetchContext();
 
       return data;
     } catch (err) {
@@ -155,9 +141,29 @@ export function useSubscription(): UseSubscriptionReturn {
     return false;
   };
 
-  useEffect(() => {
-    fetchSubscription();
-  }, []);
+  // Calculate trial status
+  const isTrialActive =
+    subscription?.status === "trialing" &&
+    subscription?.trial_end &&
+    new Date(subscription.trial_end) > new Date();
+
+  const isTrialExpired =
+    subscription?.status === "trialing" &&
+    subscription?.trial_end &&
+    new Date(subscription.trial_end) <= new Date();
+
+  const trialEndsAt = subscription?.trial_end
+    ? new Date(subscription.trial_end)
+    : null;
+
+  const daysRemaining = trialEndsAt
+    ? Math.max(
+        0,
+        Math.ceil(
+          (trialEndsAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0;
 
   return {
     subscription,
@@ -167,6 +173,11 @@ export function useSubscription(): UseSubscriptionReturn {
     createSubscription,
     cancelSubscription,
     hasFeatureAccess,
-    refetch: fetchSubscription,
+    refetch: refetchContext,
+    // Trial helpers
+    isTrialActive,
+    isTrialExpired,
+    daysRemaining,
+    trialEndsAt,
   };
 }

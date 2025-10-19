@@ -11,7 +11,6 @@ export default function AuthPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const plan = searchParams.get("plan");
   const signup = searchParams.get("signup");
 
   useEffect(() => {
@@ -39,10 +38,7 @@ export default function AuthPage() {
 
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         {isSignUp || signup ? (
-          <SignUpForm
-            onToggleMode={() => setIsSignUp(false)}
-            selectedPlan={plan}
-          />
+          <SignUpForm onToggleMode={() => setIsSignUp(false)} />
         ) : (
           <LoginForm onToggleMode={() => setIsSignUp(true)} />
         )}
