@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -13,33 +13,25 @@ export default function BillingSuccessPage() {
   );
   const [message, setMessage] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { refetch } = useSubscription();
 
   useEffect(() => {
     const handleRedirect = async () => {
       try {
-        // Get the redirect flow ID from URL params
-        const redirectFlowId = searchParams.get("redirect_flow_id");
+        // Dodo Payments redirects here after successful checkout
+        // The webhook will have already created/updated the subscription
+        // We just need to refetch the subscription data and show success
 
-        if (!redirectFlowId) {
-          setStatus("error");
-          setMessage("No redirect flow ID found. Please try again.");
-          return;
-        }
+        console.log("Processing Dodo Payments redirect...");
 
-        // In a real implementation, you would:
-        // 1. Complete the redirect flow with GoCardless
-        // 2. Create a mandate from the redirect flow
-        // 3. Create a subscription using the mandate
-        // 4. Update the database
-
-        // For now, we'll simulate success
-        setStatus("success");
-        setMessage("Your payment method has been set up successfully!");
+        // Wait a moment for webhooks to process
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Refetch subscription data
         await refetch();
+
+        setStatus("success");
+        setMessage("Your subscription has been set up successfully!");
 
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
@@ -48,16 +40,18 @@ export default function BillingSuccessPage() {
       } catch (error) {
         console.error("Error handling redirect:", error);
         setStatus("error");
-        setMessage("Something went wrong. Please try again.");
+        setMessage(
+          "Something went wrong. Please try again or contact support."
+        );
       }
     };
 
     handleRedirect();
-  }, [searchParams, refetch, router]);
+  }, [refetch, router]);
 
   return (
     <div className="min-h-screen bg-doser-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-doser-card border-doser-border">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-doser-text">
             Payment Setup

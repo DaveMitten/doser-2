@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { signup, checkEmailExists } from "@/app/(public)/auth/actions";
+import { EmailConfirmationModal } from "@/components/auth/EmailConfirmationModal";
 
 interface SignUpFormProps {
   onToggleMode: () => void;
@@ -242,55 +243,21 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
 
   if (success) {
     return (
-      <Card className="w-full max-w-md mx-auto p-6 bg-doser-card border-doser-border">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-doser-text mb-4">
-            Check Your Email
-          </h2>
-          <p className="text-doser-text-muted mb-4">
-            We&apos;ve sent you a confirmation link at <strong>{email}</strong>
-          </p>
-          <p className="text-doser-text-muted mb-6">
-            Once verified, you&apos;ll have access to your 7-day free trial!
-          </p>
-
-          {resendMessage && (
-            <div
-              className={`text-sm mb-4 p-3 rounded-md ${
-                resendMessage.includes("sent")
-                  ? "text-green-600 bg-green-50 border border-green-200"
-                  : "text-red-600 bg-red-50 border border-red-200"
-              }`}
-            >
-              {resendMessage}
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <Button
-              onClick={handleResendVerification}
-              variant="outline"
-              disabled={isResending || resendCooldown > 0}
-              className="w-full"
-            >
-              {isResending
-                ? "Sending..."
-                : resendCooldown > 0
-                ? `Resend in ${resendCooldown}s`
-                : "Resend Verification Email"}
-            </Button>
-            <Button
-              onClick={() => {
-                resetForm();
-                onToggleMode();
-              }}
-              variant="doser"
-            >
-              Back to Sign In
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <EmailConfirmationModal
+        title="Check Your Email"
+        message="We've sent you a confirmation link at"
+        email={email}
+        secondaryMessage="Once verified, you'll have access to your 7-day free trial!"
+        resendMessage={resendMessage}
+        isResending={isResending}
+        resendCooldown={resendCooldown}
+        onResend={handleResendVerification}
+        onReset={() => {
+          resetForm();
+          onToggleMode();
+        }}
+        resetButtonText="Back to Sign In"
+      />
     );
   }
 

@@ -65,20 +65,36 @@ export async function GET(request: NextRequest) {
 
     console.error("OTP verification failed:", error);
 
-    // Handle verification error
+    // Handle verification error with more specific error types
     const errorUrl = new URL("/auth/error", getBaseUrl());
-    if (error?.message?.includes("expired")) {
-      errorUrl.searchParams.set("error", "verification_failed");
+
+    if (
+      error?.message?.includes("expired") ||
+      error?.message?.includes("Token has expired")
+    ) {
+      errorUrl.searchParams.set("error", "expired_link");
+      errorUrl.searchParams.set("can_resend", "true");
+    } else if (
+      error?.message?.includes("already") ||
+      error?.message?.includes("Email link is invalid")
+    ) {
+      // User might already be verified
+      errorUrl.searchParams.set("error", "already_verified");
+      errorUrl.searchParams.set("can_resend", "false");
     } else if (error?.message?.includes("invalid")) {
       errorUrl.searchParams.set("error", "invalid_token");
+      errorUrl.searchParams.set("can_resend", "false");
     } else if (
       error?.message?.includes("rate limit") ||
       error?.message?.includes("too many")
     ) {
       errorUrl.searchParams.set("error", "rate_limited");
+      errorUrl.searchParams.set("can_resend", "false");
     } else {
       errorUrl.searchParams.set("error", "verification_failed");
+      errorUrl.searchParams.set("can_resend", "true");
     }
+
     return NextResponse.redirect(errorUrl);
   }
 

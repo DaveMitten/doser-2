@@ -133,6 +133,125 @@ export interface Database {
           updated_at?: string;
         };
       };
+      user_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          status:
+            | "active"
+            | "cancelled"
+            | "expired"
+            | "on_hold"
+            | "failed"
+            | "trialing";
+          dodo_subscription_id: string | null;
+          dodo_customer_id: string | null;
+          current_period_start: string;
+          current_period_end: string;
+          trial_start: string | null;
+          trial_end: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan_id: string;
+          status?:
+            | "active"
+            | "cancelled"
+            | "expired"
+            | "on_hold"
+            | "failed"
+            | "trialing";
+          dodo_subscription_id?: string | null;
+          dodo_customer_id?: string | null;
+          current_period_start?: string;
+          current_period_end?: string;
+          trial_start?: string | null;
+          trial_end?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan_id?: string;
+          status?:
+            | "active"
+            | "cancelled"
+            | "expired"
+            | "on_hold"
+            | "failed"
+            | "trialing";
+          dodo_subscription_id?: string | null;
+          dodo_customer_id?: string | null;
+          current_period_start?: string;
+          current_period_end?: string;
+          trial_start?: string | null;
+          trial_end?: string | null;
+          updated_at?: string;
+        };
+      };
+      payment_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          dodo_payment_id: string;
+          dodo_subscription_id: string | null;
+          amount: number;
+          currency: string;
+          status:
+            | "pending"
+            | "processing"
+            | "succeeded"
+            | "failed"
+            | "cancelled";
+          payment_method: string | null;
+          error_message: string | null;
+          metadata: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          dodo_payment_id: string;
+          dodo_subscription_id?: string | null;
+          amount: number;
+          currency: string;
+          status:
+            | "pending"
+            | "processing"
+            | "succeeded"
+            | "failed"
+            | "cancelled";
+          payment_method?: string | null;
+          error_message?: string | null;
+          metadata?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          dodo_payment_id?: string;
+          dodo_subscription_id?: string | null;
+          amount?: number;
+          currency?: string;
+          status?:
+            | "pending"
+            | "processing"
+            | "succeeded"
+            | "failed"
+            | "cancelled";
+          payment_method?: string | null;
+          error_message?: string | null;
+          metadata?: Record<string, unknown> | null;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

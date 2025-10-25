@@ -1,29 +1,82 @@
 import { Webhooks } from "@dodopayments/nextjs";
 import { DodoService } from "@/lib/dodo-service";
+import * as Sentry from "@sentry/nextjs";
+import { logError } from "@/lib/error-logger";
 
 const dodoService = new DodoService();
 
 export const POST = Webhooks({
   webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY!,
   onPayload: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onPaymentSucceeded: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onPaymentFailed: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onSubscriptionActive: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onSubscriptionCancelled: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onSubscriptionFailed: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
-  },
-  onSubscriptionExpired: async (payload) => {
-    await dodoService.handleWebhookEvent(payload);
+    return Sentry.startSpan(
+      {
+        op: "webhook.process",
+        name: "Dodo Webhook - onPayload",
+      },
+      async (span) => {
+        console.log(
+          "Webhook onPayload received:",
+          JSON.stringify(payload, null, 2)
+        );
+
+        // Extract webhook type and add to span
+        const webhookType =
+          payload && typeof payload === "object" && "type" in payload
+            ? String(payload.type)
+            : "unknown";
+        span.setAttribute("webhook.type", webhookType);
+
+        // Extract subscription_id if present in data
+        if (
+          payload &&
+          typeof payload === "object" &&
+          "data" in payload &&
+          payload.data &&
+          typeof payload.data === "object" &&
+          "subscription_id" in payload.data
+        ) {
+          span.setAttribute(
+            "subscription_id",
+            String(payload.data.subscription_id)
+          );
+
+          // Set Sentry context for subscription events
+          Sentry.setContext("webhook", {
+            event: webhookType,
+            subscriptionId: String(payload.data.subscription_id),
+          });
+        }
+
+        // Extract payment_id if present in data
+        if (
+          payload &&
+          typeof payload === "object" &&
+          "data" in payload &&
+          payload.data &&
+          typeof payload.data === "object" &&
+          "payment_id" in payload.data
+        ) {
+          span.setAttribute("payment_id", String(payload.data.payment_id));
+        }
+
+        try {
+          await dodoService.handleWebhookEvent(payload);
+          span.setAttribute("status", "success");
+          console.log("✅ Webhook processed successfully");
+        } catch (error) {
+          span.setAttribute("status", "error");
+          console.error("❌ Webhook processing failed:", error);
+
+          logError(error instanceof Error ? error : new Error(String(error)), {
+            errorType: "webhook",
+            eventType: webhookType,
+            metadata: { payload },
+          });
+
+          // Throw error so Dodo Payments receives 500 and retries
+          throw error;
+        }
+      }
+    );
   },
 });

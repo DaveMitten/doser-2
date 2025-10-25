@@ -13,6 +13,8 @@ interface SubscriptionButtonProps {
   onSuccess?: (checkoutUrl: string) => void;
   onError?: (error: string) => void;
   onClick?: () => void;
+  hasActiveSubscription?: boolean;
+  onChangePlanClick?: () => void;
 }
 
 export function SubscriptionButton({
@@ -22,6 +24,8 @@ export function SubscriptionButton({
   onSuccess,
   onError,
   onClick,
+  hasActiveSubscription = false,
+  onChangePlanClick,
 }: SubscriptionButtonProps) {
   console.log("plan key", planId);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,16 +37,31 @@ export function SubscriptionButton({
   const plan = PlanService.getPlanDetails(planId, isYearly);
 
   const handleClick = async () => {
+    setIsLoading(true);
+
+    // If user has active subscription but wants different plan, open modal
+    if (hasActiveSubscription && !isCurrentPlan && onChangePlanClick) {
+      console.log("User wants to change plan, opening modal");
+      onChangePlanClick();
+      setIsLoading(false);
+      return;
+    }
     // Call the external onClick handler first
     onClick?.();
 
-    console.log("handleClick", { isCurrentPlan, isActive, planId });
+    console.log("handleClick", {
+      isCurrentPlan,
+      isActive,
+      planId,
+      hasActiveSubscription,
+    });
+
+    // If user is on the current plan, do nothing
     if (isCurrentPlan && isActive) {
       console.log("Already subscribed to this plan, returning");
-      return; // Already subscribed to this plan
+      return;
     }
 
-    setIsLoading(true);
     console.log("Creating subscription", {
       planId,
       trialDays: plan?.trialDays,
@@ -81,6 +100,11 @@ export function SubscriptionButton({
   const getButtonText = () => {
     if (isCurrentPlan && isActive) {
       return "Current Plan";
+    }
+
+    // If user has active subscription and this is a different plan
+    if (hasActiveSubscription && !isCurrentPlan) {
+      return "Change Plan";
     }
 
     if (plan?.trialDays && plan.trialDays > 0) {

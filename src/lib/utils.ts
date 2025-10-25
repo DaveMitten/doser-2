@@ -107,5 +107,5 @@ export const subscriptionIdToName: Record<string, string> = {
  * Prioritizes DEV_WEBHOOK_URL for ngrok development
  */
 export function getWebhookUrl(): string {
-  return `${getBaseUrl()}/api/webhooks/mollie`;
+  return `${getBaseUrl()}/api/webhooks/dodo-payments`;
 }

@@ -46,7 +46,7 @@ export function TrialStatusBanner({
   if (!subscription) {
     return null;
   }
-
+  console.log(subscription.status);
   // Don't show banner if user has an active paid subscription
   if (subscription.status === "active") {
     return null;
@@ -112,7 +112,7 @@ export function TrialStatusBanner({
       </Card>
     );
   }
-
+  console.log(isTrialActive, daysRemaining);
   if (isTrialActive && daysRemaining > 2) {
     return (
       <Card className={`bg-green-50 border-green-200 ${className}`}>

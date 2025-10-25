@@ -74,13 +74,34 @@ export interface UserSubscription {
   id: string;
   user_id: string;
   plan_id: string;
-  status: "active" | "cancelled" | "expired" | "on_hold" | "failed";
+  status:
+    | "active"
+    | "cancelled"
+    | "expired"
+    | "on_hold"
+    | "failed"
+    | "trialing";
   dodo_subscription_id?: string;
   dodo_customer_id?: string;
   current_period_start: string;
   current_period_end: string;
   trial_start?: string;
   trial_end?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentHistory {
+  id: string;
+  user_id: string;
+  dodo_payment_id: string;
+  dodo_subscription_id?: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "processing" | "succeeded" | "failed" | "cancelled";
+  payment_method?: string;
+  error_message?: string;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +124,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: { monthly: 4.99, yearly: 54.89 },
     currency: "GBP",
     interval: "month",
+    trialDays: 7,
     features: [
       "Basic dosage calculator",
       "5 calculations per day",

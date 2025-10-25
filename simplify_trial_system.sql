@@ -39,7 +39,7 @@ BEGIN
   )
   VALUES (
     NEW.id,
-    'track', -- Default to Track plan for all new users
+    'pdt_QT8CsZEYopzV38iWlE0Sb', -- Default to Track plan (Dodo product ID) for all new users
     'trialing',
     NOW(),
     NOW() + INTERVAL '7 days',

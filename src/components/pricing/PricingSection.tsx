@@ -5,6 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { FAQ } from "@/components/FAQ";
 import { PlanService } from "@/lib/plan-service";
+import { useUserData } from "@/context/UserDataContext";
+import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 export type RouteType = "public" | "auth";
@@ -19,6 +21,19 @@ export function PricingSection({ routeType }: PricingSectionProps) {
 
   // Use State
   const [isYearly, setIsYearly] = useState(false);
+
+  // Get user data (only for authenticated users)
+  const { subscription } = useUserData();
+  const { user } = useAuth();
+
+  const hasActiveSubscription = subscription
+    ? ["active", "trialing"].includes(subscription.status)
+    : false;
+
+  // Extract user email and name from user object
+  const userEmail = user?.email || "";
+  const userName =
+    user?.user_metadata?.full_name || user?.user_metadata?.name || "";
 
   // Get plans using PlanService
   const plans = PlanService.getAllPlans(isYearly);
@@ -119,6 +134,10 @@ export function PricingSection({ routeType }: PricingSectionProps) {
                   onClick={() => handleCardClick(plan.id)}
                   onSuccess={handleSubscriptionSuccess}
                   onError={handleSubscriptionError}
+                  currentUserPlanId={subscription?.plan_id}
+                  hasActiveSubscription={hasActiveSubscription}
+                  userEmail={userEmail}
+                  userName={userName}
                 />
               );
             })}

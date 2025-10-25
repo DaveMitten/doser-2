@@ -59,46 +59,13 @@ export async function updateSession(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (user && isAuthPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/authorised/dashboard";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Check trial status for authenticated users on protected routes
-  if (user && isProtectedPath) {
-    try {
-      // Get user subscription to check trial status
-      const { data: subscription, error } = await supabase
-        .from("user_subscriptions")
-        .select("status, trial_end")
-        .eq("user_id", user.id)
-        .single();
-
-      // If no subscription exists, redirect to pricing
-      if (error || !subscription) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/pricing";
-        url.searchParams.set("trial_expired", "true");
-        return NextResponse.redirect(url);
-      }
-
-      // Check if trial has expired
-      const isTrialExpired =
-        subscription.status === "trialing" &&
-        subscription.trial_end &&
-        new Date(subscription.trial_end) <= new Date();
-
-      // If trial is expired, redirect to pricing
-      if (isTrialExpired) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/pricing";
-        url.searchParams.set("trial_expired", "true");
-        return NextResponse.redirect(url);
-      }
-    } catch (error) {
-      console.error("Error checking trial status in middleware:", error);
-      // Don't block access on error, just log it
-    }
-  }
+  // Note: Subscription/trial checking is handled client-side via UserDataContext
+  // and TrialStatusBanner for better performance. API routes handle their own
+  // authorization checks as needed.
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
