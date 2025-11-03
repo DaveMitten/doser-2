@@ -41,11 +41,11 @@ export function useSubscription(): UseSubscriptionReturn {
     isYearly?: boolean
   ) => {
     try {
-      console.log("Making API call to create subscription", {
-        planId,
-        trialDays,
-        isYearly,
-      });
+      // console.log("Making API call to create subscription", {
+      //   planId,
+      //   trialDays,
+      //   isYearly,
+      // });
       const response = await fetch("/api/subscriptions/create", {
         method: "POST",
         headers: {
@@ -54,9 +54,9 @@ export function useSubscription(): UseSubscriptionReturn {
         body: JSON.stringify({ planId, trialDays, isYearly }),
       });
 
-      console.log("API response status:", response.status);
+      // console.log("API response status:", response.status);
       const data = await response.json();
-      console.log("createSubscription data", data);
+      // console.log("createSubscription data", data);
 
       if (!response.ok) {
         console.error("API error:", data);
@@ -142,21 +142,25 @@ export function useSubscription(): UseSubscriptionReturn {
   };
 
   // Calculate trial status
-  const isTrialActive =
-    subscription?.status === "trialing" &&
-    subscription?.trial_end &&
-    new Date(subscription.trial_end) > new Date();
+  const isTrialActive: boolean = (() => {
+    if (!subscription) return false;
+    if (subscription.status !== "trialing") return false;
+    if (!subscription.trial_end) return false;
+    return new Date(subscription.trial_end) > new Date();
+  })();
 
-  const isTrialExpired =
-    subscription?.status === "trialing" &&
-    subscription?.trial_end &&
-    new Date(subscription.trial_end) <= new Date();
+  const isTrialExpired: boolean = (() => {
+    if (!subscription) return false;
+    if (subscription.status !== "trialing") return false;
+    if (!subscription.trial_end) return false;
+    return new Date(subscription.trial_end) <= new Date();
+  })();
 
-  const trialEndsAt = subscription?.trial_end
+  const trialEndsAt: Date | null = subscription?.trial_end
     ? new Date(subscription.trial_end)
     : null;
 
-  const daysRemaining = trialEndsAt
+  const daysRemaining: number = trialEndsAt
     ? Math.max(
         0,
         Math.ceil(

@@ -22,7 +22,7 @@ export default function BillingSuccessPage() {
         // The webhook will have already created/updated the subscription
         // We just need to refetch the subscription data and show success
 
-        console.log("Processing Dodo Payments redirect...");
+        // console.log("Processing Dodo Payments redirect...");
 
         // Wait a moment for webhooks to process
         await new Promise((resolve) => setTimeout(resolve, 2000));

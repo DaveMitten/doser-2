@@ -32,10 +32,10 @@ const FormActions = ({
 
     if (!isValid) {
       // If validation fails, don't submit and return early
-      console.log("Form validation failed");
+      // console.log("Form validation failed");
       return;
     }
-    console.log("Form is valid, submitting...");
+    // console.log("Form is valid, submitting...");
     // If validation passes, call the parent form's handleSubmit function
     // This will trigger the onSubmit function with the validated data
     await handleSubmit();

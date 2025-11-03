@@ -25,7 +25,7 @@ export class PlanService {
     planKey: string,
     isYearly: boolean = false
   ): PlanDetails | null {
-    console.log("getPlanDetails", { planKey, isYearly });
+    // console.log("getPlanDetails", { planKey, isYearly });
     const plan = SUBSCRIPTION_PLANS.find((plan) => plan.id === planKey);
 
     if (!plan) return null;

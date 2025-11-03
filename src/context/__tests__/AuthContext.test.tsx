@@ -35,7 +35,7 @@ jest.mock("@/lib/cookie-utils", () => ({
 
 // Mock utils
 jest.mock("@/lib/utils", () => ({
-  getAuthCallbackUrl: () => "http://localhost:3000/auth/callback",
+  getBaseUrl: () => "http://localhost:3000",
 }));
 
 // Test component to access auth context
@@ -142,7 +142,7 @@ describe("AuthContext", () => {
       email: "test@example.com",
       password: "password",
       options: {
-        emailRedirectTo: "http://localhost:3000/auth/callback",
+        emailRedirectTo: "http://localhost:3000/auth/callback?next=/dashboard",
         data: {
           email_verified: false, // Should be false in test environment
         },

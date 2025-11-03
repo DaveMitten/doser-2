@@ -59,20 +59,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getSession = async () => {
       try {
+        // console.log("=== AUTH CONTEXT: Getting initial session ===");
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
 
         if (error) {
-          console.error("Error getting session:", error);
+          // console.error("❌ Error getting session:", error);
           // If there's an error, clear the user state
           setUser(null);
         } else if (session) {
+          // console.log("✅ Session found:", {
+          //   userId: session.user.id,
+          //   email: session.user.email,
+          //   expiresAt: session.expires_at,
+          // });
           setUser(session.user);
+        } else {
+          // console.log("⚠️ No session found");
+          setUser(null);
         }
       } catch (error) {
-        console.error("Unexpected error getting session:", error);
+        // console.error("Unexpected error getting session:", error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -85,26 +94,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session?.user?.email);
+      // console.log("=== AUTH STATE CHANGE ===");
+      // console.log("Event:", event);
+      // console.log("User:", session?.user?.email);
+      // console.log("Session exists:", !!session);
 
       switch (event) {
         case "SIGNED_IN":
+          // console.log("✅ User signed in");
+          setUser(session?.user ?? null);
+          setLoading(false);
+          break;
         case "TOKEN_REFRESHED":
+          // console.log("🔄 Token refreshed");
           setUser(session?.user ?? null);
           setLoading(false);
           break;
         case "SIGNED_OUT":
+          // console.log("👋 User signed out");
           setUser(null);
           setLoading(false);
           break;
         case "USER_UPDATED":
+          // console.log("👤 User updated");
           setUser(session?.user ?? null);
           break;
         case "MFA_CHALLENGE_VERIFIED":
           // Handle MFA if you implement it later
+          // console.log("🔐 MFA verified");
           break;
         default:
-          console.log("Unhandled auth event:", event);
+        // console.log("⚠️ Unhandled auth event:", event);
       }
     });
 
@@ -112,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase.auth]);
 
   const signUp = async (email: string, password: string) => {
-    console.log("Attempting Supabase signUp with:", { email });
+    // console.log("Attempting Supabase signUp with:", { email });
 
     try {
       // For development: try with additional options to bypass strict validation
@@ -120,27 +140,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/dashboard`,
           data: {
             email_verified: process.env.NODE_ENV === "development", // Auto-verify in dev
           },
         },
       });
 
-      console.log("Supabase signUp response:", { data, error });
+      // console.log("Supabase signUp response:", { data, error });
 
       if (error) {
-        console.error("Supabase signUp error details:", {
-          message: error.message,
-          status: error.status,
-          code: error.code || "No code provided",
-        });
+        // console.error("Supabase signUp error details:", {
+        //   message: error.message,
+        //   status: error.status,
+        //   code: error.code || "No code provided",
+        // });
 
         // Use the helper function to get user-friendly error messages
         throw new Error(getErrorMessage(error));
       }
     } catch (error) {
-      console.error("Sign up error:", error);
+      // console.error("Sign up error:", error);
       throw error;
     }
   };
@@ -154,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw new Error(getErrorMessage(error));
     } catch (error) {
-      console.error("Sign in error:", error);
+      // console.error("Sign in error:", error);
       throw error;
     }
   };
@@ -169,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw new Error(getErrorMessage(error));
     } catch (error) {
-      console.error("Reset password error:", error);
+      // console.error("Reset password error:", error);
       throw error;
     }
   };
@@ -180,12 +200,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: "signup",
         email,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/dashboard`,
         },
       });
       if (error) throw new Error(getErrorMessage(error));
     } catch (error) {
-      console.error("Resend verification email error:", error);
+      // console.error("Resend verification email error:", error);
       throw error;
     }
   };
@@ -194,14 +214,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
-        console.error("Session refresh error:", error);
+        // console.error("Session refresh error:", error);
         // If refresh fails, clear the user state
         setUser(null);
         throw error;
       }
       return data.session;
     } catch (error) {
-      console.error("Unexpected session refresh error:", error);
+      // console.error("Unexpected session refresh error:", error);
       setUser(null);
       throw error;
     }
@@ -226,7 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     } catch (error) {
-      console.error("Error checking session validity:", error);
+      // console.error("Error checking session validity:", error);
       return false;
     }
   };

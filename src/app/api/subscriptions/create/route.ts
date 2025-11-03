@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBaseUrl } from "@/lib/utils";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 import { DodoService } from "@/lib/dodo-service";
 import { PlanService } from "../../../../lib/plan-service";

@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Mail, User, CreditCard, ArrowRight, Copy, Check } from "lucide-react";
+import { CreditCard, Copy, Check } from "lucide-react";
 
 interface ChangePlanModalProps {
   open: boolean;
@@ -46,12 +46,12 @@ Please let me know the next steps and if you need any additional information.
 Thank you!
 ${userName}`;
 
-  const handleEmailClick = () => {
-    const mailtoLink = `mailto:support@doserapp.com?subject=${encodeURIComponent(
-      emailSubject
-    )}&body=${encodeURIComponent(emailBody)}`;
-    window.location.href = mailtoLink;
-  };
+  // const handleEmailClick = () => {
+  //   const mailtoLink = `mailto:support@doserapp.com?subject=${encodeURIComponent(
+  //     emailSubject
+  //   )}&body=${encodeURIComponent(emailBody)}`;
+  //   window.location.href = mailtoLink;
+  // };
 
   const handleCopyInfo = async () => {
     const copyText = `Email: support@doserapp.com

@@ -27,7 +27,6 @@ export function SubscriptionButton({
   hasActiveSubscription = false,
   onChangePlanClick,
 }: SubscriptionButtonProps) {
-  console.log("plan key", planId);
   const [isLoading, setIsLoading] = useState(false);
   const { subscription, createSubscription } = useSubscription();
 
@@ -41,7 +40,7 @@ export function SubscriptionButton({
 
     // If user has active subscription but wants different plan, open modal
     if (hasActiveSubscription && !isCurrentPlan && onChangePlanClick) {
-      console.log("User wants to change plan, opening modal");
+      // console.log("User wants to change plan, opening modal");
       onChangePlanClick();
       setIsLoading(false);
       return;
@@ -49,39 +48,39 @@ export function SubscriptionButton({
     // Call the external onClick handler first
     onClick?.();
 
-    console.log("handleClick", {
-      isCurrentPlan,
-      isActive,
-      planId,
-      hasActiveSubscription,
-    });
+    // console.log("handleClick", {
+    //   isCurrentPlan,
+    //   isActive,
+    //   planId,
+    //   hasActiveSubscription,
+    // });
 
     // If user is on the current plan, do nothing
     if (isCurrentPlan && isActive) {
-      console.log("Already subscribed to this plan, returning");
+      // console.log("Already subscribed to this plan, returning");
       return;
     }
 
-    console.log("Creating subscription", {
-      planId,
-      trialDays: plan?.trialDays,
-    });
+    // console.log("Creating subscription", {
+    // planId,
+    // trialDays: plan?.trialDays,
+    // });
     try {
       const result = await createSubscription(
         planId,
         plan?.trialDays,
         isYearly
       );
-      console.log("createSubscription result:", result);
+      // console.log("createSubscription result:", result);
 
       if (result.success) {
         if (result.checkoutUrl) {
-          console.log("Redirecting to checkout URL:", result.checkoutUrl);
+          // console.log("Redirecting to checkout URL:", result.checkoutUrl);
           // Redirect to Dodo Payments checkout
           window.location.href = result.checkoutUrl;
           onSuccess?.(result.checkoutUrl);
         } else {
-          console.log("Free plan - no checkout needed");
+          // console.log("Free plan - no checkout needed");
           // Free plan - no checkout needed
           onSuccess?.("");
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { PlanService } from "@/lib/plan-service";
@@ -8,7 +8,7 @@ import { TrialStatusBanner } from "@/components/trial/TrialStatusBanner";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
-export default function PricingPage() {
+function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
   const searchParams = useSearchParams();
   const trialExpired = searchParams.get("trial_expired") === "true";
@@ -185,5 +185,13 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-doser-background" />}>
+      <PricingPageContent />
+    </Suspense>
   );
 }

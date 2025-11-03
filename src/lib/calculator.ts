@@ -158,15 +158,15 @@ export const calculateDosage = (
   if (errors.length > 0) {
     throw new Error(`Invalid inputs: ${errors.join(", ")}`);
   }
-  console.log("inputs", inputs);
+  // console.log("inputs", inputs);
   const dosePerUnit = calculateDosePerUnit(inputs);
   const warnings: string[] = [];
 
   // Store total draws to user profile (console log for now)
   if (inputs.higherAccuracy) {
-    console.log(
-      `Saving total draws to user profile: ${inputs.totalSessionInhalations}`
-    );
+    // console.log(
+    //   `Saving total draws to user profile: ${inputs.totalSessionInhalations}`
+    // );
   }
 
   let recommendedDose = 0;
@@ -200,7 +200,7 @@ export const calculateDosage = (
   }
 
   // Calculate confidence based on various factors
-  const confidence = calculateConfidence(inputs, dosePerUnit);
+  const confidence: number = calculateConfidence();
 
   return {
     recommendedDose,
@@ -218,10 +218,9 @@ export const calculateDosage = (
 };
 
 // Calculate confidence level in the recommendation
-export function calculateConfidence(
-  _inputs: CalculatorInputs,
-  _dosePerInhalation: { thc: number; cbd: number }
-): number {
+export function calculateConfidence(): number {
+  // _inputs: CalculatorInputs,
+  // _dosePerInhalation: { thc: number; cbd: number }
   // TODO: Implement confidence calculation
   // Factors to consider:
   // - Temperature range (optimal vs extreme)

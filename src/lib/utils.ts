@@ -109,3 +109,72 @@ export const subscriptionIdToName: Record<string, string> = {
 export function getWebhookUrl(): string {
   return `${getBaseUrl()}/api/webhooks/dodo-payments`;
 }
+
+/**
+ * Universal parameter extraction for email verification
+ * Handles URL transformations from various email clients (Gmail, Outlook, Yahoo, etc.)
+ */
+export interface VerificationParams {
+  token_hash: string | null;
+  type: string | null;
+  source: string;
+}
+
+export function extractVerificationParams(url: URL): VerificationParams {
+  let token_hash: string | null = null;
+  let type: string | null = null;
+
+  // 1. Check direct parameters (normal case - most common)
+  token_hash = url.searchParams.get("token_hash");
+  type = url.searchParams.get("type");
+
+  if (token_hash && type) {
+    return { token_hash, type, source: "direct" };
+  }
+
+  // 2. Check all query parameters for wrapped URLs
+  // This handles Gmail (?q=), Outlook SafeLinks, and other email client transformations
+  for (const [key, value] of url.searchParams.entries()) {
+    if (value.includes("token_hash=") && value.includes("type=")) {
+      try {
+        // Try parsing as full URL (Gmail's q= parameter)
+        const wrappedUrl = new URL(value);
+        token_hash = wrappedUrl.searchParams.get("token_hash");
+        type = wrappedUrl.searchParams.get("type");
+
+        if (token_hash && type) {
+          return { token_hash, type, source: `wrapped-${key}` };
+        }
+      } catch {
+        // Not a valid URL, try regex extraction
+        const tokenMatch = value.match(/token_hash=([^&\s]+)/);
+        const typeMatch = value.match(/type=([^&\s]+)/);
+
+        if (tokenMatch && typeMatch) {
+          return {
+            token_hash: tokenMatch[1],
+            type: typeMatch[1],
+            source: `regex-${key}`,
+          };
+        }
+      }
+    }
+  }
+
+  // 3. Check URL hash fragment (some email clients/security scanners use this)
+  if (url.hash) {
+    try {
+      const hashParams = new URLSearchParams(url.hash.substring(1));
+      token_hash = hashParams.get("token_hash");
+      type = hashParams.get("type");
+
+      if (token_hash && type) {
+        return { token_hash, type, source: "hash" };
+      }
+    } catch {
+      // Hash parsing failed, continue
+    }
+  }
+
+  return { token_hash: null, type: null, source: "none" };
+}

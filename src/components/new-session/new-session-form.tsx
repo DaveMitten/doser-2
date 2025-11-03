@@ -419,7 +419,7 @@ export function NewSessionForm({
     const isValid = await trigger();
     if (!isValid) {
       // Validation failed, errors will be displayed by react-hook-form
-      console.log("Validation failed");
+      // console.log("Validation failed");
       return;
     }
 

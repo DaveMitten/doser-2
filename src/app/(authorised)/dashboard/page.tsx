@@ -48,6 +48,12 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
 
+  // DEBUG: Log user state on dashboard mount
+  useEffect(() => {
+    // console.log("=== DASHBOARD MOUNTED ===");
+    // console.log("User:", user ? { id: user.id, email: user.email } : "No user");
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -152,7 +158,7 @@ export default function DashboardPage() {
 
   const handleSessionClick = (session: Session) => {
     // For now, just log the session. In a real app, you might want to navigate to a detail view
-    console.log("Session clicked:", session);
+    // console.log("Session clicked:", session);
   };
 
   const handleNewSessionCreated = () => {

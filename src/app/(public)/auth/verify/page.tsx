@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { EmailOtpType } from "@supabase/supabase-js";
@@ -12,7 +12,7 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
  * This page is used to verify the email address of the user.
  * @returns A page that verifies the email address of the user.
  */
-export default function VerifyPage() {
+function VerifyPageContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
@@ -176,5 +176,29 @@ export default function VerifyPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-doser-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6 bg-doser-card border-doser-border">
+            <div className="text-center">
+              <Loader2 className="w-16 h-16 text-blue-500 mx-auto mb-4 animate-spin" />
+              <h2 className="text-2xl font-bold text-doser-text mb-4">
+                Verifying Email...
+              </h2>
+              <p className="text-doser-text-muted">
+                Please wait while we verify your email address.
+              </p>
+            </div>
+          </Card>
+        </div>
+      }
+    >
+      <VerifyPageContent />
+    </Suspense>
   );
 }

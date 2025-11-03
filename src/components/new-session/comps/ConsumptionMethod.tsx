@@ -275,7 +275,7 @@ const ConsumptionMethod = ({
               <Switch
                 checked={formData.higherAccuracy}
                 onCheckedChange={(checked) => {
-                  console.log("Switch changed to:", checked);
+                  // console.log("Switch changed to:", checked);
                   handleInputChange("higherAccuracy", checked);
                 }}
                 disabled

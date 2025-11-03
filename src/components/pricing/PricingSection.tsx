@@ -70,7 +70,7 @@ export function PricingSection({ routeType }: PricingSectionProps) {
     if (routeType === "auth") {
       // For authenticated users, the SubscriptionButton will handle the subscription creation
       // This is just a placeholder - the actual logic is in SubscriptionButton
-      console.log("Plan selected:", planKey);
+      // console.log("Plan selected:", planKey);
     } else {
       // we need to redirect to the signup page
       router.push("/signup?plan=" + planKey);
@@ -79,15 +79,15 @@ export function PricingSection({ routeType }: PricingSectionProps) {
 
   const handleSubscriptionSuccess = (checkoutUrl: string) => {
     if (checkoutUrl) {
-      console.log("Redirecting to payment...");
+      // console.log("Redirecting to payment...");
       // The SubscriptionButton will handle the redirect
     } else {
-      console.log("Subscription activated successfully!");
+      // console.log("Subscription activated successfully!");
     }
   };
 
   const handleSubscriptionError = (error: string) => {
-    console.error(`Failed to create subscription: ${error}`);
+    // console.error(`Failed to create subscription: ${error}`);
   };
 
   return (
