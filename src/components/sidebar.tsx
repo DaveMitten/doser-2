@@ -154,27 +154,6 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
             </Link>
           </nav>
         </div>
-
-        {/* Credits Widget */}
-        <div className="bg-doser-primary-light border border-doser-primary/20 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 bg-doser-primary rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">💎</span>
-            </div>
-            <div className="text-doser-primary text-xl font-bold">25</div>
-          </div>
-          <div className="text-doser-text-muted text-xs mb-2">
-            Calculations available
-          </div>
-          <div className="text-doser-text-muted text-xs mb-3">
-            Need more? Upgrade your plan
-          </div>
-          <Link href="/upgrade">
-            <Button variant="dashboard" size="sm" className="w-full text-xs">
-              Upgrade now
-            </Button>
-          </Link>
-        </div>
       </div>
       {/* User Profile - Bottom */}
       {/* <div className="space-y-3 mt-auto">

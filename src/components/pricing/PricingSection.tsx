@@ -113,9 +113,16 @@ export function PricingSection({ routeType }: PricingSectionProps) {
                 onCheckedChange={setIsYearly}
               />
               <span className="text-doser-text">Yearly</span>
-              <Badge variant="secondary" className="bg-orange-500 text-white">
-                1 Month Free
-              </Badge>
+              <div className="h-6 w-22">
+                {isYearly && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-orange-500 text-white h-6 w-22"
+                  >
+                    1 Month Free
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 

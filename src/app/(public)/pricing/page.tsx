@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { PlanService } from "@/lib/plan-service";
-import { TrialStatusBanner } from "@/components/trial/TrialStatusBanner";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
@@ -39,9 +38,6 @@ function PricingPageContent() {
               </div>
             </Card>
           )}
-
-          {/* Trial Status Banner */}
-          <TrialStatusBanner className="mb-8" />
 
           <div className="text-center mb-12">
             <h1 className="text-4xl lg:text-5xl font-bold text-doser-text mb-4">

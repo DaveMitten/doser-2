@@ -48,6 +48,9 @@ exec("pkill -9 ngrok", (killError) => {
 });
 
 function startServers() {
+  // Reset tunnel flag when starting servers
+  tunnelStarted = false;
+
   // Start Next.js dev server with nvm
   console.log(
     "🔧 Switching to Node 20.18.3 and starting Next.js development server..."
@@ -68,9 +71,13 @@ function startServers() {
     const output = data.toString();
     console.log(`[Next.js] ${output}`);
 
-    // Check if Next.js is ready
-    if (output.includes("Ready in") || output.includes("Local:")) {
+    // Check if Next.js is ready and tunnel hasn't been started yet
+    if (
+      !tunnelStarted &&
+      (output.includes("Ready in") || output.includes("Local:"))
+    ) {
       console.log("\n🌐 Starting ngrok tunnel...");
+      tunnelStarted = true;
       startTunnel();
     }
   });
@@ -95,6 +102,7 @@ function startServers() {
 }
 
 let tunnelProcess;
+let tunnelStarted = false;
 
 function updateEnvLocal(ngrokUrl) {
   const envPath = path.join(__dirname, "..", ".env.local");
@@ -141,6 +149,12 @@ function updateEnvLocal(ngrokUrl) {
 }
 
 function startTunnel() {
+  // Double-check that tunnel hasn't been started (extra safety)
+  if (tunnelStarted && tunnelProcess) {
+    console.log("⚠️  Tunnel already started, skipping...");
+    return;
+  }
+
   console.log(`🌐 Creating ngrok tunnel...`);
 
   // Start ngrok

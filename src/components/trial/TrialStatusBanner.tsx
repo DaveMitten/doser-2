@@ -113,7 +113,7 @@ export function TrialStatusBanner({
     );
   }
   console.log(isTrialActive, daysRemaining);
-  if (isTrialActive && daysRemaining > 2) {
+  if (isTrialActive && daysRemaining > 0) {
     return (
       <Card className={`bg-green-50 border-green-200 ${className}`}>
         <div className="flex items-center space-x-3 p-4">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/lib/useSubscription";
 import { PlanService } from "../../lib/plan-service";
 import { subscriptionIdToName } from "../../lib/utils";
+import { useUserData } from "../../context/UserDataContext";
 
 interface SubscriptionButtonProps {
   planId: string;
@@ -101,16 +102,16 @@ export function SubscriptionButton({
       return "Current Plan";
     }
 
+    if (subscription?.status === "trialing") {
+      return `Upgrade`;
+    }
+
     // If user has active subscription and this is a different plan
     if (hasActiveSubscription && !isCurrentPlan) {
       return "Change Plan";
     }
 
-    if (plan?.trialDays && plan.trialDays > 0) {
-      return `Start ${plan?.trialDays}-Day Trial`;
-    }
-
-    return `Start ${plan?.trialDays}-Day Trial`;
+    return "Start 7-Day Trial";
   };
 
   const getButtonVariant = () => {

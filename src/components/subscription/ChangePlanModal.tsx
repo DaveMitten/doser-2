@@ -36,7 +36,6 @@ export function ChangePlanModal({
 
 I would like to request a plan change with the following details:
 
-Name: ${userName}
 Email: ${userEmail}
 Current Plan: ${currentPlan}
 Requested Plan: ${targetPlan}
@@ -113,12 +112,7 @@ Thank you!`}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCopyInfo}
-            className="w-full sm:w-auto border-doser-border text-doser-text hover:bg-doser-background"
-          >
+          <Button type="button" onClick={handleCopyInfo} variant="doser">
             {copied ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
