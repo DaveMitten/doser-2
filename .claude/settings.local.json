@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(nvm:*)",
+      "Bash(node:*)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash([ -s \"$NVM_DIR/nvm.sh\" ])",
+      "Bash(. \"$NVM_DIR/nvm.sh\")"
+    ],
+    "deny": []
+  }
+}

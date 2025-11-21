@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect, useMemo } from "react";
 import {
   type CalculatorInputs,
@@ -8,19 +7,10 @@ import {
 } from "@/lib/calculator";
 import { dryHerbVaporizers } from "@/data/vapes";
 import { calculateDosage } from "@/lib/calculator";
-import { validateNumberInput, formatDecimalInput } from "../../../lib/utils";
-import RecentCalculations from "./(comps)/ResultsCalculations";
+import { formatDecimalInput } from "../../../lib/utils";
 import CalculationDetails from "./(comps)/CalculationDetails";
-import SafetyGuidelines from "./(comps)/SafetyGuidelines";
-import SelectYourVapourizer from "../../../components/calculator/comps/SelectYourVapourizer";
-import MeasurementMethod from "../../../components/calculator/comps/MeasurementMethod";
-import HigherAccuracyToggle from "../../../components/calculator/comps/HigherAccuracyToggle";
-import InhalationsPerCapsule from "../../../components/calculator/comps/InhalationsPerCapsule";
-import CannabinoidContent from "../../../components/calculator/comps/CannabinoidContent";
-import DesiredDoseType from "../../../components/calculator/comps/DesiredDoseType";
-import DesiredDose from "../../../components/calculator/comps/DesiredDose";
-import ErrorDisplay from "../../../components/calculator/comps/ErrorDisplay";
-import CalculateButton from "../../../components/calculator/comps/CalculateButton";
+import { CalculatorEmptyState } from "@/components/calculator/calculator-empty-state";
+import { EnhancedCalculatorForm } from "@/components/calculator/enhanced-calculator-form";
 
 export default function CalculatorPage() {
   const [inputs, setInputs] = useState<CalculatorInputs>({
@@ -63,9 +53,6 @@ export default function CalculatorPage() {
   // Check if vaporizer is selected (not empty)
   const isVaporizerSelected = inputs.vaporizer !== "";
 
-  // Check if it's a known vaporizer (not "other")
-  const isKnownVaporizer =
-    inputs.vaporizer !== "" && inputs.vaporizer !== "other";
 
   // Handle vaporizer-specific logic
   useEffect(() => {
@@ -182,125 +169,43 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-doser-text mb-2">
+    <div className="container mx-auto p-6 space-y-10">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-gradient-doser">
           Dosage Calculator
         </h1>
-        <p className="text-doser-text-muted">
-          Calculate your optimal cannabis dosage based on your profile and
-          preferences
+        <p className="text-doser-text-muted leading-relaxed">
+          Calculate your optimal cannabis dosage based on your profile and preferences.<br />
+          Get personalized recommendations for a safe and effective experience.
         </p>
       </div>
 
-      {/* Calculator Form */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+      {/* Calculator Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Input Form */}
-        <div className="lg:col-span-2 xl:col-span-2 space-y-6">
-          <Card className="bg-doser-surface border-doser-border">
-            <CardHeader>
-              <CardTitle className="text-doser-text">
-                Calculator Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent noTopPadding className="space-y-6">
-              {/* Vaporizer Selection */}
-              <SelectYourVapourizer
-                inputs={inputs}
-                setInputs={setInputs}
-                selectedVaporizer={selectedVaporizer ?? null}
-              />
+        <EnhancedCalculatorForm
+          inputs={inputs}
+          setInputs={setInputs}
+          onCalculate={handleCalculate}
+          errors={errors}
+          isVaporizerSelected={isVaporizerSelected}
+          thcDisplayValue={thcDisplayValue}
+          cbdDisplayValue={cbdDisplayValue}
+          onDecimalInput={handleDecimalInput}
+        />
 
-              {/* Measurement Method */}
-              <MeasurementMethod
-                inputs={inputs}
-                setInputs={setInputs}
-                selectedVaporizer={selectedVaporizer ?? null}
-                isVaporizerSelected={isVaporizerSelected}
-                isKnownVaporizer={isKnownVaporizer}
-              />
-
-              {/* Higher Accuracy Toggle */}
-              <HigherAccuracyToggle
-                inputs={inputs}
-                setInputs={setInputs}
-                isVaporizerSelected={isVaporizerSelected}
-              />
-
-              {/* Inhalations per Capsule (only for higher accuracy + capsule method) */}
-              {inputs.higherAccuracy && (
-                <InhalationsPerCapsule
-                  inputs={inputs}
-                  setInputs={setInputs}
-                  isVaporizerSelected={isVaporizerSelected}
-                />
-              )}
-
-              {/* THC and CBD Content */}
-              <CannabinoidContent
-                thcDisplayValue={thcDisplayValue}
-                cbdDisplayValue={cbdDisplayValue}
-                handleDecimalInput={handleDecimalInput}
-                isVaporizerSelected={isVaporizerSelected}
-              />
-
-              {/* Desired Dose Type */}
-              <DesiredDoseType
-                inputs={inputs}
-                setInputs={setInputs}
-                isVaporizerSelected={isVaporizerSelected}
-              />
-
-              {/* Desired Dose */}
-              <DesiredDose
-                inputs={inputs}
-                setInputs={setInputs}
-                isVaporizerSelected={isVaporizerSelected}
-                validateNumberInput={validateNumberInput}
-              />
-
-              {/* Error Display */}
-              <ErrorDisplay errors={errors} />
-
-              {/* Calculate Button */}
-              <CalculateButton
-                inputs={inputs}
-                isVaporizerSelected={isVaporizerSelected}
-                handleCalculate={handleCalculate}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Side Content - 3 Rows */}
-        <div className="col-span-1 xl:col-span-3 space-y-6">
-          {/* Row 1: Calculation Details - Full Width */}
-          <CalculationDetails
-            results={results}
-            inputs={inputs}
-            selectedVaporizer={selectedVaporizer ?? null}
-          />
-
-          {/* Row 2: Safety Guidelines and Results Calculations */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Safety Guidelines - 1 column */}
-            <div className="col-span-1">
-              <SafetyGuidelines />
-            </div>
-
-            {/* Quick Results - remaining space */}
-            {/* <div className="col-span-1">
-              {results && selectedVaporizer && (
-                <ResultsPanel
-                  results={results}
-                  inputs={inputs}
-                  selectedVaporizer={selectedVaporizer}
-                />
-              )}
-            </div> */}
-            <RecentCalculations />
-          </div>
+        {/* Results/Empty State */}
+        <div>
+          {results ? (
+            <CalculationDetails
+              results={results}
+              inputs={inputs}
+              selectedVaporizer={selectedVaporizer ?? null}
+            />
+          ) : (
+            <CalculatorEmptyState />
+          )}
         </div>
       </div>
     </div>
