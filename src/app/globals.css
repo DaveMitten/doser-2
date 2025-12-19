@@ -214,7 +214,7 @@
   }
   
   .card-hover:hover {
-    border-color: #10b981;
+    border-color: var(--primary);
     box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
   }
 }
