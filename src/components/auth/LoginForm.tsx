@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Zap } from "lucide-react";
 import { login } from "../../app/(public)/auth/actions";
 
 interface LoginFormProps {
   onToggleMode: () => void;
 }
 
+// Test credentials - only used in development
+const IS_DEV = process.env.NODE_ENV === "development";
+const TEST_EMAIL = IS_DEV ? "test@example.com" : "";
+const TEST_PASSWORD = IS_DEV ? "testpassword123" : "";
 export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +23,41 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuth();
+
+  // Auto-fill test credentials in development
+  useEffect(() => {
+    if (IS_DEV) {
+      setEmail(TEST_EMAIL);
+      setPassword(TEST_PASSWORD);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleQuickLogin = async () => {
+    setEmail(TEST_EMAIL);
+    setPassword(TEST_PASSWORD);
+    setLoading(true);
+    setError(null);
+
+    try {
+      await signIn(TEST_EMAIL, TEST_PASSWORD);
+    } catch {
+      try {
+        const formData = new FormData();
+        formData.append("email", TEST_EMAIL);
+        formData.append("password", TEST_PASSWORD);
+        await login(formData);
+      } catch (serverErr) {
+        const errorMessage =
+          serverErr instanceof Error
+            ? serverErr.message
+            : "An error occurred during sign in";
+        setError(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +94,21 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
         <h2 className="text-2xl font-bold text-doser-text">Welcome Back</h2>
         <p className="text-doser-text-muted mt-2">Sign in to your account</p>
       </div>
+
+      {IS_DEV && (
+        <div className="mb-4">
+          <Button
+            type="button"
+            onClick={handleQuickLogin}
+            disabled={loading}
+            className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
+            variant="outline"
+          >
+            <Zap size={14} className="mr-2" />
+            Quick Login (Test Mode)
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

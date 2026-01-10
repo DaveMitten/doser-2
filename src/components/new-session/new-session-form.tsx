@@ -668,7 +668,7 @@ export function NewSessionForm({
                 isSubmitting={isSubmitting}
                 form={form}
                 handleSubmit={handleSubmit(onSubmit)}
-                onSaveAsDraft={() => {}}
+                // onSaveAsDraft={() => {}}
                 isEditMode={isEditMode}
               />
             </form>

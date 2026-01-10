@@ -12,13 +12,13 @@ type FormActionsProps = {
   isSubmitting: boolean;
   form: UseFormReturn<SessionFormSchema>;
   handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
-  onSaveAsDraft: () => void;
+  // onSaveAsDraft: () => void;
   isEditMode?: boolean; // New prop for edit mode
 };
 
 const FormActions = ({
   isSubmitting,
-  onSaveAsDraft,
+  // onSaveAsDraft = () => {},
   form,
   handleSubmit,
   isEditMode = false, // Default to false for backward compatibility
@@ -45,7 +45,7 @@ const FormActions = ({
     <>
       {/* Form Actions */}
       <div className="flex gap-3 pt-6 border-t border-doser-border">
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           size="sm"
@@ -55,7 +55,7 @@ const FormActions = ({
         >
           <span className="mr-2">📋</span>
           Save as Draft
-        </Button>
+        </Button> */}
         <Button
           type="button"
           size="sm"
