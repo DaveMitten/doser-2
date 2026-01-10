@@ -1,8 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
 import {
   Sheet,
   SheetContent,
@@ -12,15 +10,14 @@ import {
 import { NewSessionForm } from "@/components/new-session/new-session-form";
 import { useState, useEffect, useCallback } from "react";
 import { sessionService, type Session } from "@/lib/sessionService";
-import SessionsGrid from "./SessionsGrid";
 import {
   formatDate,
   formatTime,
   getTemperatureDisplay,
   renderStars,
 } from "@/lib/sessionCardUtils";
-
-const filters = ["All", "Today", "This Week", "This Month"];
+import { FilterTabs } from "@/components/sessions/filter-tabs";
+import { EnhancedSessionCard } from "@/components/sessions/enhanced-session-card";
 
 export default function SessionsPage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -31,7 +28,6 @@ export default function SessionsPage() {
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null); // New state for session to edit
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
 
   // Fetch sessions function
   const fetchSessions = useCallback(async () => {
@@ -166,79 +162,38 @@ export default function SessionsPage() {
   // };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-      {/* Responsive Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
-        <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-doser-primary mb-2">
-            Session History
-          </h1>
-          <p className="text-sm sm:text-base text-doser-text-muted">
-            Track your consumption patterns and effects
-          </p>
-        </div>
+    <div className="container mx-auto p-6 space-y-8">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-gradient-doser">
+          Session History
+        </h1>
+        <p className="text-doser-text-muted">
+          Track your consumption patterns and effects
+        </p>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <FilterTabs onFilterChange={(filter) => setActiveFilter(filter)} />
         <Button
           onClick={() => setIsNewSessionOpen(true)}
-          className="bg-doser-primary hover:bg-doser-primary-hover w-full sm:w-auto"
+          className="bg-doser-primary hover:bg-doser-primary-hover"
         >
           + New Session
         </Button>
       </div>
 
-      {/* Responsive Filters */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-doser min-w-0">
-            {filters.map((filter) => (
-              <Badge
-                key={filter}
-                variant={activeFilter === filter ? "default" : "outline"}
-                className={`cursor-pointer whitespace-nowrap flex-shrink-0 ${
-                  activeFilter === filter
-                    ? "bg-doser-primary text-white"
-                    : "text-doser-text-muted border-doser-border"
-                }`}
-                onClick={() => setActiveFilter(filter)}
-              >
-                {filter}
-              </Badge>
-            ))}
-          </div>
-
-          {/* View Toggle */}
-          <div className="hidden sm:flex gap-2 flex-shrink-0">
-            <Badge
-              variant={viewMode === "cards" ? "default" : "outline"}
-              className={`cursor-pointer whitespace-nowrap ${
-                viewMode === "cards"
-                  ? "bg-doser-primary text-white"
-                  : "text-doser-text-muted border-doser-border"
-              }`}
-              onClick={() => setViewMode("cards")}
-            >
-              Cards
-            </Badge>
-            <Badge
-              variant={viewMode === "list" ? "default" : "outline"}
-              className={`cursor-pointer whitespace-nowrap ${
-                viewMode === "list"
-                  ? "bg-doser-primary text-white"
-                  : "text-doser-text-muted border-doser-border"
-              }`}
-              onClick={() => setViewMode("list")}
-            >
-              List
-            </Badge>
-          </div>
-        </div>
+      {/* Session Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredSessions().map((session) => (
+          <EnhancedSessionCard
+            key={session.id}
+            session={session}
+            onClick={handleSessionClick}
+          />
+        ))}
       </div>
-
-      <SessionsGrid
-        sessions={filteredSessions()}
-        setIsNewSessionOpen={setIsNewSessionOpen}
-        handleSessionClick={handleSessionClick}
-        viewMode={viewMode}
-      />
 
       {/* Session Detail Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

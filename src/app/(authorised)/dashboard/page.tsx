@@ -1,15 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { sessionService, Session } from "@/lib/sessionService";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
-import SessionCard from "@/components/sessions/SessionCard";
+import { EnhancedSessionCard } from "@/components/sessions/enhanced-session-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NewSessionForm } from "@/components/new-session/new-session-form";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { EffectsBreakdown } from "@/components/dashboard/effects-breakdown";
+import { InfoBanner } from "@/components/dashboard/info-banner";
+import { Carousel, CarouselItem } from "@/components/ui/carousel";
 
 import {
   processDosingTrends,
@@ -149,16 +152,10 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [user]);
 
-  // const getDisplayName = () => {
-  //   if (profile?.full_name) {
-  //     return profile.full_name.split(" ")[0]; // First name only
-  //   }
-  //   return user?.email?.split("@")[0] || "User";
-  // };
-
-  const handleSessionClick = (session: Session) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSessionClick = (_session: Session) => {
     // For now, just log the session. In a real app, you might want to navigate to a detail view
-    // console.log("Session clicked:", session);
+    // console.log("Session clicked:", _session);
   };
 
   const handleNewSessionCreated = () => {
@@ -176,18 +173,37 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Desktop skeleton */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="bg-doser-surface border-doser-border">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <div className="h-8 bg-gray-200 rounded w-16 mx-auto mb-2 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-24 mx-auto mb-2 animate-pulse"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32 mx-auto animate-pulse"></div>
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              key={i}
+              className="bg-doser-surface border border-doser-border rounded-lg p-6"
+            >
+              <div className="text-center">
+                <div className="h-8 bg-gray-200 rounded w-16 mx-auto mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-24 mx-auto mb-2 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-32 mx-auto animate-pulse"></div>
+              </div>
+            </div>
           ))}
+        </div>
+        {/* Mobile skeleton */}
+        <div className="md:hidden -mx-6 px-6">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-[calc(50%-0.375rem)] min-w-[calc(50%-0.375rem)] bg-doser-surface border border-doser-border rounded-lg p-4"
+              >
+                <div className="text-center">
+                  <div className="h-6 bg-gray-200 rounded w-12 mx-auto mb-2 animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 rounded w-20 mx-auto mb-2 animate-pulse"></div>
+                  <div className="h-2 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -208,219 +224,147 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Header */}
+    <div className="container mx-auto p-6 space-y-12">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-doser-text mb-2">
-            {/* Welcome back, {getDisplayName()} */}
-            Welcome back, Luke!
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-gradient-doser">
+            {/* {profile
+              ? `Welcome back, ${profile?.full_name?.split(" ")[0]}!`
+              : "Welcome back!"} */}
+            Welcome back!
           </h1>
-          <p className="text-doser-text-muted">
-            Here&apos;s your cannabis dosing overview for today
-          </p>
-        </div>
-        {recentSessions.length > 0 && (
-          <Button
-            onClick={() => setIsNewSessionOpen(true)}
-            className="bg-doser-primary hover:bg-doser-primary-hover"
-          >
-            + New Session
-          </Button>
-        )}
-      </div>
-
-      {/* Summary Cards */}
-      <div className="md:hidden">
-        {/* Mobile: Horizontal scrolling cards */}
-        <div className="mb-3">
-          <p className="text-xs text-doser-text-muted text-center">
-            ← Scroll to see all stats →
-          </p>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-doser">
-          {/* Total Sessions */}
-          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-doser-text mb-2">
-                  {stats?.totalSessions || 0}
-                </div>
-                <div className="text-doser-text-muted text-sm mb-2">
-                  Total Sessions
-                </div>
-                {stats && stats.lastWeekSessions > 0 && (
-                  <div className="text-doser-primary text-xs">
-                    +{stats.thisWeekSessions - stats.lastWeekSessions} from last
-                    week
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Avg THC Dose */}
-          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-doser-text mb-2">
-                  {stats?.avgThcDose || 0}mg
-                </div>
-                <div className="text-doser-text-muted text-sm mb-2">
-                  Avg THC Dose
-                </div>
-                {stats && stats.totalThcConsumed > 0 && (
-                  <div className="text-doser-primary text-xs">
-                    {stats.totalThcConsumed}mg total consumed
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Avg CBD Dose */}
-          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-doser-text mb-2">
-                  {stats?.avgCbdDose || 0}mg
-                </div>
-                <div className="text-doser-text-muted text-sm mb-2">
-                  Avg CBD Dose
-                </div>
-                {stats && stats.totalCbdConsumed > 0 && (
-                  <div className="text-doser-primary text-xs">
-                    {stats.totalCbdConsumed}mg total consumed
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Days Tracked */}
-          <Card className="bg-doser-surface border-doser-border min-w-[280px] flex-shrink-0">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-doser-text mb-2">
-                  {stats?.totalDaysTracked || 0}
-                </div>
-                <div className="text-doser-text-muted text-sm mb-2">
-                  Days Tracked
-                </div>
-                {stats && stats.thisWeekSessions > 0 && (
-                  <div className="text-doser-primary text-xs">
-                    {stats.thisWeekSessions} this week
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
-      {/* Desktop: Grid layout */}
-      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Sessions */}
-        <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-doser-text mb-2">
-                {stats?.totalSessions || 0}
-              </div>
-              <div className="text-doser-text-muted text-sm mb-2">
-                Total Sessions
-              </div>
-              {stats && stats.lastWeekSessions > 0 && (
-                <div className="text-doser-primary text-sm">
-                  +{stats.thisWeekSessions - stats.lastWeekSessions} from last
-                  week
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Avg THC Dose */}
-        <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-doser-text mb-2">
-                {stats?.avgThcDose || 0}mg
-              </div>
-              <div className="text-doser-text-muted text-sm mb-2">
-                Avg THC Dose
-              </div>
-              {stats && stats.totalThcConsumed > 0 && (
-                <div className="text-doser-primary text-sm">
-                  {stats.totalThcConsumed}mg total consumed
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Avg CBD Dose */}
-        <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-doser-text mb-2">
-                {stats?.avgCbdDose || 0}mg
-              </div>
-              <div className="text-doser-text-muted text-sm mb-2">
-                Avg CBD Dose
-              </div>
-              {stats && stats.totalCbdConsumed > 0 && (
-                <div className="text-doser-primary text-sm">
-                  {stats.totalCbdConsumed}mg total consumed
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Days Tracked */}
-        <Card className="bg-doser-surface border-doser-border">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-doser-text mb-2">
-                {stats?.totalDaysTracked || 0}
-              </div>
-              <div className="text-doser-text-muted text-sm mb-2">
-                Days Tracked
-              </div>
-              {stats && stats.thisWeekSessions > 0 && (
-                <div className="text-doser-primary text-sm">
-                  {stats.thisWeekSessions} this week
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Grid - Desktop: 4 columns, Mobile: Swipeable carousel */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          value={stats?.totalSessions || 0}
+          label="Total Sessions"
+          sublabel={
+            stats && stats.lastWeekSessions > 0
+              ? `+${
+                  stats.thisWeekSessions - stats.lastWeekSessions
+                } from last week`
+              : "Last 7 days"
+          }
+        />
+        <StatsCard
+          value={`${stats?.avgThcDose || 0}mg`}
+          label="Avg THC Dose"
+          sublabel={
+            stats && stats.totalThcConsumed > 0
+              ? `${stats.totalThcConsumed}mg total consumed`
+              : "Average per session"
+          }
+        />
+        <StatsCard
+          value={`${stats?.avgCbdDose || 0}mg`}
+          label="Avg CBD Dose"
+          sublabel={
+            stats && stats.totalCbdConsumed > 0
+              ? `${stats.totalCbdConsumed}mg total consumed`
+              : "Average per session"
+          }
+        />
+        <StatsCard
+          value={stats?.totalDaysTracked || 0}
+          label="Days Tracked"
+          sublabel={
+            stats && stats.thisWeekSessions > 0
+              ? `${stats.thisWeekSessions} this week`
+              : "Keep it up! 🌿"
+          }
+        />
       </div>
 
-      {/* Analytics Charts */}
+      {/* Mobile Carousel */}
+      <div className="md:hidden -mx-6 px-6">
+        <Carousel>
+          <CarouselItem className="w-[calc(50%-0.375rem)] min-w-[calc(50%-0.375rem)] h-[190px]">
+            <StatsCard
+              value={stats?.totalSessions || 0}
+              label="Total Sessions"
+              sublabel={
+                stats && stats.lastWeekSessions > 0
+                  ? `+${
+                      stats.thisWeekSessions - stats.lastWeekSessions
+                    } from last week`
+                  : "Last 7 days"
+              }
+            />
+          </CarouselItem>
+          <CarouselItem className="w-[calc(50%-0.375rem)] min-w-[calc(50%-0.375rem)] h-[190px]">
+            <StatsCard
+              value={`${stats?.avgThcDose || 0}mg`}
+              label="Avg THC Dose"
+              sublabel={
+                stats && stats.totalThcConsumed > 0
+                  ? `${stats.totalThcConsumed}mg total consumed`
+                  : "Average per session"
+              }
+            />
+          </CarouselItem>
+          <CarouselItem className="w-[calc(50%-0.375rem)] min-w-[calc(50%-0.375rem)] h-[190px]">
+            <StatsCard
+              value={`${stats?.avgCbdDose || 0}mg`}
+              label="Avg CBD Dose"
+              sublabel={
+                stats && stats.totalCbdConsumed > 0
+                  ? `${stats.totalCbdConsumed}mg total consumed`
+                  : "Average per session"
+              }
+            />
+          </CarouselItem>
+          <CarouselItem className="w-[calc(50%-0.375rem)] min-w-[calc(50%-0.375rem)] h-[190px]">
+            <StatsCard
+              value={stats?.totalDaysTracked || 0}
+              label="Days Tracked"
+              sublabel={
+                stats && stats.thisWeekSessions > 0
+                  ? `${stats.thisWeekSessions} this week`
+                  : "Keep it up! 🌿"
+              }
+            />
+          </CarouselItem>
+        </Carousel>
+      </div>
+
+      {/* Analytics Section */}
       {stats && stats.totalSessions > 0 && allSessions.length > 0 && (
-        <div className="space-y-4 sm:space-y-6">
-          <h2 className="text-xl font-semibold text-doser-text">
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold tracking-tight">
             Analytics & Insights
           </h2>
-          <DashboardCharts
-            dosingTrends={processDosingTrends(allSessions)}
-            effects={processEffectsData(allSessions)}
-            usagePattern={processUsagePattern(allSessions)}
-          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <DashboardCharts
+                dosingTrends={processDosingTrends(allSessions)}
+                effects={processEffectsData(allSessions)}
+                usagePattern={processUsagePattern(allSessions)}
+              />
+            </div>
+            <div>
+              <EffectsBreakdown />
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Info Banner */}
+      <InfoBanner />
 
       {/* Recent Sessions */}
       {recentSessions.length > 0 ? (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-doser-text">
+          <h2 className="text-2xl font-semibold tracking-tight">
             Recent Sessions
           </h2>
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {recentSessions.map((session) => (
-              <SessionCard
+              <EnhancedSessionCard
                 key={session.id}
                 session={session}
                 onClick={handleSessionClick}
@@ -430,7 +374,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-doser-text">
+          <h2 className="text-2xl font-semibold tracking-tight">
             Recent Sessions
           </h2>
           <EmptyState
