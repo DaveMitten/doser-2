@@ -15,18 +15,25 @@ interface EnhancedSessionCardProps {
 }
 
 // Effect mapping with colors and icons
+const POSITIVE_EFFECT_COLOR =
+  "bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30"
+const NEUTRAL_EFFECT_COLOR =
+  "bg-doser-effect-neutral/15 text-doser-effect-neutral border-doser-effect-neutral/30"
+const NEGATIVE_EFFECT_COLOR =
+  "bg-doser-effect-negative/15 text-doser-effect-negative border-doser-effect-negative/30"
+
 const effectConfig: Record<string, { color: string; icon: string; type: 'positive' | 'neutral' | 'negative' }> = {
-  euphoric: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '😌', type: 'positive' },
-  happy: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '😊', type: 'positive' },
-  creative: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '🎨', type: 'positive' },
-  energetic: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '⚡', type: 'positive' },
-  hungry: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '😋', type: 'positive' },
-  relaxed: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '😌', type: 'positive' },
-  focused: { color: 'bg-doser-effect-positive/15 text-doser-effect-positive border-doser-effect-positive/30', icon: '🎯', type: 'positive' },
-  sleepy: { color: 'bg-doser-effect-neutral/15 text-doser-effect-neutral border-doser-effect-neutral/30', icon: '😴', type: 'neutral' },
-  anxious: { color: 'bg-doser-effect-negative/15 text-doser-effect-negative border-doser-effect-negative/30', icon: '😰', type: 'negative' },
-  dizzy: { color: 'bg-doser-effect-negative/15 text-doser-effect-negative border-doser-effect-negative/30', icon: '😵', type: 'negative' },
-  paranoid: { color: 'bg-doser-effect-negative/15 text-doser-effect-negative border-doser-effect-negative/30', icon: '😨', type: 'negative' },
+  euphoric: { color: POSITIVE_EFFECT_COLOR, icon: "😌", type: "positive" },
+  happy: { color: POSITIVE_EFFECT_COLOR, icon: "😊", type: "positive" },
+  creative: { color: POSITIVE_EFFECT_COLOR, icon: "🎨", type: "positive" },
+  energetic: { color: POSITIVE_EFFECT_COLOR, icon: "⚡", type: "positive" },
+  hungry: { color: POSITIVE_EFFECT_COLOR, icon: "😋", type: "positive" },
+  relaxed: { color: POSITIVE_EFFECT_COLOR, icon: "😌", type: "positive" },
+  focused: { color: POSITIVE_EFFECT_COLOR, icon: "🎯", type: "positive" },
+  sleepy: { color: NEUTRAL_EFFECT_COLOR, icon: "😴", type: "neutral" },
+  anxious: { color: NEGATIVE_EFFECT_COLOR, icon: "😰", type: "negative" },
+  dizzy: { color: NEGATIVE_EFFECT_COLOR, icon: "😵", type: "negative" },
+  paranoid: { color: NEGATIVE_EFFECT_COLOR, icon: "😨", type: "negative" },
 }
 
 export function EnhancedSessionCard({ session, onClick }: EnhancedSessionCardProps) {
