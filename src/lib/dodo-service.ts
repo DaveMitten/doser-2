@@ -2,6 +2,7 @@ import {
   createSupabaseServerClient,
   createSupabaseServiceClient,
 } from "@/lib/supabase-server";
+import { SupabaseClient } from "@supabase/supabase-js";
 import DodoPayments from "dodopayments";
 
 import type {
@@ -19,11 +20,16 @@ import {
 } from "./dodo-types";
 import { PlanService } from "./plan-service";
 import { logError, logWarning, logInfo } from "./error-logger";
+import { Database } from "./database.types";
 import z from "zod";
+
+type SupabaseClientType = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
 
 export class DodoService {
   private config: DodoConfig;
-  private supabase?: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  private supabase?: any;
   private serviceSupabase?: ReturnType<typeof createSupabaseServiceClient>;
   private dodoClient: DodoPayments;
 
@@ -57,11 +63,11 @@ export class DodoService {
       : "https://live.dodopayments.com";
   }
 
-  private async getSupabase() {
+  private async getSupabase(): Promise<SupabaseClient<Database>> {
     if (!this.supabase) {
       this.supabase = await createSupabaseServerClient();
     }
-    return this.supabase;
+    return this.supabase as SupabaseClient<Database>;
   }
 
   /**
@@ -85,8 +91,11 @@ export class DodoService {
     console.log("getOrCreateCustomer", { userId, email, name });
     try {
       // First check if we already have a customer for this user
-      const supabase = await this.getSupabase();
-      const { data: existingSubscription, error: queryError } = await supabase
+      const supabase = (await this.getSupabase()) as any;
+      const {
+        data: existingSubscription,
+        error: queryError,
+      }: { data: UserSubscription | null; error: any | Error } = await supabase
         .from("user_subscriptions")
         .select("dodo_customer_id")
         .eq("user_id", userId)
@@ -96,7 +105,7 @@ export class DodoService {
       if (queryError) {
         console.error("Error querying user_subscriptions:", queryError);
         // If table doesn't exist, just create a new customer
-        if (queryError.code === "42P01") {
+        if ((queryError as any).code === "42P01") {
           console.warn(
             "user_subscriptions table not found. Please run dodo-payments-migration.sql"
           );
@@ -316,20 +325,21 @@ export class DodoService {
     planId: string
   ): Promise<UserSubscription> {
     const now = new Date().toISOString();
-    const subscription: UserSubscription = {
-      id: crypto.randomUUID(),
-      user_id: userId,
-      plan_id: planId,
-      status: "active",
-      current_period_start: now,
-      current_period_end: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(), // 1 year from now
-      created_at: now,
-      updated_at: now,
-    };
+    const subscription: Database["public"]["Tables"]["user_subscriptions"]["Insert"] =
+      {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        plan_id: planId,
+        status: "active",
+        current_period_start: now,
+        current_period_end: new Date(
+          Date.now() + 365 * 24 * 60 * 60 * 1000
+        ).toISOString(), // 1 year from now
+        created_at: now,
+        updated_at: now,
+      };
 
-    const supabase = await this.getSupabase();
+    const supabase = (await this.getSupabase()) as any;
     const { error } = await supabase
       .from("user_subscriptions")
       .upsert(subscription, { onConflict: "user_id" });
@@ -338,7 +348,7 @@ export class DodoService {
       throw new Error(`Failed to create free subscription: ${error.message}`);
     }
 
-    return subscription;
+    return subscription as UserSubscription;
   }
 
   /**
@@ -426,7 +436,7 @@ export class DodoService {
           }
         );
 
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { data: existingSubscription } = await supabase
           .from("user_subscriptions")
           .select("user_id")
@@ -499,7 +509,7 @@ export class DodoService {
       );
 
       // Use service role client for webhook operations to bypass RLS
-      const supabase = this.getServiceSupabase();
+      const supabase = this.getServiceSupabase() as any;
 
       // Log before upsert
       console.log("🔄 Attempting upsert to user_subscriptions table...");
@@ -574,7 +584,7 @@ export class DodoService {
     const subscription = data;
     const dodoSubscriptionId = subscription.subscription_id as string;
 
-    const supabase = this.getServiceSupabase();
+    const supabase = this.getServiceSupabase() as any;
     const { error } = await supabase
       .from("user_subscriptions")
       .update({
@@ -600,7 +610,7 @@ export class DodoService {
     const subscription = data;
     const dodoSubscriptionId = subscription.subscription_id as string;
 
-    const supabase = this.getServiceSupabase();
+    const supabase = this.getServiceSupabase() as any;
     const { error } = await supabase
       .from("user_subscriptions")
       .update({
@@ -626,7 +636,7 @@ export class DodoService {
     const subscription = data;
     const dodoSubscriptionId = subscription.subscription_id as string;
 
-    const supabase = this.getServiceSupabase();
+    const supabase = this.getServiceSupabase() as any;
     const { error } = await supabase
       .from("user_subscriptions")
       .update({
@@ -690,7 +700,7 @@ export class DodoService {
         userId = metadata.user_id as string;
       } else if (subscriptionId) {
         // Try to find user from subscription (use service client for webhook)
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { data: subscription } = await supabase
           .from("user_subscriptions")
           .select("user_id")
@@ -711,7 +721,7 @@ export class DodoService {
       // Only insert payment history if we have a valid amount
       if (amount && amount > 0) {
         // Insert payment record into payment_history (use service client for webhook)
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { error: insertError } = await supabase
           .from("payment_history")
           .insert({
@@ -751,7 +761,7 @@ export class DodoService {
           }) for subscription ${subscriptionId}, updating status to active`
         );
 
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { error: updateError } = await supabase
           .from("user_subscriptions")
           .update({
@@ -823,7 +833,7 @@ export class DodoService {
         userId = metadata.user_id as string;
       } else if (subscriptionId) {
         // Try to find user from subscription (use service client for webhook)
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { data: subscription } = await supabase
           .from("user_subscriptions")
           .select("user_id")
@@ -844,7 +854,7 @@ export class DodoService {
       // Only insert payment history if we have a valid amount
       if (amount && amount > 0) {
         // Insert failed payment record into payment_history (use service client for webhook)
-        const supabase = this.getServiceSupabase();
+        const supabase = this.getServiceSupabase() as any;
         const { error: insertError } = await supabase
           .from("payment_history")
           .insert({

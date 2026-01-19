@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 import { DodoService } from "@/lib/dodo-service";
 import { PlanService } from "../../../../lib/plan-service";
 import { SUBSCRIPTION_PLANS } from "../../../../lib/dodo-types";
+import { UserProfile } from "../../../../types/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,11 +27,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user profile for email
-    const { data: profile } = await supabase
+    const { data: profile }: { data: UserProfile | null } = (await supabase
       .from("profiles")
       .select("email, full_name")
       .eq("id", user.id)
-      .single();
+      .single()) as { data: UserProfile | null };
 
     if (!profile?.email) {
       return NextResponse.json(

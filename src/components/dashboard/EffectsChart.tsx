@@ -24,7 +24,11 @@ export function EffectsChart({ data }: EffectsChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={data}
+            data={data.map((item) => ({
+              name: item.name,
+              value: item.value,
+              color: item.color,
+            }))}
             cx="50%"
             cy="50%"
             labelLine={false}
