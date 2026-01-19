@@ -1,12 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Database } from "./database.types";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -14,7 +15,9 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(
+          cookiesToSet: Array<{ name: string; value: string; options?: any }>
+        ) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
@@ -62,14 +65,26 @@ export async function updateSession(request: NextRequest) {
   if (!user && isProtectedPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
-    return NextResponse.redirect(url);
+    // Preserve cookies when redirecting
+    const redirectResponse = NextResponse.redirect(url);
+    // Copy cookies from supabaseResponse to preserve session
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
   // Redirect authenticated users away from auth pages
   if (user && isAuthPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    // Preserve cookies when redirecting
+    const redirectResponse = NextResponse.redirect(url);
+    // Copy cookies from supabaseResponse to preserve session
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
   // Note: Subscription/trial checking is handled client-side via UserDataContext

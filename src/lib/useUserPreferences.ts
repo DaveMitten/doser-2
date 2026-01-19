@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { createSupabaseBrowserClient } from "./supabase-browser";
 
@@ -18,7 +18,9 @@ export function useUserPreferences() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createSupabaseBrowserClient();
+
+  // Memoize the Supabase client to avoid recreating it on every render
+  const supabase = useMemo(() => createSupabaseBrowserClient() as any, []);
 
   useEffect(() => {
     if (!user) {
