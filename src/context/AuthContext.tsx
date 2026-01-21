@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
+import * as Sentry from "@sentry/nextjs";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -59,14 +60,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getSession = async () => {
       try {
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'getSession called',
+          level: 'debug',
+          data: { env: typeof window !== 'undefined' ? 'browser' : 'server', hypothesisId: 'A' },
+        });
+        // #endregion
         // console.log("=== AUTH CONTEXT: Getting initial session ===");
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
 
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'getSession result',
+          level: 'debug',
+          data: {
+            hasError: !!error,
+            errorMessage: error?.message,
+            hasSession: !!session,
+            userId: session?.user?.id,
+            email: session?.user?.email,
+            expiresAt: session?.expires_at,
+            hypothesisId: 'A',
+          },
+        });
+        // #endregion
+
         if (error) {
           // console.error("❌ Error getting session:", error);
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'getSession error path',
+            level: 'error',
+            data: { errorCode: error?.code, errorStatus: error?.status, hypothesisId: 'A' },
+          });
+          // #endregion
           // If there's an error, clear the user state
           setUser(null);
         } else if (session) {
@@ -75,15 +109,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           //   email: session.user.email,
           //   expiresAt: session.expires_at,
           // });
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Setting user from session',
+            level: 'info',
+            data: { userId: session.user.id, email: session.user.email, hypothesisId: 'A' },
+          });
+          // #endregion
           setUser(session.user);
         } else {
           // console.log("⚠️ No session found");
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'No session found',
+            level: 'warning',
+            data: { hypothesisId: 'A' },
+          });
+          // #endregion
           setUser(null);
         }
       } catch (error) {
         // console.error("Unexpected error getting session:", error);
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Unexpected error in getSession',
+          level: 'error',
+          data: { errorMessage: error instanceof Error ? error.message : 'unknown', hypothesisId: 'A' },
+        });
+        // #endregion
         setUser(null);
       } finally {
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Setting loading to false',
+          level: 'debug',
+          data: { hypothesisId: 'A' },
+        });
+        // #endregion
         setLoading(false);
       }
     };
@@ -94,6 +160,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // #region agent log
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'onAuthStateChange fired',
+        level: 'info',
+        data: {
+          event,
+          hasSession: !!session,
+          userId: session?.user?.id,
+          email: session?.user?.email,
+          hypothesisId: 'B',
+        },
+      });
+      // #endregion
       // console.log("=== AUTH STATE CHANGE ===");
       // console.log("Event:", event);
       // console.log("User:", session?.user?.email);
@@ -102,21 +182,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       switch (event) {
         case "SIGNED_IN":
           // console.log("✅ User signed in");
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'SIGNED_IN event',
+            level: 'info',
+            data: { userId: session?.user?.id, hypothesisId: 'B' },
+          });
+          // #endregion
           setUser(session?.user ?? null);
           setLoading(false);
           break;
         case "TOKEN_REFRESHED":
           // console.log("🔄 Token refreshed");
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'TOKEN_REFRESHED event',
+            level: 'info',
+            data: { userId: session?.user?.id, hypothesisId: 'B' },
+          });
+          // #endregion
           setUser(session?.user ?? null);
           setLoading(false);
           break;
         case "SIGNED_OUT":
           // console.log("👋 User signed out");
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'SIGNED_OUT event',
+            level: 'info',
+            data: { hypothesisId: 'B' },
+          });
+          // #endregion
           setUser(null);
           setLoading(false);
           break;
         case "USER_UPDATED":
           // console.log("👤 User updated");
+          // #region agent log
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'USER_UPDATED event',
+            level: 'info',
+            data: { userId: session?.user?.id, hypothesisId: 'B' },
+          });
+          // #endregion
           setUser(session?.user ?? null);
           break;
         case "MFA_CHALLENGE_VERIFIED":

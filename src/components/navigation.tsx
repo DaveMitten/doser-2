@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 import DoserSVG from "./svgs/DoserSVG";
 import { useAuth } from "@/context/AuthContext";
+import * as Sentry from "@sentry/nextjs";
 
 interface NavigationProps {
   currentPage?: string;
@@ -66,6 +67,24 @@ export function Navigation({ currentPage }: NavigationProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
+  // #region agent log
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: 'navigation',
+      message: 'Navigation render',
+      level: 'debug',
+      data: {
+        hasUser: !!user,
+        loading,
+        userId: user?.id,
+        email: user?.email,
+        pathname,
+        hypothesisId: 'C',
+      },
+    });
+  }, [user, loading, pathname]);
+  // #endregion
+
   // Auto-determine current page if not provided
   if (!currentPage) {
     if (pathname === "/pricing") {
@@ -74,6 +93,22 @@ export function Navigation({ currentPage }: NavigationProps) {
       currentPage = "home";
     }
   }
+
+  // #region agent log
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: 'navigation',
+      message: 'Rendering CTA buttons',
+      level: 'debug',
+      data: {
+        loading,
+        hasUser: !!user,
+        buttonsCount: !loading ? getCtaButtons(!!user).length : 0,
+        hypothesisId: 'C',
+      },
+    });
+  }, [loading, user]);
+  // #endregion
 
   const renderNavigationLink = (link: NavigationLink, isMobile = false) => {
     const isActive = currentPage === link.pageKey;

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,8 +21,33 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   } = useSubscription();
   const router = useRouter();
 
+  // #region agent log
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'ProtectedRoute render',
+      level: 'debug',
+      data: {
+        hasUser: !!user,
+        authLoading,
+        userId: user?.id,
+        email: user?.email,
+        hypothesisId: 'E',
+      },
+    });
+  }, [user, authLoading]);
+  // #endregion
+
   useEffect(() => {
     if (!authLoading && !user) {
+      // #region agent log
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Redirecting to auth (no user)',
+        level: 'warning',
+        data: { authLoading, hasUser: !!user, hypothesisId: 'E' },
+      });
+      // #endregion
       router.push("/auth");
     }
   }, [user, authLoading, router]);

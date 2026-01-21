@@ -14,8 +14,8 @@ interface LoginFormProps {
 
 // Test credentials - only used in development
 const IS_DEV = process.env.NODE_ENV === "development";
-const TEST_EMAIL = IS_DEV ? "test@example.com" : "";
-const TEST_PASSWORD = IS_DEV ? "testpassword123" : "";
+const TEST_EMAIL = IS_DEV ? "davidmitten88+prod3@gmail.com" : "";
+const TEST_PASSWORD = IS_DEV ? "Ihatepasswords1" : "";
 export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
