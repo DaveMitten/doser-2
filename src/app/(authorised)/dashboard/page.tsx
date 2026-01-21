@@ -58,7 +58,38 @@ export default function DashboardPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    // #region agent log
+    if (typeof window !== 'undefined') {
+      import('@sentry/nextjs').then((Sentry) => {
+        Sentry.addBreadcrumb({
+          category: 'dashboard',
+          message: 'Dashboard useEffect',
+          level: 'debug',
+          data: {
+            hasUser: !!user,
+            userId: user?.id,
+            email: user?.email,
+          },
+        });
+      }).catch(() => {});
+    }
+    // #endregion
+    
+    if (!user) {
+      // #region agent log
+      if (typeof window !== 'undefined') {
+        import('@sentry/nextjs').then((Sentry) => {
+          Sentry.addBreadcrumb({
+            category: 'dashboard',
+            message: 'Dashboard: No user, returning early',
+            level: 'warning',
+            data: { hasUser: false },
+          });
+        }).catch(() => {});
+      }
+      // #endregion
+      return;
+    }
 
     const fetchDashboardData = async () => {
       try {

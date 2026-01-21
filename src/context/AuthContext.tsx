@@ -14,6 +14,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = createSupabaseBrowserClient();
 
+  // Timeout fallback: if loading takes more than 5 seconds, stop loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Auth loading timeout - forcing loading to false',
+          level: 'warning',
+          data: { hasUser: !!user },
+        });
+        Sentry.captureMessage('AuthContext loading timeout', {
+          level: 'warning',
+          tags: { component: 'AuthContext' },
+        });
+        // #endregion
+        setLoading(false);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [loading, user]);
+
   // Helper function to get user-friendly error messages
   const getErrorMessage = (
     error: { message?: string } | null | undefined

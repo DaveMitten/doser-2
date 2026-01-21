@@ -171,8 +171,11 @@ export function Navigation({ currentPage }: NavigationProps) {
 
       {/* Desktop CTA Buttons */}
       <div className="hidden md:flex items-center space-x-4">
-        {!loading &&
-          getCtaButtons(!!user).map((button) => renderCTAButton(button))}
+        {loading ? (
+          <div className="text-doser-text-muted text-sm">Loading...</div>
+        ) : (
+          getCtaButtons(!!user).map((button) => renderCTAButton(button))
+        )}
       </div>
 
       {/* Mobile Menu Button */}
@@ -213,10 +216,13 @@ export function Navigation({ currentPage }: NavigationProps) {
 
               {/* Mobile CTA Buttons */}
               <div className="pt-6 border-t border-doser-border space-y-2">
-                {!loading &&
+                {loading ? (
+                  <div className="text-doser-text-muted text-sm text-center py-2">Loading...</div>
+                ) : (
                   getCtaButtons(!!user).map((button) =>
                     renderCTAButton(button, true)
-                  )}
+                  )
+                )}
               </div>
             </div>
           </SheetContent>
