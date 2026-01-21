@@ -1,41 +1,56 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
+import { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
+import { Database } from "../lib/database.types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createSupabaseBrowserClient();
+  
+  // Create Supabase client with error handling
+  let supabase: ReturnType<typeof createSupabaseBrowserClient> | null = null;
+  try {
+    supabase = createSupabaseBrowserClient();
+  } catch (error) {
+    // #region agent log
+    Sentry.captureException(error instanceof Error ? error : new Error('Failed to create Supabase client'), {
+      level: 'error',
+      tags: { component: 'AuthContext', issue: 'supabase_client_creation' },
+    });
+    // #endregion
+    // If client creation fails, set loading to false immediately
+    // The component will still render, but auth won't work
+    console.error('Failed to create Supabase client:', error);
+  }
 
-  // Timeout fallback: if loading takes more than 5 seconds, stop loading
+  // Timeout fallback: if loading takes more than 3 seconds, stop loading
+  // This is a safety net in case getSession() hangs
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (loading) {
-        // #region agent log
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Auth loading timeout - forcing loading to false',
-          level: 'warning',
-          data: { hasUser: !!user },
-        });
-        Sentry.captureMessage('AuthContext loading timeout', {
-          level: 'warning',
-          tags: { component: 'AuthContext' },
-        });
-        // #endregion
-        setLoading(false);
-      }
-    }, 5000);
+      // #region agent log
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Auth loading timeout - forcing loading to false',
+        level: 'warning',
+        data: { hasUser: !!user, loading },
+      });
+      Sentry.captureMessage('AuthContext loading timeout - getSession may have hung', {
+        level: 'warning',
+        tags: { component: 'AuthContext', issue: 'loading_timeout' },
+      });
+      // #endregion
+      setLoading(false);
+    }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [loading, user]);
+  }, []); // Run once on mount, don't depend on loading/user
 
   // Helper function to get user-friendly error messages
   const getErrorMessage = (
@@ -88,14 +103,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           category: 'auth',
           message: 'getSession called',
           level: 'debug',
-          data: { env: typeof window !== 'undefined' ? 'browser' : 'server', hypothesisId: 'A' },
+          data: { 
+            env: typeof window !== 'undefined' ? 'browser' : 'server',
+            hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            hasSupabaseClient: !!supabase,
+            hypothesisId: 'A' 
+          },
         });
         // #endregion
-        // console.log("=== AUTH CONTEXT: Getting initial session ===");
+
+        // Check if Supabase client is available
+        if (!supabase) {
+          // #region agent log
+          Sentry.captureMessage('Supabase client not available - cannot get session', {
+            level: 'error',
+            tags: { component: 'AuthContext', issue: 'missing_supabase_client' },
+          });
+          // #endregion
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        // Check if Supabase env vars are missing
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          // #region agent log
+          Sentry.captureMessage('Missing Supabase environment variables', {
+            level: 'error',
+            tags: { component: 'AuthContext' },
+            extra: {
+              hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+              hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            },
+          });
+          // #endregion
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        // Wrap getSession in a timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
+        );
+
+        // #region agent log
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Starting getSession with timeout',
+          level: 'debug',
+          data: { hypothesisId: 'A' },
+        });
+        // #endregion
+
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession();
+        } = await Promise.race([sessionPromise, timeoutPromise]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
 
         // #region agent log
         Sentry.addBreadcrumb({
@@ -156,12 +222,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         // console.error("Unexpected error getting session:", error);
         // #region agent log
+        const errorMessage = error instanceof Error ? error.message : 'unknown';
         Sentry.addBreadcrumb({
           category: 'auth',
           message: 'Unexpected error in getSession',
           level: 'error',
-          data: { errorMessage: error instanceof Error ? error.message : 'unknown', hypothesisId: 'A' },
+          data: { errorMessage, hypothesisId: 'A' },
         });
+        
+        // If it's a timeout, capture it as a warning
+        if (errorMessage.includes('timeout')) {
+          Sentry.captureMessage('getSession timeout - Supabase may be unreachable', {
+            level: 'warning',
+            tags: { component: 'AuthContext', errorType: 'timeout' },
+          });
+        } else {
+          Sentry.captureException(error instanceof Error ? error : new Error(errorMessage), {
+            level: 'error',
+            tags: { component: 'AuthContext' },
+          });
+        }
         // #endregion
         setUser(null);
       } finally {
@@ -180,9 +260,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getSession();
 
     // Listen for auth changes
+    if (!supabase) {
+      setLoading(false);
+      return () => {}; // Return empty cleanup function
+    }
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       // #region agent log
       Sentry.addBreadcrumb({
         category: 'auth',
@@ -264,9 +349,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase?.auth]);
 
   const signUp = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     // console.log("Attempting Supabase signUp with:", { email });
 
     try {
@@ -301,6 +389,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -315,11 +406,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   const resetPassword = async (email: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw new Error(getErrorMessage(error));
@@ -330,6 +427,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resendVerificationEmail = async (email: string) => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const { error } = await supabase.auth.resend({
         type: "signup",
@@ -346,6 +446,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshSession = async () => {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const { data, error } = await supabase.auth.refreshSession();
       if (error) {
@@ -363,6 +466,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const checkSessionValidity = async (): Promise<boolean> => {
+    if (!supabase) {
+      return false;
+    }
     try {
       const {
         data: { session },
