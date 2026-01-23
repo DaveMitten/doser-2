@@ -7,7 +7,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+// Top-level console log to verify file loads
+console.log("HOME PAGE FILE LOADED");
+
 export default function Home() {
+  console.log("HOME COMPONENT RENDERED");
   const { user, loading } = useAuth();
   const router = useRouter();
 

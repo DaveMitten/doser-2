@@ -1,5 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 
+// Log to verify this file is being loaded
+console.log("[Sentry Client] Loading configuration file");
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
