@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (supabaseCreationError) {
       console.error('Supabase client creation failed - setting loading to false', supabaseCreationError.message);
+      console.log('1 setting loading to false ');
       setLoading(false);
     }
   }, []); // Run once on mount
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         tags: { component: 'AuthContext', issue: 'loading_timeout' },
       });
       // #endregion
+      console.log('2 setting loading to false ');
       setLoading(false);
     }, 3000);
 
@@ -120,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           // #endregion
           setUser(null);
+          console.log('3 setting loading to false ');
           setLoading(false);
           return;
         }
@@ -137,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           // #endregion
           setUser(null);
+          console.log('4 setting loading to false ');
           setLoading(false);
           return;
         }
@@ -216,6 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // #region agent log
         console.log('Setting loading to false', { hypothesisId: 'A' });
         // #endregion
+        console.log('5 setting loading to false ');
         setLoading(false);
       }
     };
@@ -252,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('SIGNED_IN event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
           setUser(session?.user ?? null);
+          console.log('6 setting loading to false ');
           setLoading(false);
           break;
         case "TOKEN_REFRESHED":
@@ -260,6 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('TOKEN_REFRESHED event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
           setUser(session?.user ?? null);
+          console.log('7 setting loading to false ');
           setLoading(false);
           break;
         case "SIGNED_OUT":
@@ -268,13 +275,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('SIGNED_OUT event', { hypothesisId: 'B' });
           // #endregion
           setUser(null);
+          console.log('8 setting loading to false ');
           setLoading(false);
           break;
         case "USER_UPDATED":
           // console.log("👤 User updated");
           // #region agent log
+
+
           console.log('USER_UPDATED event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
+          console.log('9 setting loading to false ');
           setUser(session?.user ?? null);
           break;
         case "MFA_CHALLENGE_VERIFIED":
