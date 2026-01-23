@@ -73,11 +73,18 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     try {
       // Try client-side signout first
       await signOut();
+      // Navigate to auth page after successful signout
+      window.location.href = "/auth";
     } catch (error) {
       console.error("1: Error signing out:", error);
       // Fallback to server action
       try {
-        await serverSignOut();
+        const result = await serverSignOut();
+        if (result.success) {
+          window.location.href = "/auth";
+        } else {
+          console.error("Server signout failed:", result.error);
+        }
       } catch (serverError) {
         console.error("2: Error server error signing out:", serverError);
       }

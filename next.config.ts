@@ -4,14 +4,18 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   /* config options here */
   async headers() {
+    const isDev = process.env.NODE_ENV === "development";
+    const devWebSocketSources = isDev
+      ? " ws://127.0.0.1:* ws://localhost:*"
+      : "";
+
     return [
       {
         source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
-            value:
-              "connect-src 'self' https://prodregistryv2.org https://*.statsig.com https://*.supabase.co https://*.vercel.app https://*.sentry.io",
+            value: `connect-src 'self' https://prodregistryv2.org https://*.statsig.com https://*.supabase.co https://*.vercel.app https://*.sentry.io${devWebSocketSources}`,
           },
         ],
       },

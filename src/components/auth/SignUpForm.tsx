@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -28,7 +27,8 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const { signUp, resendVerificationEmail } = useAuth();
+  const [isPending, startTransition] = useTransition();
+  const { resendVerificationEmail } = useAuth();
 
   // Debounced email validation
   useEffect(() => {
@@ -97,47 +97,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
     }
   }, [resendCooldown]);
 
-  // Helper function to get user-friendly error messages
-  const getErrorMessage = (error: unknown): string => {
-    if (error instanceof Error) {
-      const message = error.message.toLowerCase();
-
-      if (
-        message.includes("user already registered") ||
-        message.includes("already exists") ||
-        message.includes("duplicate key") ||
-        message.includes("23505")
-      ) {
-        return "An account with this email already exists. Please sign in instead.";
-      }
-
-      if (message.includes("invalid email")) {
-        return "Please enter a valid email address.";
-      }
-
-      if (message.includes("password")) {
-        return "Password must be at least 6 characters long.";
-      }
-
-      if (
-        message.includes("rate limit") ||
-        message.includes("too many requests")
-      ) {
-        return "Too many signup attempts. Please wait a moment and try again.";
-      }
-
-      if (message.includes("network") || message.includes("connection")) {
-        return "Network error. Please check your connection and try again.";
-      }
-
-      // Return the original error message for other cases
-      return error.message;
-    }
-
-    return "An unexpected error occurred. Please try again.";
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Clear any previous errors
@@ -176,40 +136,18 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+      const result = await signup(formData);
 
-    try {
-      // Try client-side auth first for better UX
-      await signUp(email, password);
-      setSuccess(true);
-    } catch (err) {
-      console.error("Client-side signup failed:", err);
-
-      // Check if this is a duplicate email error
-      const errorMessage = getErrorMessage(err);
-      if (errorMessage.includes("already exists")) {
-        setError(errorMessage);
-        return;
-      }
-
-      // If client-side fails, try server action
-      try {
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("password", password);
-        await signup(formData);
+      if (result.success) {
         setSuccess(true);
-      } catch (serverErr) {
-        console.error("Server-side signup failed:", serverErr);
-
-        // Use the helper function for server errors too
-        const finalErrorMessage = getErrorMessage(serverErr);
-        setError(finalErrorMessage);
+      } else {
+        setError(result.error || "An error occurred during sign up");
       }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleResendVerification = async () => {
@@ -275,7 +213,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             className="bg-doser-background border-doser-border text-doser-text"
             aria-invalid={!!emailError}
             required
@@ -304,7 +242,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             className="bg-doser-background border-doser-border text-doser-text pr-10"
             required
           />
@@ -312,7 +250,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-doser-text-muted hover:text-doser-text transition-colors"
-            disabled={loading}
+            disabled={isPending}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -324,7 +262,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             className="bg-doser-background border-doser-border text-doser-text pr-10"
             required
           />
@@ -332,7 +270,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-doser-text-muted hover:text-doser-text transition-colors"
-            disabled={loading}
+            disabled={isPending}
           >
             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -357,7 +295,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
         <Button
           type="submit"
           disabled={
-            loading ||
+            isPending ||
             !email ||
             !password ||
             !confirmPassword ||
@@ -366,7 +304,7 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
           }
           className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
         >
-          {loading
+          {isPending
             ? "Creating account..."
             : isCheckingEmail
             ? "Validating email..."
