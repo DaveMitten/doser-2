@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
@@ -12,50 +12,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasInitialized = useRef(false);
 
-  // Create Supabase client with error handling
-  let supabase: ReturnType<typeof createSupabaseBrowserClient> | null = null;
-  let supabaseCreationError: Error | null = null;
-  try {
-    supabase = createSupabaseBrowserClient();
-  } catch (error) {
-    // #region agent log
-    Sentry.captureException(error instanceof Error ? error : new Error('Failed to create Supabase client'), {
-      level: 'error',
-      tags: { component: 'AuthContext', issue: 'supabase_client_creation' },
-    });
-    // #endregion
-    // Store error to handle in useEffect (can't call setState during render)
-    supabaseCreationError = error instanceof Error ? error : new Error('Failed to create Supabase client');
-    console.error('Failed to create Supabase client:', error);
-  }
+  // Create Supabase client with useMemo to ensure it's stable across renders
+  const supabase = useMemo(() => {
+    try {
+      console.log('Creating Supabase client...');
+      return createSupabaseBrowserClient();
+    } catch (error) {
+      console.error('Failed to create Supabase client:', error);
+      Sentry.captureException(error instanceof Error ? error : new Error('Failed to create Supabase client'), {
+        level: 'error',
+        tags: { component: 'AuthContext', issue: 'supabase_client_creation' },
+      });
+      return null;
+    }
+  }, []); // Only create once
 
   // If Supabase client creation failed, set loading to false immediately
   useEffect(() => {
-    if (supabaseCreationError) {
-      console.error('Supabase client creation failed - setting loading to false', supabaseCreationError.message);
-      console.log('1 setting loading to false ');
+    if (!supabase) {
+      console.error('Supabase client not available - setting loading to false');
+      console.log('1 setting loading to false (no supabase client)');
       setLoading(false);
+      return;
     }
-  }, []); // Run once on mount
+  }, [supabase]);
 
-  // Timeout fallback: if loading takes more than 3 seconds, stop loading
+  // Timeout fallback: if loading takes more than 5 seconds, stop loading
   // This is a safety net in case getSession() hangs
   useEffect(() => {
     const timeout = setTimeout(() => {
-      // #region agent log
-      console.warn('Auth loading timeout - forcing loading to false', { hasUser: !!user, loading });
-      Sentry.captureMessage('AuthContext loading timeout - getSession may have hung', {
-        level: 'warning',
-        tags: { component: 'AuthContext', issue: 'loading_timeout' },
-      });
-      // #endregion
-      console.log('2 setting loading to false ');
-      setLoading(false);
-    }, 3000);
+      if (loading) {
+        console.warn('Auth loading timeout - forcing loading to false', { hasUser: !!user, loading });
+        Sentry.captureMessage('AuthContext loading timeout - getSession may have hung', {
+          level: 'warning',
+          tags: { component: 'AuthContext', issue: 'loading_timeout' },
+        });
+        console.log('2 setting loading to false (timeout)');
+        setLoading(false);
+      }
+    }, 5000);
 
     return () => clearTimeout(timeout);
-  }, []); // Run once on mount, don't depend on loading/user
+  }, [loading, user]); // Re-run if loading state changes
 
   // Helper function to get user-friendly error messages
   const getErrorMessage = (
@@ -100,10 +100,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitialized.current) {
+      console.log('AuthContext: Already initialized, skipping getSession');
+      return;
+    }
+
+    console.log('AuthContext: useEffect running', {
+      hasSupabase: !!supabase,
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    });
+
     // Get initial session
     const getSession = async () => {
+      hasInitialized.current = true;
+
       try {
-        // #region agent log
         console.log('getSession called', {
           env: typeof window !== 'undefined' ? 'browser' : 'server',
           hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -111,25 +124,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           hasSupabaseClient: !!supabase,
           hypothesisId: 'A'
         });
-        // #endregion
 
         // Check if Supabase client is available
         if (!supabase) {
-          // #region agent log
+          console.error('Supabase client not available - cannot get session');
           Sentry.captureMessage('Supabase client not available - cannot get session', {
             level: 'error',
             tags: { component: 'AuthContext', issue: 'missing_supabase_client' },
           });
-          // #endregion
           setUser(null);
-          console.log('3 setting loading to false ');
+          console.log('3 setting loading to false (no client)');
           setLoading(false);
           return;
         }
 
         // Check if Supabase env vars are missing
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          // #region agent log
+          console.error('Missing Supabase environment variables');
           Sentry.captureMessage('Missing Supabase environment variables', {
             level: 'error',
             tags: { component: 'AuthContext' },
@@ -138,20 +149,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
             },
           });
-          // #endregion
           setUser(null);
-          console.log('4 setting loading to false ');
+          console.log('4 setting loading to false (no env vars)');
           setLoading(false);
           return;
         }
 
         // Wrap getSession in a timeout to prevent hanging
+        console.log('Starting getSession with timeout');
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
         );
-
-        console.log('Starting getSession with timeout');
 
         try {
           const result = await Promise.race([sessionPromise, timeoutPromise]);
@@ -173,7 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (error) {
             console.error('getSession error path', error);
-            // If there's an error, clear the user state
             setUser(null);
           } else if (session) {
             console.log('Setting user from session', session);
@@ -194,9 +202,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Unexpected error in getSession', error);
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+          level: 'error',
+          tags: { component: 'AuthContext', issue: 'getSession_error' },
+        });
         setUser(null);
       } finally {
-        console.log('5 setting loading to false ');
+        console.log('5 setting loading to false (finally block)');
         setLoading(false);
       }
     };
@@ -205,14 +217,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     if (!supabase) {
-      setLoading(false);
-      return () => { }; // Return empty cleanup function
+      console.log('No supabase client, skipping auth state listener');
+      return;
     }
 
+    console.log('Setting up auth state change listener');
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      // #region agent log
       console.log('onAuthStateChange fired', {
         event,
         hasSession: !!session,
@@ -220,7 +232,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: session?.user?.email,
         hypothesisId: 'B',
       });
-      // #endregion
       console.log("=== AUTH STATE CHANGE ===");
       console.log("Event:", event);
       console.log("User:", session?.user?.email);
@@ -228,53 +239,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       switch (event) {
         case "SIGNED_IN":
-          // console.log("✅ User signed in");
-          // #region agent log
           console.log('SIGNED_IN event', { userId: session?.user?.id, hypothesisId: 'B' });
-          // #endregion
           setUser(session?.user ?? null);
-          console.log('6 setting loading to false ');
+          console.log('6 setting loading to false (SIGNED_IN)');
           setLoading(false);
           break;
         case "TOKEN_REFRESHED":
-          // console.log("🔄 Token refreshed");
-          // #region agent log
           console.log('TOKEN_REFRESHED event', { userId: session?.user?.id, hypothesisId: 'B' });
-          // #endregion
           setUser(session?.user ?? null);
-          console.log('7 setting loading to false ');
+          console.log('7 setting loading to false (TOKEN_REFRESHED)');
           setLoading(false);
           break;
         case "SIGNED_OUT":
-          // console.log("👋 User signed out");
-          // #region agent log
           console.log('SIGNED_OUT event', { hypothesisId: 'B' });
-          // #endregion
           setUser(null);
-          console.log('8 setting loading to false ');
+          console.log('8 setting loading to false (SIGNED_OUT)');
           setLoading(false);
           break;
         case "USER_UPDATED":
-          // console.log("👤 User updated");
-          // #region agent log
-
-
           console.log('USER_UPDATED event', { userId: session?.user?.id, hypothesisId: 'B' });
-          // #endregion
-          console.log('9 setting loading to false ');
           setUser(session?.user ?? null);
+          // Don't set loading to false here as it might already be false
           break;
         case "MFA_CHALLENGE_VERIFIED":
           // Handle MFA if you implement it later
-          // console.log("🔐 MFA verified");
           break;
         default:
-        // console.log("⚠️ Unhandled auth event:", event);
+          // Unhandled event
+          break;
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [supabase?.auth]);
+    return () => {
+      console.log('Cleaning up auth state listener');
+      subscription.unsubscribe();
+    };
+  }, [supabase]); // Only depend on supabase, not supabase?.auth
 
   const signUp = async (email: string, password: string) => {
     if (!supabase) {
