@@ -5,10 +5,11 @@ import { cookies } from 'next/headers';
 export const privatePageFlag = flag({
     key: 'private',
     decide: async () => {
-        if (process.env.NODE_ENV === 'production') {
-            const c = await cookies()
-            return c.getAll().find(cookie => cookie.name === 'private')?.value === 'true';
-        }
-        return process.env.PRIVATE_PAGE_FLAG === 'true' ? true : false;
+        // Check for private access cookie
+        const c = await cookies();
+        const hasPrivateAccess = c.get('private_access')?.value === 'true';
+
+        // Allow access if cookie is set OR if environment flag is true
+        return hasPrivateAccess || process.env.PRIVATE_PAGE_FLAG === 'true';
     }
 });
