@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
@@ -12,50 +12,170 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supabase, setSupabase] = useState<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
   const hasInitialized = useRef(false);
 
-  // Create Supabase client with useMemo to ensure it's stable across renders
-  const supabase = useMemo(() => {
+  // Initialize Supabase client ONLY on client side, in useEffect
+  useEffect(() => {
+    // Skip everything on server - set loading false immediately
+    if (typeof window === 'undefined') {
+      console.log('[AUTH] Server-side render - setting loading false');
+      setLoading(false);
+      return;
+    }
+
+    console.log('[AUTH] Client-side: Initializing Supabase client');
+
+    // Create client only on client
+    let client: ReturnType<typeof createSupabaseBrowserClient> | null = null;
     try {
-      console.log('Creating Supabase client...');
-      return createSupabaseBrowserClient();
+      client = createSupabaseBrowserClient();
+      console.log('[AUTH] Supabase client created successfully');
+      setSupabase(client);
     } catch (error) {
-      console.error('Failed to create Supabase client:', error);
+      console.error('[AUTH] Failed to create Supabase client:', error);
       Sentry.captureException(error instanceof Error ? error : new Error('Failed to create Supabase client'), {
         level: 'error',
         tags: { component: 'AuthContext', issue: 'supabase_client_creation' },
       });
-      return null;
-    }
-  }, []); // Only create once
-
-  // If Supabase client creation failed, set loading to false immediately
-  useEffect(() => {
-    if (!supabase) {
-      console.error('Supabase client not available - setting loading to false');
-      console.log('1 setting loading to false (no supabase client)');
       setLoading(false);
       return;
     }
-  }, [supabase]);
 
-  // Timeout fallback: if loading takes more than 5 seconds, stop loading
-  // This is a safety net in case getSession() hangs
+    // Now get session
+    const getSession = async () => {
+      if (hasInitialized.current) {
+        console.log('[AUTH] Already initialized, skipping');
+        return;
+      }
+
+      hasInitialized.current = true;
+      console.log('[AUTH] getSession called');
+
+      // Hard timeout that ALWAYS runs
+      const hardTimeout = setTimeout(() => {
+        console.error('[AUTH] HARD TIMEOUT: 5 seconds - forcing loading false');
+        setLoading(false);
+      }, 5000);
+
+      try {
+        if (!client) {
+          console.error('[AUTH] No client available');
+          setLoading(false);
+          clearTimeout(hardTimeout);
+          return;
+        }
+
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          console.error('[AUTH] Missing env vars');
+          setLoading(false);
+          clearTimeout(hardTimeout);
+          return;
+        }
+
+        console.log('[AUTH] Starting getSession');
+
+        const sessionPromise = client.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout')), 3000)
+        );
+
+        try {
+          const result = await Promise.race([sessionPromise, timeoutPromise]);
+          const {
+            data: { session },
+            error,
+          } = result as Awaited<ReturnType<typeof client.auth.getSession>>;
+
+          console.log('[AUTH] getSession result', { hasError: !!error, hasSession: !!session });
+
+          if (error) {
+            console.error('[AUTH] getSession error:', error);
+            setUser(null);
+          } else if (session) {
+            console.log('[AUTH] Setting user from session');
+            setUser(session.user);
+          } else {
+            console.warn('[AUTH] No session found');
+            setUser(null);
+          }
+        } catch (raceError) {
+          if (raceError instanceof Error && raceError.message.includes('timeout')) {
+            console.warn('[AUTH] getSession timed out');
+            setUser(null);
+          } else {
+            throw raceError;
+          }
+        }
+      } catch (error) {
+        console.error('[AUTH] Unexpected error:', error);
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+          level: 'error',
+          tags: { component: 'AuthContext', issue: 'getSession_error' },
+        });
+        setUser(null);
+      } finally {
+        clearTimeout(hardTimeout);
+        console.log('[AUTH] FINALLY: Setting loading to false');
+        setLoading(false);
+      }
+    };
+
+    getSession();
+
+    // Set up auth state listener
+    if (!client) return;
+
+    console.log('[AUTH] Setting up auth state listener');
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange(async (event: string, session: any) => {
+      console.log('[AUTH] Auth state change:', event);
+
+      switch (event) {
+        case "SIGNED_IN":
+          setUser(session?.user ?? null);
+          setLoading(false);
+          break;
+        case "TOKEN_REFRESHED":
+          setUser(session?.user ?? null);
+          setLoading(false);
+          break;
+        case "SIGNED_OUT":
+          setUser(null);
+          setLoading(false);
+          break;
+        case "USER_UPDATED":
+          setUser(session?.user ?? null);
+          break;
+        default:
+          break;
+      }
+    });
+
+    return () => {
+      console.log('[AUTH] Cleaning up');
+      subscription.unsubscribe();
+    };
+  }, []); // Empty deps - only run once on mount
+
+  // Timeout fallback - additional safety net
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const timeout = setTimeout(() => {
       if (loading) {
-        console.warn('Auth loading timeout - forcing loading to false', { hasUser: !!user, loading });
-        Sentry.captureMessage('AuthContext loading timeout - getSession may have hung', {
+        console.error('[AUTH] TIMEOUT FALLBACK: Forcing loading false');
+        Sentry.captureMessage('AuthContext loading timeout - forcing false', {
           level: 'warning',
           tags: { component: 'AuthContext', issue: 'loading_timeout' },
         });
-        console.log('2 setting loading to false (timeout)');
         setLoading(false);
       }
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [loading, user]); // Re-run if loading state changes
+  }, [loading]);
 
   // Helper function to get user-friendly error messages
   const getErrorMessage = (
@@ -99,182 +219,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return "An unexpected error occurred. Please try again.";
   };
 
-  useEffect(() => {
-    // Prevent multiple initializations
-    if (hasInitialized.current) {
-      console.log('AuthContext: Already initialized, skipping getSession');
-      return;
-    }
-
-    console.log('AuthContext: useEffect running', {
-      hasSupabase: !!supabase,
-      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    });
-
-    // Get initial session
-    const getSession = async () => {
-      hasInitialized.current = true;
-
-      try {
-        console.log('getSession called', {
-          env: typeof window !== 'undefined' ? 'browser' : 'server',
-          hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-          hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-          hasSupabaseClient: !!supabase,
-          hypothesisId: 'A'
-        });
-
-        // Check if Supabase client is available
-        if (!supabase) {
-          console.error('Supabase client not available - cannot get session');
-          Sentry.captureMessage('Supabase client not available - cannot get session', {
-            level: 'error',
-            tags: { component: 'AuthContext', issue: 'missing_supabase_client' },
-          });
-          setUser(null);
-          console.log('3 setting loading to false (no client)');
-          setLoading(false);
-          return;
-        }
-
-        // Check if Supabase env vars are missing
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          console.error('Missing Supabase environment variables');
-          Sentry.captureMessage('Missing Supabase environment variables', {
-            level: 'error',
-            tags: { component: 'AuthContext' },
-            extra: {
-              hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-              hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            },
-          });
-          setUser(null);
-          console.log('4 setting loading to false (no env vars)');
-          setLoading(false);
-          return;
-        }
-
-        // Wrap getSession in a timeout to prevent hanging
-        console.log('Starting getSession with timeout');
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
-        );
-
-        try {
-          const result = await Promise.race([sessionPromise, timeoutPromise]);
-
-          const {
-            data: { session },
-            error,
-          } = result as Awaited<ReturnType<typeof supabase.auth.getSession>>;
-
-          console.log('getSession result', {
-            hasError: !!error,
-            errorMessage: error?.message,
-            hasSession: !!session,
-            userId: session?.user?.id,
-            email: session?.user?.email,
-            expiresAt: session?.expires_at,
-            hypothesisId: 'A',
-          });
-
-          if (error) {
-            console.error('getSession error path', error);
-            setUser(null);
-          } else if (session) {
-            console.log('Setting user from session', session);
-            setUser(session.user);
-          } else {
-            console.warn('No session found');
-            setUser(null);
-          }
-        } catch (raceError) {
-          // Handle timeout or other race errors
-          if (raceError instanceof Error && raceError.message.includes('timeout')) {
-            console.warn('getSession timed out after 3 seconds');
-            setUser(null);
-          } else {
-            // Re-throw to be caught by outer catch
-            throw raceError;
-          }
-        }
-      } catch (error) {
-        console.error('Unexpected error in getSession', error);
-        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
-          level: 'error',
-          tags: { component: 'AuthContext', issue: 'getSession_error' },
-        });
-        setUser(null);
-      } finally {
-        console.log('5 setting loading to false (finally block)');
-        setLoading(false);
-      }
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    if (!supabase) {
-      console.log('No supabase client, skipping auth state listener');
-      return;
-    }
-
-    console.log('Setting up auth state change listener');
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      console.log('onAuthStateChange fired', {
-        event,
-        hasSession: !!session,
-        userId: session?.user?.id,
-        email: session?.user?.email,
-        hypothesisId: 'B',
-      });
-      console.log("=== AUTH STATE CHANGE ===");
-      console.log("Event:", event);
-      console.log("User:", session?.user?.email);
-      console.log("Session exists:", !!session);
-
-      switch (event) {
-        case "SIGNED_IN":
-          console.log('SIGNED_IN event', { userId: session?.user?.id, hypothesisId: 'B' });
-          setUser(session?.user ?? null);
-          console.log('6 setting loading to false (SIGNED_IN)');
-          setLoading(false);
-          break;
-        case "TOKEN_REFRESHED":
-          console.log('TOKEN_REFRESHED event', { userId: session?.user?.id, hypothesisId: 'B' });
-          setUser(session?.user ?? null);
-          console.log('7 setting loading to false (TOKEN_REFRESHED)');
-          setLoading(false);
-          break;
-        case "SIGNED_OUT":
-          console.log('SIGNED_OUT event', { hypothesisId: 'B' });
-          setUser(null);
-          console.log('8 setting loading to false (SIGNED_OUT)');
-          setLoading(false);
-          break;
-        case "USER_UPDATED":
-          console.log('USER_UPDATED event', { userId: session?.user?.id, hypothesisId: 'B' });
-          setUser(session?.user ?? null);
-          // Don't set loading to false here as it might already be false
-          break;
-        case "MFA_CHALLENGE_VERIFIED":
-          // Handle MFA if you implement it later
-          break;
-        default:
-          // Unhandled event
-          break;
-      }
-    });
-
-    return () => {
-      console.log('Cleaning up auth state listener');
-      subscription.unsubscribe();
-    };
-  }, [supabase]); // Only depend on supabase, not supabase?.auth
 
   const signUp = async (email: string, password: string) => {
     if (!supabase) {
