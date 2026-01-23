@@ -147,79 +147,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Wrap getSession in a timeout to prevent hanging
         const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
         );
 
-        // #region agent log
-        console.log('Starting getSession with timeout', { hypothesisId: 'A' });
-        // #endregion
+        console.log('Starting getSession with timeout');
 
-        const {
-          data: { session },
-          error,
-        } = await Promise.race([sessionPromise, timeoutPromise]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        try {
+          const result = await Promise.race([sessionPromise, timeoutPromise]);
 
-        // #region agent log
-        console.log('getSession result', {
-          hasError: !!error,
-          errorMessage: error?.message,
-          hasSession: !!session,
-          userId: session?.user?.id,
-          email: session?.user?.email,
-          expiresAt: session?.expires_at,
-          hypothesisId: 'A',
-        });
-        // #endregion
+          const {
+            data: { session },
+            error,
+          } = result as Awaited<ReturnType<typeof supabase.auth.getSession>>;
 
-        if (error) {
-          // console.error("❌ Error getting session:", error);
-          // #region agent log
-          console.error('getSession error path', { errorCode: error?.code, errorStatus: error?.status, hypothesisId: 'A' });
-          // #endregion
-          // If there's an error, clear the user state
-          setUser(null);
-        } else if (session) {
-          // console.log("✅ Session found:", {
-          //   userId: session.user.id,
-          //   email: session.user.email,
-          //   expiresAt: session.expires_at,
-          // });
-          // #region agent log
-          console.log('Setting user from session', { userId: session.user.id, email: session.user.email, hypothesisId: 'A' });
-          // #endregion
-          setUser(session.user);
-        } else {
-          // console.log("⚠️ No session found");
-          // #region agent log
-          console.warn('No session found', { hypothesisId: 'A' });
-          // #endregion
-          setUser(null);
+          console.log('getSession result', {
+            hasError: !!error,
+            errorMessage: error?.message,
+            hasSession: !!session,
+            userId: session?.user?.id,
+            email: session?.user?.email,
+            expiresAt: session?.expires_at,
+            hypothesisId: 'A',
+          });
+
+          if (error) {
+            console.error('getSession error path', error);
+            // If there's an error, clear the user state
+            setUser(null);
+          } else if (session) {
+            console.log('Setting user from session', session);
+            setUser(session.user);
+          } else {
+            console.warn('No session found');
+            setUser(null);
+          }
+        } catch (raceError) {
+          // Handle timeout or other race errors
+          if (raceError instanceof Error && raceError.message.includes('timeout')) {
+            console.warn('getSession timed out after 3 seconds');
+            setUser(null);
+          } else {
+            // Re-throw to be caught by outer catch
+            throw raceError;
+          }
         }
       } catch (error) {
-        // console.error("Unexpected error getting session:", error);
-        // #region agent log
-        const errorMessage = error instanceof Error ? error.message : 'unknown';
-        console.error('Unexpected error in getSession', { errorMessage, hypothesisId: 'A' });
-
-        // If it's a timeout, capture it as a warning
-        if (errorMessage.includes('timeout')) {
-          Sentry.captureMessage('getSession timeout - Supabase may be unreachable', {
-            level: 'warning',
-            tags: { component: 'AuthContext', errorType: 'timeout' },
-          });
-        } else {
-          Sentry.captureException(error instanceof Error ? error : new Error(errorMessage), {
-            level: 'error',
-            tags: { component: 'AuthContext' },
-          });
-        }
-        // #endregion
+        console.error('Unexpected error in getSession', error);
         setUser(null);
       } finally {
-        // #region agent log
-        console.log('Setting loading to false', { hypothesisId: 'A' });
-        // #endregion
         console.log('5 setting loading to false ');
         setLoading(false);
       }
