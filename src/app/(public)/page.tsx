@@ -12,6 +12,7 @@ export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+
   // #region agent log
   useEffect(() => {
     Sentry.addBreadcrumb({

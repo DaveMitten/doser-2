@@ -1,10 +1,21 @@
 import { Navigation } from "@/components/navigation";
 
-export default function PublicLayout({
+import { privatePageFlag } from '../../../flags';
+import NotFound from "../not-found";
+
+
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const isPrivatePage = await privatePageFlag();
+
+  if (!isPrivatePage) {
+    return <NotFound />;
+  }
+
   return (
     <>
       {/* Navigation for public pages */}
