@@ -4,7 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { UserDataProvider } from "@/context/UserDataContext";
 import { Analytics } from "@vercel/analytics/next";
-import MyStatsig from "./my-statsig";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +38,7 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]"></div>
         </div>
         <AuthProvider>
-          <MyStatsig>
-            <UserDataProvider>{children}</UserDataProvider>
-          </MyStatsig>
+          <UserDataProvider>{children}</UserDataProvider>
         </AuthProvider>
       </body>
     </html>
