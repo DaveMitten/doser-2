@@ -11,7 +11,7 @@ import * as Sentry from "@sentry/nextjs";
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
-
+  console.log({ user, loading })
 
   // #region agent log
   useEffect(() => {
