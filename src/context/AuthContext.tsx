@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
@@ -11,24 +11,75 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createSupabaseBrowserClient();
+
+  // Create supabase client once and memoize it
+  const supabase = useMemo(() => {
+    console.log("[AuthProvider] Creating Supabase client");
+    try {
+      return createSupabaseBrowserClient();
+    } catch (error) {
+      console.error("[AuthProvider] Failed to create Supabase client:", error);
+      // Return null and handle it gracefully
+      throw error;
+    }
+  }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    console.log("[AuthProvider] Initializing auth context");
+
+    // Timeout fallback - ensure loading doesn't hang forever
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn("[AuthProvider] Auth initialization timeout (5s) - setting loading to false");
+        setLoading(false);
+      }
+    }, 5000);
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    console.log("[AuthProvider] Fetching initial session");
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          console.log("[AuthProvider] Session fetched:", {
+            hasSession: !!session,
+            userId: session?.user?.id,
+          });
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          console.error("[AuthProvider] Error getting session:", error);
+          setLoading(false);
+        }
+      });
 
     // Listen for auth changes - this is the single source of truth
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (isMounted) {
+        console.log("[AuthProvider] Auth state changed:", {
+          event: _event,
+          hasSession: !!session,
+          userId: session?.user?.id,
+        });
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("[AuthProvider] Cleaning up");
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   const signUp = async (email: string, password: string) => {

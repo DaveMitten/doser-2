@@ -12,26 +12,21 @@ export default function Home() {
   const router = useRouter();
 
 
-  // #region agent 
   useEffect(() => {
-    console.log('Home page render', {
+    console.log('[Home] Render state:', {
       hasUser: !!user,
       loading,
       userId: user?.id,
       email: user?.email,
-      hypothesisId: 'D',
     });
-  }, []);
-  // #endregion
+  }, [user, loading]);
 
-  // #region agent log
   useEffect(() => {
     if (!loading && user) {
-      console.log('Should redirect to dashboard', { hasUser: !!user, loading, hypothesisId: 'D' });
+      console.log('[Home] Redirecting authenticated user to dashboard');
       router.push("/dashboard");
     }
   }, [user, loading, router]);
-  // #endregion
 
   return (
     <>

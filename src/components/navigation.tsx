@@ -66,18 +66,15 @@ export function Navigation({ currentPage }: NavigationProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
-  // #region agent log
   useEffect(() => {
-    console.log('Navigation render', {
+    console.log('[Navigation] Render state:', {
       hasUser: !!user,
       loading,
       userId: user?.id,
       email: user?.email,
       pathname,
-      hypothesisId: 'C',
     });
   }, [user, loading, pathname]);
-  // #endregion
 
   // Auto-determine current page if not provided
   if (!currentPage) {
@@ -88,16 +85,13 @@ export function Navigation({ currentPage }: NavigationProps) {
     }
   }
 
-  // #region agent log
   useEffect(() => {
-    console.log('Rendering CTA buttons', {
+    console.log('[Navigation] CTA buttons state:', {
       loading,
       hasUser: !!user,
       buttonsCount: !loading ? getCtaButtons(!!user).length : 0,
-      hypothesisId: 'C',
     });
   }, [loading, user]);
-  // #endregion
 
   const renderNavigationLink = (link: NavigationLink, isMobile = false) => {
     const isActive = currentPage === link.pageKey;
