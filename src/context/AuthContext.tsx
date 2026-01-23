@@ -1,21 +1,21 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { SupabaseClient, User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
-import { Database } from "../lib/database.types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Create Supabase client with error handling
   let supabase: ReturnType<typeof createSupabaseBrowserClient> | null = null;
+  let supabaseCreationError: Error | null = null;
   try {
     supabase = createSupabaseBrowserClient();
   } catch (error) {
@@ -25,10 +25,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       tags: { component: 'AuthContext', issue: 'supabase_client_creation' },
     });
     // #endregion
-    // If client creation fails, set loading to false immediately
-    // The component will still render, but auth won't work
+    // Store error to handle in useEffect (can't call setState during render)
+    supabaseCreationError = error instanceof Error ? error : new Error('Failed to create Supabase client');
     console.error('Failed to create Supabase client:', error);
   }
+
+  // If Supabase client creation failed, set loading to false immediately
+  useEffect(() => {
+    if (supabaseCreationError) {
+      // #region agent log
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Supabase client creation failed - setting loading to false',
+        level: 'error',
+        data: { errorMessage: supabaseCreationError.message },
+      });
+      // #endregion
+      setLoading(false);
+    }
+  }, []); // Run once on mount
 
   // Timeout fallback: if loading takes more than 3 seconds, stop loading
   // This is a safety net in case getSession() hangs
@@ -103,12 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           category: 'auth',
           message: 'getSession called',
           level: 'debug',
-          data: { 
+          data: {
             env: typeof window !== 'undefined' ? 'browser' : 'server',
             hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
             hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
             hasSupabaseClient: !!supabase,
-            hypothesisId: 'A' 
+            hypothesisId: 'A'
           },
         });
         // #endregion
@@ -145,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Wrap getSession in a timeout to prevent hanging
         const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
         );
 
@@ -229,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           level: 'error',
           data: { errorMessage, hypothesisId: 'A' },
         });
-        
+
         // If it's a timeout, capture it as a warning
         if (errorMessage.includes('timeout')) {
           Sentry.captureMessage('getSession timeout - Supabase may be unreachable', {
@@ -262,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     if (!supabase) {
       setLoading(false);
-      return () => {}; // Return empty cleanup function
+      return () => { }; // Return empty cleanup function
     }
 
     const {
