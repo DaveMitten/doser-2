@@ -5,6 +5,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { UserDataProvider } from "@/context/UserDataContext";
 import { Analytics } from "@vercel/analytics/next";
 import { SentryInit } from "@/components/SentryInit";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Diagnostic } from "./diagnostic";
 
 
 const geistSans = Geist({
@@ -33,15 +35,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-doser-background text-doser-text min-h-screen`}
       >
+        <Diagnostic />
         <SentryInit />
         <Analytics />
         {/* Background Pattern */}
         <div className="fixed inset-0 bg-doser-background">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]"></div>
         </div>
-        <AuthProvider>
-          <UserDataProvider>{children}</UserDataProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <UserDataProvider>{children}</UserDataProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

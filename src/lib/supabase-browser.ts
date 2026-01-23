@@ -2,7 +2,14 @@ import { createBrowserClient } from "@supabase/ssr";
 import { Database } from "./database.types";
 import * as Sentry from "@sentry/nextjs";
 
+console.log("[supabase-browser] FILE LOADED");
+console.log("[supabase-browser] ENV CHECK:", {
+  hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+  hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+});
+
 export function createSupabaseBrowserClient() {
+  console.log("[supabase-browser] createSupabaseBrowserClient() CALLED");
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

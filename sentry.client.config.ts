@@ -15,17 +15,8 @@ Sentry.init({
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
-  // Capture errors in the browser
-  integrations: [
-    Sentry.replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
-
-  // Session Replay
-  replaysSessionSampleRate: 0.1, // 10% of sessions
-  replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
+  // Disable Session Replay for now - it's causing issues
+  integrations: [],
 
   // Debug mode for troubleshooting
   debug: process.env.NODE_ENV === "development",

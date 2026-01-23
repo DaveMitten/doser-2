@@ -7,9 +7,12 @@ import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 
+console.log("[AuthContext] FILE LOADED");
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  console.log("[AuthProvider] COMPONENT RENDERING");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
