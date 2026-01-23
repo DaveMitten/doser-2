@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Zap } from "lucide-react";
 import { login } from "../../app/(public)/auth/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import * as Sentry from "@sentry/nextjs";
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -38,20 +39,43 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
   const handleQuickLogin = () => {
     setError(null);
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append("email", TEST_EMAIL);
-      formData.append("password", TEST_PASSWORD);
-      const result = await login(formData);
+      try {
+        const formData = new FormData();
+        formData.append("email", TEST_EMAIL);
+        formData.append("password", TEST_PASSWORD);
+        const result = await login(formData);
 
-      if (result.success) {
-        // Refresh the client-side session to pick up the new cookies
-        await supabase.auth.getSession();
-        // Small delay to ensure auth state updates
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Navigate to dashboard
-        window.location.href = "/dashboard";
-      } else {
-        setError(result.error || "An error occurred during sign in");
+        if (result.success) {
+          // Refresh the client-side session to pick up the new cookies
+          await supabase.auth.getSession();
+          // Small delay to ensure auth state updates
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          // Navigate to dashboard
+          window.location.href = "/dashboard";
+        } else {
+          setError(result.error || "An error occurred during sign in");
+          Sentry.captureMessage("Login failed", {
+            level: "warning",
+            tags: {
+              component: "LoginForm",
+              action: "quickLogin",
+            },
+            contexts: {
+              error: {
+                message: result.error,
+              },
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Quick login error:", err);
+        Sentry.captureException(err, {
+          tags: {
+            component: "LoginForm",
+            action: "quickLogin",
+          },
+        });
+        setError("An unexpected error occurred during sign in");
       }
     });
   };
@@ -62,20 +86,43 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
 
     setError(null);
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
-      const result = await login(formData);
+      try {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
+        const result = await login(formData);
 
-      if (result.success) {
-        // Refresh the client-side session to pick up the new cookies
-        await supabase.auth.getSession();
-        // Small delay to ensure auth state updates
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Navigate to dashboard
-        window.location.href = "/dashboard";
-      } else {
-        setError(result.error || "An error occurred during sign in");
+        if (result.success) {
+          // Refresh the client-side session to pick up the new cookies
+          await supabase.auth.getSession();
+          // Small delay to ensure auth state updates
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          // Navigate to dashboard
+          window.location.href = "/dashboard";
+        } else {
+          setError(result.error || "An error occurred during sign in");
+          Sentry.captureMessage("Login failed", {
+            level: "warning",
+            tags: {
+              component: "LoginForm",
+              action: "login",
+            },
+            contexts: {
+              error: {
+                message: result.error,
+              },
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        Sentry.captureException(err, {
+          tags: {
+            component: "LoginForm",
+            action: "login",
+          },
+        });
+        setError("An unexpected error occurred during sign in");
       }
     });
   };
