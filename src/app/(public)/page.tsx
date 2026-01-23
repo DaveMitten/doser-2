@@ -6,39 +6,28 @@ import { CTAButton } from "@/components/CTAButton";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  console.log({ user, loading })
 
-  // #region agent log
+
+  // #region agent 
   useEffect(() => {
-    Sentry.addBreadcrumb({
-      category: 'page',
-      message: 'Home page render',
-      level: 'debug',
-      data: {
-        hasUser: !!user,
-        loading,
-        userId: user?.id,
-        email: user?.email,
-        hypothesisId: 'D',
-      },
+    console.log('Home page render', {
+      hasUser: !!user,
+      loading,
+      userId: user?.id,
+      email: user?.email,
+      hypothesisId: 'D',
     });
-  }, [user, loading]);
+  }, []);
   // #endregion
 
   // #region agent log
   useEffect(() => {
     if (!loading && user) {
-      Sentry.addBreadcrumb({
-        category: 'page',
-        message: 'Should redirect to dashboard',
-        level: 'info',
-        data: { hasUser: !!user, loading, hypothesisId: 'D' },
-      });
+      console.log('Should redirect to dashboard', { hasUser: !!user, loading, hypothesisId: 'D' });
       router.push("/dashboard");
     }
   }, [user, loading, router]);

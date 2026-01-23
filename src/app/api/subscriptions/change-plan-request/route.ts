@@ -24,13 +24,13 @@ if (!process.env.RESEND_API_KEY) {
 // Initialize rate limiter (3 requests per hour per user)
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter:
-        process.env.NODE_ENV === "development"
-          ? Ratelimit.slidingWindow(3, "1 h")
-          : Ratelimit.slidingWindow(100, "1 h"),
-      analytics: true,
-    })
+    redis: Redis.fromEnv(),
+    limiter:
+      process.env.NODE_ENV === "development"
+        ? Ratelimit.slidingWindow(3, "1 h")
+        : Ratelimit.slidingWindow(100, "1 h"),
+    analytics: true,
+  })
   : null;
 
 export async function POST(request: NextRequest) {
@@ -176,16 +176,11 @@ export async function POST(request: NextRequest) {
         hasResendKey: !!process.env.RESEND_API_KEY,
       });
 
-      Sentry.addBreadcrumb({
-        category: "email",
-        message: "Attempting to send change plan email",
-        level: "info",
-        data: {
-          userId: user.id,
-          currentPlan,
-          targetPlan,
-          requestEmail: email,
-        },
+      console.log("Attempting to send change plan email", {
+        userId: user.id,
+        currentPlan,
+        targetPlan,
+        requestEmail: email,
       });
 
       const emailResponse = await resend.emails.send({
@@ -246,14 +241,9 @@ Submitted at: ${new Date().toISOString()}
         emailResponse: JSON.stringify(emailResponse),
       });
 
-      Sentry.addBreadcrumb({
-        category: "email",
-        message: "Change plan email sent successfully",
-        level: "info",
-        data: {
-          userId: user.id,
-          emailId: emailResponse.data?.id,
-        },
+      console.log("Change plan email sent successfully", {
+        userId: user.id,
+        emailId: emailResponse.data?.id,
       });
 
       return NextResponse.json({
@@ -322,8 +312,8 @@ Submitted at: ${new Date().toISOString()}
       error instanceof Error
         ? error
         : new Error(
-            `Unexpected error in change plan request: ${JSON.stringify(error)}`
-          ),
+          `Unexpected error in change plan request: ${JSON.stringify(error)}`
+        ),
       {
         errorType: "subscription",
         eventType: "change-plan-request-unexpected-error",

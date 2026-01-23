@@ -60,32 +60,18 @@ export default function DashboardPage() {
   useEffect(() => {
     // #region agent log
     if (typeof window !== 'undefined') {
-      import('@sentry/nextjs').then((Sentry) => {
-        Sentry.addBreadcrumb({
-          category: 'dashboard',
-          message: 'Dashboard useEffect',
-          level: 'debug',
-          data: {
-            hasUser: !!user,
-            userId: user?.id,
-            email: user?.email,
-          },
-        });
-      }).catch(() => {});
+      console.log('Dashboard useEffect', {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+      });
     }
     // #endregion
-    
+
     if (!user) {
       // #region agent log
       if (typeof window !== 'undefined') {
-        import('@sentry/nextjs').then((Sentry) => {
-          Sentry.addBreadcrumb({
-            category: 'dashboard',
-            message: 'Dashboard: No user, returning early',
-            level: 'warning',
-            data: { hasUser: false },
-          });
-        }).catch(() => {});
+        console.warn('Dashboard: No user, returning early', { hasUser: false });
       }
       // #endregion
       return;
@@ -275,9 +261,8 @@ export default function DashboardPage() {
           label="Total Sessions"
           sublabel={
             stats && stats.lastWeekSessions > 0
-              ? `+${
-                  stats.thisWeekSessions - stats.lastWeekSessions
-                } from last week`
+              ? `+${stats.thisWeekSessions - stats.lastWeekSessions
+              } from last week`
               : "Last 7 days"
           }
         />
@@ -319,9 +304,8 @@ export default function DashboardPage() {
               label="Total Sessions"
               sublabel={
                 stats && stats.lastWeekSessions > 0
-                  ? `+${
-                      stats.thisWeekSessions - stats.lastWeekSessions
-                    } from last week`
+                  ? `+${stats.thisWeekSessions - stats.lastWeekSessions
+                  } from last week`
                   : "Last 7 days"
               }
             />

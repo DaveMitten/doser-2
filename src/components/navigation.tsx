@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 import DoserSVG from "./svgs/DoserSVG";
 import { useAuth } from "@/context/AuthContext";
-import * as Sentry from "@sentry/nextjs";
 
 interface NavigationProps {
   currentPage?: string;
@@ -69,18 +68,13 @@ export function Navigation({ currentPage }: NavigationProps) {
 
   // #region agent log
   useEffect(() => {
-    Sentry.addBreadcrumb({
-      category: 'navigation',
-      message: 'Navigation render',
-      level: 'debug',
-      data: {
-        hasUser: !!user,
-        loading,
-        userId: user?.id,
-        email: user?.email,
-        pathname,
-        hypothesisId: 'C',
-      },
+    console.log('Navigation render', {
+      hasUser: !!user,
+      loading,
+      userId: user?.id,
+      email: user?.email,
+      pathname,
+      hypothesisId: 'C',
     });
   }, [user, loading, pathname]);
   // #endregion
@@ -96,16 +90,11 @@ export function Navigation({ currentPage }: NavigationProps) {
 
   // #region agent log
   useEffect(() => {
-    Sentry.addBreadcrumb({
-      category: 'navigation',
-      message: 'Rendering CTA buttons',
-      level: 'debug',
-      data: {
-        loading,
-        hasUser: !!user,
-        buttonsCount: !loading ? getCtaButtons(!!user).length : 0,
-        hypothesisId: 'C',
-      },
+    console.log('Rendering CTA buttons', {
+      loading,
+      hasUser: !!user,
+      buttonsCount: !loading ? getCtaButtons(!!user).length : 0,
+      hypothesisId: 'C',
     });
   }, [loading, user]);
   // #endregion
@@ -135,11 +124,11 @@ export function Navigation({ currentPage }: NavigationProps) {
   const renderCTAButton = (button: CTAButton, isMobile = false) => {
     const mobileClasses = isMobile
       ? cn(
-          "w-full justify-center ",
-          button.variant === "ghost"
-            ? "hover:!bg-transparent hover:!text-doser-text"
-            : ""
-        )
+        "w-full justify-center ",
+        button.variant === "ghost"
+          ? "hover:!bg-transparent hover:!text-doser-text"
+          : ""
+      )
       : "";
     const buttonClasses = `${button.className} ${mobileClasses}`;
 

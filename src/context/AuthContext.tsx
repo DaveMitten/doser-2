@@ -33,14 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // If Supabase client creation failed, set loading to false immediately
   useEffect(() => {
     if (supabaseCreationError) {
-      // #region agent log
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Supabase client creation failed - setting loading to false',
-        level: 'error',
-        data: { errorMessage: supabaseCreationError.message },
-      });
-      // #endregion
+      console.error('Supabase client creation failed - setting loading to false', supabaseCreationError.message);
       setLoading(false);
     }
   }, []); // Run once on mount
@@ -50,12 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       // #region agent log
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Auth loading timeout - forcing loading to false',
-        level: 'warning',
-        data: { hasUser: !!user, loading },
-      });
+      console.warn('Auth loading timeout - forcing loading to false', { hasUser: !!user, loading });
       Sentry.captureMessage('AuthContext loading timeout - getSession may have hung', {
         level: 'warning',
         tags: { component: 'AuthContext', issue: 'loading_timeout' },
@@ -114,17 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getSession = async () => {
       try {
         // #region agent log
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'getSession called',
-          level: 'debug',
-          data: {
-            env: typeof window !== 'undefined' ? 'browser' : 'server',
-            hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-            hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            hasSupabaseClient: !!supabase,
-            hypothesisId: 'A'
-          },
+        console.log('getSession called', {
+          env: typeof window !== 'undefined' ? 'browser' : 'server',
+          hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          hasSupabaseClient: !!supabase,
+          hypothesisId: 'A'
         });
         // #endregion
 
@@ -165,12 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         // #region agent log
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Starting getSession with timeout',
-          level: 'debug',
-          data: { hypothesisId: 'A' },
-        });
+        console.log('Starting getSession with timeout', { hypothesisId: 'A' });
         // #endregion
 
         const {
@@ -179,31 +157,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await Promise.race([sessionPromise, timeoutPromise]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
 
         // #region agent log
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'getSession result',
-          level: 'debug',
-          data: {
-            hasError: !!error,
-            errorMessage: error?.message,
-            hasSession: !!session,
-            userId: session?.user?.id,
-            email: session?.user?.email,
-            expiresAt: session?.expires_at,
-            hypothesisId: 'A',
-          },
+        console.log('getSession result', {
+          hasError: !!error,
+          errorMessage: error?.message,
+          hasSession: !!session,
+          userId: session?.user?.id,
+          email: session?.user?.email,
+          expiresAt: session?.expires_at,
+          hypothesisId: 'A',
         });
         // #endregion
 
         if (error) {
           // console.error("❌ Error getting session:", error);
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'getSession error path',
-            level: 'error',
-            data: { errorCode: error?.code, errorStatus: error?.status, hypothesisId: 'A' },
-          });
+          console.error('getSession error path', { errorCode: error?.code, errorStatus: error?.status, hypothesisId: 'A' });
           // #endregion
           // If there's an error, clear the user state
           setUser(null);
@@ -214,23 +182,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           //   expiresAt: session.expires_at,
           // });
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Setting user from session',
-            level: 'info',
-            data: { userId: session.user.id, email: session.user.email, hypothesisId: 'A' },
-          });
+          console.log('Setting user from session', { userId: session.user.id, email: session.user.email, hypothesisId: 'A' });
           // #endregion
           setUser(session.user);
         } else {
           // console.log("⚠️ No session found");
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'No session found',
-            level: 'warning',
-            data: { hypothesisId: 'A' },
-          });
+          console.warn('No session found', { hypothesisId: 'A' });
           // #endregion
           setUser(null);
         }
@@ -238,12 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // console.error("Unexpected error getting session:", error);
         // #region agent log
         const errorMessage = error instanceof Error ? error.message : 'unknown';
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Unexpected error in getSession',
-          level: 'error',
-          data: { errorMessage, hypothesisId: 'A' },
-        });
+        console.error('Unexpected error in getSession', { errorMessage, hypothesisId: 'A' });
 
         // If it's a timeout, capture it as a warning
         if (errorMessage.includes('timeout')) {
@@ -261,12 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       } finally {
         // #region agent log
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Setting loading to false',
-          level: 'debug',
-          data: { hypothesisId: 'A' },
-        });
+        console.log('Setting loading to false', { hypothesisId: 'A' });
         // #endregion
         setLoading(false);
       }
@@ -284,34 +232,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       // #region agent log
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'onAuthStateChange fired',
-        level: 'info',
-        data: {
-          event,
-          hasSession: !!session,
-          userId: session?.user?.id,
-          email: session?.user?.email,
-          hypothesisId: 'B',
-        },
+      console.log('onAuthStateChange fired', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        hypothesisId: 'B',
       });
       // #endregion
-      // console.log("=== AUTH STATE CHANGE ===");
-      // console.log("Event:", event);
-      // console.log("User:", session?.user?.email);
-      // console.log("Session exists:", !!session);
+      console.log("=== AUTH STATE CHANGE ===");
+      console.log("Event:", event);
+      console.log("User:", session?.user?.email);
+      console.log("Session exists:", !!session);
 
       switch (event) {
         case "SIGNED_IN":
           // console.log("✅ User signed in");
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'SIGNED_IN event',
-            level: 'info',
-            data: { userId: session?.user?.id, hypothesisId: 'B' },
-          });
+          console.log('SIGNED_IN event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
           setUser(session?.user ?? null);
           setLoading(false);
@@ -319,12 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         case "TOKEN_REFRESHED":
           // console.log("🔄 Token refreshed");
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'TOKEN_REFRESHED event',
-            level: 'info',
-            data: { userId: session?.user?.id, hypothesisId: 'B' },
-          });
+          console.log('TOKEN_REFRESHED event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
           setUser(session?.user ?? null);
           setLoading(false);
@@ -332,12 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         case "SIGNED_OUT":
           // console.log("👋 User signed out");
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'SIGNED_OUT event',
-            level: 'info',
-            data: { hypothesisId: 'B' },
-          });
+          console.log('SIGNED_OUT event', { hypothesisId: 'B' });
           // #endregion
           setUser(null);
           setLoading(false);
@@ -345,12 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         case "USER_UPDATED":
           // console.log("👤 User updated");
           // #region agent log
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'USER_UPDATED event',
-            level: 'info',
-            data: { userId: session?.user?.id, hypothesisId: 'B' },
-          });
+          console.log('USER_UPDATED event', { userId: session?.user?.id, hypothesisId: 'B' });
           // #endregion
           setUser(session?.user ?? null);
           break;
@@ -524,7 +447,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  console.log({ context })
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }

@@ -66,10 +66,6 @@ export function logWarning(message: string, context: Record<string, unknown>) {
 export function logInfo(message: string, context: Record<string, unknown>) {
   logger.info(message, context);
 
-  // Add breadcrumb for debugging context
-  Sentry.addBreadcrumb({
-    message,
-    level: "info",
-    data: context,
-  });
+  // Log to console for debugging context
+  console.log(message, context);
 }
