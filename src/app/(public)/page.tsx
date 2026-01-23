@@ -7,27 +7,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-// Top-level console log to verify file loads
-console.log("HOME PAGE FILE LOADED");
-
 export default function Home() {
-  console.log("HOME COMPONENT RENDERED");
   const { user, loading } = useAuth();
   const router = useRouter();
 
 
   useEffect(() => {
-    console.log('[Home] Render state:', {
-      hasUser: !!user,
-      loading,
-      userId: user?.id,
-      email: user?.email,
-    });
-  }, [user, loading]);
-
-  useEffect(() => {
     if (!loading && user) {
-      console.log('[Home] Redirecting authenticated user to dashboard');
       router.push("/dashboard");
     }
   }, [user, loading, router]);

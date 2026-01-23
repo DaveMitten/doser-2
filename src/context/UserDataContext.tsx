@@ -3,9 +3,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { UserSubscription } from "@/lib/dodo-types";
-import * as Sentry from "@sentry/nextjs";
-
-console.log("[UserDataContext] FILE LOADED");
 
 interface UserDataContextType {
   subscription: UserSubscription | null;
@@ -22,24 +19,7 @@ const STORAGE_KEY = "doser_subscription_cache";
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
-  console.log("[UserDataProvider] COMPONENT RENDERING");
-
-  let authData;
-  try {
-    authData = useAuth();
-    console.log("[UserDataProvider] useAuth() successful:", { hasUser: !!authData.user, loading: authData.loading });
-  } catch (error) {
-    console.error("[UserDataProvider] useAuth() failed:", error);
-    Sentry.captureException(error, {
-      tags: {
-        component: "UserDataProvider",
-        action: "useAuth",
-      },
-    });
-    throw error;
-  }
-
-  const { user, loading: authLoading } = authData;
+  const { user, loading: authLoading } = useAuth();
   const [subscription, setSubscription] = useState<UserSubscription | null>(
     null
   );

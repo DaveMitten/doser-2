@@ -7,22 +7,16 @@ import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 
-console.log("[AuthContext] FILE LOADED");
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  console.log("[AuthProvider] COMPONENT RENDERING");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Create supabase client once and memoize it
   const supabase = useMemo(() => {
-    console.log("[AuthProvider] Creating Supabase client");
     try {
-      const client = createSupabaseBrowserClient();
-      console.log("[AuthProvider] Supabase client created successfully");
-      return client;
+      return createSupabaseBrowserClient();
     } catch (error) {
       console.error("[AuthProvider] Failed to create Supabase client:", error);
       Sentry.captureException(error, {
@@ -38,12 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    console.log("[AuthProvider] Initializing auth context");
-
     // Timeout fallback - ensure loading doesn't hang forever
     const timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.warn("[AuthProvider] Auth initialization timeout (5s) - setting loading to false");
+        console.warn("[AuthProvider] Auth initialization timeout");
         Sentry.captureMessage("Auth initialization timeout", {
           level: "warning",
           tags: {
@@ -56,15 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 5000);
 
     // Get initial session
-    console.log("[AuthProvider] Fetching initial session");
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         if (isMounted) {
           clearTimeout(timeoutId);
-          console.log("[AuthProvider] Session fetched:", {
-            hasSession: !!session,
-            userId: session?.user?.id,
-          });
           setUser(session?.user ?? null);
           setLoading(false);
         }
@@ -78,33 +65,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               component: "AuthProvider",
               action: "getSession",
             },
-            contexts: {
-              auth: {
-                step: "initial_session_fetch",
-              },
-            },
           });
           setLoading(false);
         }
       });
 
-    // Listen for auth changes - this is the single source of truth
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (isMounted) {
-        console.log("[AuthProvider] Auth state changed:", {
-          event: _event,
-          hasSession: !!session,
-          userId: session?.user?.id,
-        });
         setUser(session?.user ?? null);
         setLoading(false);
       }
     });
 
     return () => {
-      console.log("[AuthProvider] Cleaning up");
       isMounted = false;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
