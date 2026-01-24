@@ -52,8 +52,13 @@ export default withSentryConfig(nextConfig, {
   // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
 
-  // Disable removal of console logs and Sentry debug logging
-  disableLogger: false,
+  // Remove console logs in production, but keep Sentry debug logging
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 
   // Hide source maps from generated client bundles
   sourcemaps: {

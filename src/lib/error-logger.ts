@@ -65,7 +65,4 @@ export function logWarning(message: string, context: Record<string, unknown>) {
 
 export function logInfo(message: string, context: Record<string, unknown>) {
   logger.info(message, context);
-
-  // Log to console for debugging context
-  console.log(message, context);
 }

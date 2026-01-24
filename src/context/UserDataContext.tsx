@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { UserSubscription } from "@/lib/dodo-types";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 interface UserDataContextType {
   subscription: UserSubscription | null;
@@ -44,7 +47,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (err) {
-      console.error("Error loading subscription from cache:", err);
+      logger.error("Error loading subscription from cache", { error: err });
     }
   }, []);
 
@@ -79,12 +82,12 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
             })
           );
         } catch (err) {
-          console.error("Error caching subscription:", err);
+          logger.error("Error caching subscription", { error: err });
         }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
-      console.error("Error fetching subscription:", err);
+      logger.error("Error fetching subscription", { error: err });
     } finally {
       setIsLoading(false);
     }

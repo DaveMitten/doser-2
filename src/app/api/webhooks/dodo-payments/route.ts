@@ -3,6 +3,8 @@ import { DodoService } from "@/lib/dodo-service";
 import * as Sentry from "@sentry/nextjs";
 import { logError } from "@/lib/error-logger";
 
+const { logger } = Sentry;
+
 const dodoService = new DodoService();
 
 export const POST = Webhooks({
@@ -14,10 +16,7 @@ export const POST = Webhooks({
         name: "Dodo Webhook - onPayload",
       },
       async (span) => {
-        console.log(
-          "Webhook onPayload received:",
-          JSON.stringify(payload, null, 2)
-        );
+        logger.info("Webhook onPayload received", { payload });
 
         // Extract webhook type and add to span
         const webhookType =
@@ -62,10 +61,10 @@ export const POST = Webhooks({
         try {
           await dodoService.handleWebhookEvent(payload);
           span.setAttribute("status", "success");
-          console.log("✅ Webhook processed successfully");
+          logger.info("Webhook processed successfully", { webhookType });
         } catch (error) {
           span.setAttribute("status", "error");
-          console.error("❌ Webhook processing failed:", error);
+          logger.error("Webhook processing failed", { error, webhookType });
 
           logError(error instanceof Error ? error : new Error(String(error)), {
             errorType: "webhook",

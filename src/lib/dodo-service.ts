@@ -22,6 +22,9 @@ import { PlanService } from "./plan-service";
 import { logError, logWarning, logInfo } from "./error-logger";
 import { Database } from "./database.types";
 import z from "zod";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 type SupabaseClientType = Awaited<
   ReturnType<typeof createSupabaseServerClient>
@@ -49,7 +52,7 @@ export class DodoService {
       environment: this.config.environment,
     });
 
-    console.log("DodoService config:", {
+    logger.info("DodoService initialized", {
       hasApiKey: !!this.config.apiKey,
       environment: this.config.environment,
       hasWebhookSecret: !!this.config.webhookSecret,
@@ -88,7 +91,7 @@ export class DodoService {
     email: string,
     name?: string
   ): Promise<DodoPayments.Customer> {
-    console.log("getOrCreateCustomer", { userId, email, name });
+    logger.debug("Getting or creating customer", { userId, email, name });
     try {
       // First check if we already have a customer for this user
       const supabase = (await this.getSupabase()) as any;
@@ -103,11 +106,11 @@ export class DodoService {
         .maybeSingle(); // Use maybeSingle() instead of single() to avoid throwing on no rows
 
       if (queryError) {
-        console.error("Error querying user_subscriptions:", queryError);
+        logger.error("Error querying user_subscriptions", { error: queryError });
         // If table doesn't exist, just create a new customer
         if ((queryError as any).code === "42P01") {
-          console.warn(
-            "user_subscriptions table not found. Please run dodo-payments-migration.sql"
+          logger.warn(
+            "user_subscriptions table not found - run migrations"
           );
         }
       }
@@ -115,27 +118,22 @@ export class DodoService {
       // Only fetch existing customer if we found one
       if (existingSubscription?.dodo_customer_id) {
         try {
-          console.log(
-            "Found existing customer ID:",
-            existingSubscription.dodo_customer_id
-          );
+          logger.debug("Found existing customer ID", {
+            customerId: existingSubscription.dodo_customer_id
+          });
           const customer = await this.dodoClient.customers.retrieve(
             existingSubscription.dodo_customer_id
           );
-          console.log("Retrieved existing customer from Dodo");
+          logger.debug("Retrieved existing customer from Dodo");
           return customer;
         } catch (err) {
-          console.warn(
-            "Existing customer not found in Dodo, creating new one:",
-            err
-          );
+          logger.warn("Existing customer not found in Dodo, creating new one", { error: err });
           // If customer doesn't exist in Dodo anymore, create a new one
         }
       }
 
       // Create new customer using the SDK
-      console.log("Creating new customer in Dodo Payments");
-      console.log("Request details:", {
+      logger.info("Creating new customer in Dodo Payments", {
         email,
         name: name || email.split("@")[0],
         environment: this.config.environment,
@@ -147,22 +145,19 @@ export class DodoService {
         name: name || email.split("@")[0], // Use email prefix as fallback
       });
 
-      console.log("Customer created successfully:", customer.customer_id);
+      logger.info("Customer created successfully", { customerId: customer.customer_id });
       return customer;
     } catch (error: unknown) {
-      console.error("Error getting or creating customer:", error);
-
       // Type guard for errors with status property
       const hasStatus = (err: unknown): err is { status: number } => {
         return typeof err === "object" && err !== null && "status" in err;
       };
 
-      console.error("Error details:", {
+      logger.error("Error getting or creating customer", {
         message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
         userId,
         email,
-        // Check if it's a Dodo API error
         status: hasStatus(error) ? error.status : undefined,
         errorType: error?.constructor?.name,
       });
@@ -192,10 +187,7 @@ export class DodoService {
     request: CreateSubscriptionRequest
   ): Promise<SubscriptionResponse> {
     try {
-      console.log(
-        "DodoService.createSubscriptionPayment called with:",
-        request
-      );
+      logger.debug("Creating subscription payment", { request });
 
       const {
         userId,
@@ -206,34 +198,31 @@ export class DodoService {
       } = request;
 
       // Get plan configuration using PlanService
-      console.log("Looking up plan details for:", { planId, isYearly });
+      logger.debug("Looking up plan details", { planId, isYearly });
       const planDetails = PlanService.getPlanDetails(planId, isYearly);
-      console.log("Plan found:", planDetails);
       if (!planDetails) {
-        console.error("Invalid plan ID:", planId);
-        console.error("Available plans:", Object.keys(SUBSCRIPTION_PLANS));
+        logger.error("Invalid plan ID", {
+          planId,
+          availablePlans: Object.keys(SUBSCRIPTION_PLANS)
+        });
         return { success: false, error: `Invalid plan ID: ${planId}` };
       }
 
       // Free plan - no payment needed
       if (planDetails.price === 0) {
-        console.log("Free plan detected, creating free subscription");
+        logger.info("Creating free subscription", { userId, planId });
         const subscription = await this.createFreeSubscription(userId, planId);
         return { success: true, subscription };
       }
 
-      console.log("Getting or creating customer...");
+      logger.debug("Getting or creating customer", { userId, customerEmail });
       // Get or create customer
       const customer = await this.getOrCreateCustomer(
         userId,
         customerEmail,
         customerName
       );
-      console.log("customer", customer);
-      console.log("customerEmail", customerEmail);
-      console.log("userId", userId);
-      console.log("customerName", customerName);
-      console.log("Customer obtained:", customer.customer_id);
+      logger.debug("Customer obtained", { customerId: customer.customer_id });
 
       // Create checkout session for subscription
       const customerRequest: DodoPayments.NewCustomer = {
@@ -259,22 +248,20 @@ export class DodoService {
         },
       };
 
-      console.log(
-        "Creating checkout session with request:",
-        JSON.stringify(checkoutRequest, null, 2)
-      );
+      logger.debug("Creating checkout session", { checkoutRequest });
 
       const checkoutSession = await this.createCheckoutSession(checkoutRequest);
 
-      console.log("Checkout session created:", checkoutSession.checkout_url);
+      logger.info("Checkout session created", {
+        checkoutUrl: checkoutSession.checkout_url
+      });
 
       return {
         success: true,
         checkoutUrl: checkoutSession.checkout_url,
       };
     } catch (error) {
-      console.error("Error creating subscription payment:", error);
-      console.error("Error details:", {
+      logger.error("Error creating subscription payment", {
         message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -296,23 +283,20 @@ export class DodoService {
     request: DodoPayments.CheckoutSessionCreateParams
   ): Promise<CheckoutSessionResponse> {
     try {
-      console.log(
-        "Creating checkout session with request:",
-        JSON.stringify(request, null, 2)
-      );
+      logger.debug("Creating checkout session", { request });
 
       // Use the SDK to create checkout session
       const checkoutSession = await this.dodoClient.checkoutSessions.create(
         request
       );
 
-      console.log("Checkout session created:", checkoutSession);
+      logger.info("Checkout session created", { checkoutSession });
       return {
         checkout_url: checkoutSession.checkout_url,
         session_id: checkoutSession.session_id,
       };
     } catch (error) {
-      console.error("Error creating checkout session:", error);
+      logger.error("Error creating checkout session", { error });
       throw error;
     }
   }
@@ -356,7 +340,7 @@ export class DodoService {
    */
   async handleWebhookEvent(payload: unknown): Promise<void> {
     try {
-      console.log("Dodo webhook event received:", payload);
+      logger.debug("Dodo webhook event received", { payload });
 
       const payloadData = payload as z.infer<typeof WebhookPayloadSchema>;
       const { type, data } = payloadData;
@@ -391,10 +375,10 @@ export class DodoService {
           await this.handlePaymentFailed(data);
           break;
         default:
-          console.log(`Unhandled webhook event type: ${type}`);
+          logger.info("Unhandled webhook event type", { type });
       }
     } catch (error) {
-      console.error("Error handling webhook event:", error);
+      logger.error("Error handling webhook event", { error });
       throw error;
     }
   }
@@ -406,10 +390,7 @@ export class DodoService {
     subscriptionData: z.infer<typeof SubscriptionActivePayloadSchema>
   ): Promise<void> {
     try {
-      console.log(
-        "Raw subscription webhook data:",
-        JSON.stringify(subscriptionData, null, 2)
-      );
+      logger.debug("Raw subscription webhook data", { subscriptionData });
 
       const subscription = subscriptionData.data;
       const metadata = subscription.metadata as
@@ -419,7 +400,7 @@ export class DodoService {
       const planId = metadata?.plan_id as string;
       const subscriptionId = subscription.subscription_id as string;
 
-      console.log("Processing subscription activation:", {
+      logger.info("Processing subscription activation", {
         subscriptionId,
         userId,
         planId,
@@ -503,20 +484,17 @@ export class DodoService {
         updated_at: now,
       };
 
-      console.log(
-        "Prepared subscription data for upsert:",
-        JSON.stringify(userSubscription, null, 2)
-      );
+      logger.debug("Prepared subscription data for upsert", { userSubscription });
 
       // Use service role client for webhook operations to bypass RLS
       const supabase = this.getServiceSupabase() as any;
 
-      // Log before upsert
-      console.log("🔄 Attempting upsert to user_subscriptions table...");
-      console.log("  - user_id:", userId);
-      console.log("  - dodo_subscription_id:", subscriptionId);
-      console.log("  - plan_id:", planId);
-      console.log("  - status:", subscriptionStatus);
+      logger.debug("Attempting upsert to user_subscriptions table", {
+        userId,
+        subscriptionId,
+        planId,
+        status: subscriptionStatus
+      });
 
       const { data: upsertedData, error } = await supabase
         .from("user_subscriptions")
@@ -526,12 +504,8 @@ export class DodoService {
         })
         .select();
 
-      // Log the result
       if (upsertedData) {
-        console.log(
-          "✅ Upsert successful! Returned data:",
-          JSON.stringify(upsertedData, null, 2)
-        );
+        logger.info("Upsert successful", { upsertedData });
       }
 
       if (error) {
@@ -563,14 +537,14 @@ export class DodoService {
         throw dbError;
       }
 
-      console.log("Subscription activated successfully:", {
+      logger.info("Subscription activated successfully", {
         userId,
         planId,
         status: subscriptionStatus,
         subscriptionId,
       });
     } catch (error) {
-      console.error("Error handling subscription activation:", error);
+      logger.error("Error handling subscription activation", { error });
       throw error;
     }
   }
@@ -594,11 +568,11 @@ export class DodoService {
       .eq("dodo_subscription_id", dodoSubscriptionId);
 
     if (error) {
-      console.error("Failed to cancel subscription:", error);
+      logger.error("Failed to cancel subscription", { error, dodoSubscriptionId });
       throw error;
     }
 
-    console.log("Subscription cancelled:", dodoSubscriptionId);
+    logger.info("Subscription cancelled", { dodoSubscriptionId });
   }
 
   /**
@@ -620,11 +594,11 @@ export class DodoService {
       .eq("dodo_subscription_id", dodoSubscriptionId);
 
     if (error) {
-      console.error("Failed to update subscription status:", error);
+      logger.error("Failed to update subscription status", { error, dodoSubscriptionId });
       throw error;
     }
 
-    console.log("Subscription failed:", dodoSubscriptionId);
+    logger.info("Subscription failed", { dodoSubscriptionId });
   }
 
   /**
@@ -646,11 +620,11 @@ export class DodoService {
       .eq("dodo_subscription_id", dodoSubscriptionId);
 
     if (error) {
-      console.error("Failed to expire subscription:", error);
+      logger.error("Failed to expire subscription", { error, dodoSubscriptionId });
       throw error;
     }
 
-    console.log("Subscription expired:", dodoSubscriptionId);
+    logger.info("Subscription expired", { dodoSubscriptionId });
   }
 
   /**
@@ -660,11 +634,11 @@ export class DodoService {
     data: Record<string, unknown>
   ): Promise<void> {
     try {
-      console.log("Raw payment webhook data:", JSON.stringify(data, null, 2));
+      logger.debug("Raw payment webhook data", { data });
 
       const payment = data;
       const paymentId = payment.payment_id as string;
-      console.log("Payment succeeded:", paymentId);
+      logger.info("Payment succeeded", { paymentId });
 
       // Extract payment details with better null handling
       // Amount might be in different formats (number, string, cents)
@@ -686,7 +660,7 @@ export class DodoService {
       const paymentMethod = payment.payment_method as string | undefined;
       const metadata = payment.metadata as Record<string, unknown> | undefined;
 
-      console.log("Extracted payment details:", {
+      logger.debug("Extracted payment details", {
         paymentId,
         amount,
         currency,
@@ -710,7 +684,7 @@ export class DodoService {
       }
 
       if (!userId) {
-        console.error("Cannot track payment: user_id not found", {
+        logger.warn("Cannot track payment - user_id not found", {
           metadata,
           subscriptionId,
           paymentId,
@@ -736,30 +710,27 @@ export class DodoService {
           });
 
         if (insertError) {
-          console.error("Failed to insert payment history:", insertError);
+          logger.error("Failed to insert payment history", { error: insertError });
           // Don't throw - we don't want to fail webhook processing
         } else {
-          console.log("Payment history recorded successfully");
+          logger.info("Payment history recorded successfully");
         }
       } else {
-        console.warn(
-          "Skipping payment history insertion - amount is 0 or undefined",
-          {
-            amount,
-            paymentId,
-          }
-        );
+        logger.warn("Skipping payment history insertion - amount is 0 or undefined", {
+          amount,
+          paymentId,
+        });
       }
 
       // If this is a subscription payment, update subscription status to active
       // Note: payment.succeeded webhook only fires when real money is charged
       // During free trials, no payment webhook is sent
       if (subscriptionId) {
-        console.log(
-          `Payment received (${currency} ${
-            amount || 0
-          }) for subscription ${subscriptionId}, updating status to active`
-        );
+        logger.info("Payment received for subscription", {
+          currency,
+          amount: amount || 0,
+          subscriptionId
+        });
 
         const supabase = this.getServiceSupabase() as any;
         const { error: updateError } = await supabase
@@ -771,15 +742,13 @@ export class DodoService {
           .eq("dodo_subscription_id", subscriptionId);
 
         if (updateError) {
-          console.error("Failed to update subscription status:", updateError);
+          logger.error("Failed to update subscription status", { error: updateError });
         } else {
-          console.log(
-            `Subscription ${subscriptionId} status updated to active after successful payment`
-          );
+          logger.info("Subscription status updated to active", { subscriptionId });
         }
       }
     } catch (error) {
-      console.error("Error handling payment succeeded:", error);
+      logger.error("Error handling payment succeeded", { error });
       // Don't throw - we don't want to fail webhook processing
     }
   }
@@ -791,14 +760,11 @@ export class DodoService {
     data: Record<string, unknown>
   ): Promise<void> {
     try {
-      console.log(
-        "Raw failed payment webhook data:",
-        JSON.stringify(data, null, 2)
-      );
+      logger.debug("Raw failed payment webhook data", { data });
 
       const payment = data;
       const paymentId = payment.payment_id as string;
-      console.log("Payment failed:", paymentId);
+      logger.warn("Payment failed", { paymentId });
 
       // Extract payment details with better null handling
       let amount = payment.amount as number | undefined;
@@ -819,7 +785,7 @@ export class DodoService {
       const metadata = payment.metadata as Record<string, unknown> | undefined;
       const errorMessage = payment.error_message as string | undefined;
 
-      console.log("Extracted failed payment details:", {
+      logger.debug("Extracted failed payment details", {
         paymentId,
         amount,
         currency,
@@ -843,7 +809,7 @@ export class DodoService {
       }
 
       if (!userId) {
-        console.error("Cannot track failed payment: user_id not found", {
+        logger.warn("Cannot track failed payment - user_id not found", {
           metadata,
           subscriptionId,
           paymentId,
@@ -870,31 +836,28 @@ export class DodoService {
           });
 
         if (insertError) {
-          console.error("Failed to insert payment history:", insertError);
+          logger.error("Failed to insert payment history", { error: insertError });
           // Don't throw - we don't want to fail webhook processing
         } else {
-          console.log("Failed payment history recorded successfully");
+          logger.info("Failed payment history recorded successfully");
         }
       } else {
-        console.warn(
-          "Skipping failed payment history insertion - amount is 0 or undefined",
-          {
-            amount,
-            paymentId,
-          }
-        );
+        logger.warn("Skipping failed payment history insertion - amount is 0 or undefined", {
+          amount,
+          paymentId,
+        });
       }
 
       // Check if we should update subscription status
       // Note: Dodo Payments usually handles subscription status updates
       // We'll log this but let Dodo manage the subscription lifecycle
       if (subscriptionId) {
-        console.log(
-          `Payment failed for subscription ${subscriptionId}. Dodo Payments will handle retry logic.`
-        );
+        logger.info("Payment failed for subscription - Dodo will handle retry", {
+          subscriptionId
+        });
       }
     } catch (error) {
-      console.error("Error handling payment failed:", error);
+      logger.error("Error handling payment failed", { error });
       // Don't throw - we don't want to fail webhook processing
     }
   }
@@ -923,7 +886,7 @@ export class DodoService {
 
       return true;
     } catch (error) {
-      console.error("Error cancelling subscription:", error);
+      logger.error("Error cancelling subscription", { error });
       return false;
     }
   }
@@ -952,7 +915,7 @@ export class DodoService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error("Error getting subscription status:", error);
+      logger.error("Error getting subscription status", { error });
       throw error;
     }
   }

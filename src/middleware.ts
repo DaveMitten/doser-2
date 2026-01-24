@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from './lib/supabase-middleware'
+import * as Sentry from '@sentry/nextjs'
+
+const { logger } = Sentry
 
 const publicRoutes = [
   '/',
@@ -9,7 +12,7 @@ const publicRoutes = [
 ]
 
 const setAccessCookie = (request: NextRequest) => {
-  console.log('✅ Valid key - setting cookie');
+  logger.info('Valid key - setting cookie');
   const url = new URL(request.url);
   url.searchParams.delete('access');
 
@@ -29,7 +32,7 @@ const searchParamAccess = async (request: NextRequest) => {
   const privateAccessKey = process.env.PRIVATE_ACCESS_KEY;
   const hasPrivateCookie = request.cookies.get('private_access')?.value === 'true';
 
-  console.log('🔍 Check:', { hasParam: !!accessParam, hasCookie: hasPrivateCookie });
+  logger.debug('Access check', { hasParam: !!accessParam, hasCookie: hasPrivateCookie });
 
   // If valid access param, set cookie and redirect to clean URL
   if (accessParam && privateAccessKey && accessParam === privateAccessKey) {
@@ -43,7 +46,7 @@ const searchParamAccess = async (request: NextRequest) => {
   const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
 
   if (isPublicRoute && !hasAccess) {
-    console.log('❌ No access - showing 404');
+    logger.warn('No access - showing 404', { pathname: request.nextUrl.pathname });
     return NextResponse.rewrite(new URL('/not-found', request.url), { status: 404 });
   }
 
@@ -52,7 +55,7 @@ const searchParamAccess = async (request: NextRequest) => {
 }
 
 export async function middleware(request: NextRequest) {
-  console.log('🔥 Middleware:', request.nextUrl.pathname);
+  logger.debug('Middleware processing', { pathname: request.nextUrl.pathname });
   return await searchParamAccess(request);
 }
 

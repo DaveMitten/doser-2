@@ -3,6 +3,8 @@
 import React from "react";
 import * as Sentry from "@sentry/nextjs";
 
+const { logger } = Sentry;
+
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -23,12 +25,14 @@ export class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    console.error("[ErrorBoundary] Error caught:", error);
+    logger.error("ErrorBoundary caught error", { error });
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack);
+    logger.error("ErrorBoundary component stack", {
+      componentStack: errorInfo.componentStack
+    });
     Sentry.captureException(error, {
       contexts: {
         react: {

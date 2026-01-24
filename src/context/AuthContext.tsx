@@ -7,6 +7,8 @@ import { AuthContextType } from "@/types/auth";
 import { getBaseUrl } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 
+const { logger } = Sentry;
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -18,7 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       return createSupabaseBrowserClient();
     } catch (error) {
-      console.error("[AuthProvider] Failed to create Supabase client:", error);
+      logger.error("Failed to create Supabase client", { error });
       Sentry.captureException(error, {
         tags: {
           component: "AuthProvider",
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Timeout fallback - ensure loading doesn't hang forever
     const timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.warn("[AuthProvider] Auth initialization timeout");
+        logger.warn("Auth initialization timeout");
         Sentry.captureMessage("Auth initialization timeout", {
           level: "warning",
           tags: {
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((error) => {
         if (isMounted) {
           clearTimeout(timeoutId);
-          console.error("[AuthProvider] Error getting session:", error);
+          logger.error("Error getting session", { error });
           Sentry.captureException(error, {
             tags: {
               component: "AuthProvider",
