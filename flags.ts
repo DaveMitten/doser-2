@@ -13,3 +13,9 @@ export const privatePageFlag = flag({
         return hasPrivateAccess || process.env.PRIVATE_PAGE_FLAG === 'true';
     }
 });
+
+
+// javascript: (function () {
+//     document.cookie = "private_access=true; path=/; max-age=36000";
+//     alert(document.cookie);
+// })();

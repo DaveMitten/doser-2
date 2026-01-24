@@ -1,4 +1,4 @@
-export default function NotFound() {
+export default async function NotFound() {
     return (
         <div className="min-h-screen bg-doser-background">
             <div className="relative z-10">

@@ -3,30 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { Database } from "./database.types";
 
 export async function updateSession(request: NextRequest) {
+  console.error('supabase middleware running'); // Changed from console.log
+
   let supabaseResponse = NextResponse.next({
     request,
   });
-
-  // Check for private access query parameter
-  const url = new URL(request.url);
-  const accessParam = url.searchParams.get('access');
-  const privateAccessKey = process.env.PRIVATE_ACCESS_KEY;
-
-  // If access param matches, set cookie and redirect to clean URL
-  if (accessParam && privateAccessKey && accessParam === privateAccessKey) {
-    // Remove access param from URL
-    url.searchParams.delete('access');
-
-    supabaseResponse = NextResponse.redirect(url);
-    supabaseResponse.cookies.set('private_access', 'true', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      path: '/',
-    });
-    return supabaseResponse;
-  }
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
