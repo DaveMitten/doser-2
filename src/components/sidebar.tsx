@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { signOut as serverSignOut } from "@/app/(public)/auth/actions";
 import { LogOut } from "lucide-react";
+import DoserSVG from "./svgs/DoserSVG";
 
 interface SidebarProps {
   currentPage?: string;
@@ -98,11 +99,10 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     <Link
       key={item.href}
       href={item.href}
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-        currentPage === item.pageKey
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
           ? "text-doser-primary bg-doser-primary-light"
           : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-      }`}
+        }`}
       onClick={onMobileItemClick}
     >
       <span className="text-base">{item.icon}</span>
@@ -115,11 +115,10 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     <Link
       key={item.href}
       href={item.href}
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-        currentPage === item.pageKey
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
           ? "text-doser-primary bg-doser-primary-light"
           : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-      }`}
+        }`}
       onClick={onMobileItemClick}
     >
       <span className="text-base">{item.icon}</span>
@@ -132,9 +131,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       <div className="space-y-6 flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center space-x-3 pb-6 border-b border-doser-border">
-          <div className="w-7 h-7 bg-gradient-to-br from-doser-primary to-doser-primary-hover rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm">🌿</span>
-          </div>
+          <DoserSVG width={28} height={28} />
           <span className="text-lg font-bold text-doser-text">Doser</span>
         </div>
 
