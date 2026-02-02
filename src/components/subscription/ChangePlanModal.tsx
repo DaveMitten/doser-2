@@ -10,13 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CreditCard, Copy, Check } from "lucide-react";
+import { CreditCard, Loader2, Check, AlertCircle } from "lucide-react";
+import { PlanService } from "@/lib/plan-service";
+import { useUserData } from "@/context/UserDataContext";
 
 interface ChangePlanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentPlan: string;
-  targetPlan: string;
+  currentPlanId: string;
+  targetPlanId: string;
   userEmail?: string;
   userName?: string;
 }
@@ -24,53 +26,86 @@ interface ChangePlanModalProps {
 export function ChangePlanModal({
   open,
   onOpenChange,
-  currentPlan,
-  targetPlan,
+  currentPlanId,
+  targetPlanId,
   userEmail = "",
   userName = "",
 }: ChangePlanModalProps) {
-  const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const { refetch } = useUserData();
 
-  const emailSubject = `Plan Change Request - ${userName}`;
-  const emailBody = `Hi Doser Support Team,
+  // Get plan details
+  const currentPlan = PlanService.getPlanDetails(currentPlanId);
+  const targetPlan = PlanService.getPlanDetails(targetPlanId);
 
-I would like to request a plan change with the following details:
-
-Email: ${userEmail}
-Current Plan: ${currentPlan}
-Requested Plan: ${targetPlan}
-
-Please let me know the next steps and if you need any additional information.
-
-Thank you!
-${userName}`;
-
-  // const handleEmailClick = () => {
-  //   const mailtoLink = `mailto:support@doserapp.com?subject=${encodeURIComponent(
-  //     emailSubject
-  //   )}&body=${encodeURIComponent(emailBody)}`;
-  //   window.location.href = mailtoLink;
-  // };
-
-  const handleCopyInfo = async () => {
-    const copyText = `Email: support@doserapp.com
-Subject: ${emailSubject}
-
-${emailBody}`;
+  const handleChangePlan = async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      await navigator.clipboard.writeText(copyText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      const response = await fetch("/api/subscriptions/change-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          newPlanId: targetPlanId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to change plan");
+      }
+
+      setSuccess(true);
+      // Refresh subscription data
+      await refetch();
+
+      // Close modal after short delay
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      console.error("Error changing plan:", err);
+      setError(err instanceof Error ? err.message : "Failed to change plan");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setCopied(false);
+    setError(null);
+    setSuccess(false);
   };
+
+  if (success) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[450px] bg-doser-surface border-doser-border">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-green-600 flex items-center gap-2">
+              <Check className="w-6 h-6" />
+              Plan Changed Successfully!
+            </DialogTitle>
+            <DialogDescription className="text-doser-text-muted pt-2">
+              Your subscription has been updated to {targetPlan?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-doser-text-muted">
+              You'll be charged the prorated amount based on your remaining
+              billing cycle.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -78,51 +113,89 @@ ${emailBody}`;
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-doser-text flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-doser-primary" />
-            Request Plan Change
+            Change Subscription Plan
           </DialogTitle>
           <DialogDescription className="text-doser-text-muted pt-2">
-            Contact our support team to change your subscription plan
+            Review the plan change and confirm
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Contact Information */}
-          <div className="bg-doser-background rounded-lg p-4 border border-doser-border space-y-3">
-            <p className="whitespace-pre-line text-doser-text">
-              {`I would like to request a plan change with the following details;
+          {/* Plan Comparison */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Current Plan */}
+            <div className="bg-doser-background rounded-lg p-4 border border-doser-border">
+              <p className="text-xs text-doser-text-muted uppercase mb-2">
+                Current Plan
+              </p>
+              <h3 className="text-lg font-semibold text-doser-text">
+                {currentPlan?.name}
+              </h3>
+              <p className="text-2xl font-bold text-doser-text mt-2">
+                £{currentPlan?.price}
+                <span className="text-sm font-normal text-doser-text-muted">
+                  /month
+                </span>
+              </p>
+            </div>
 
-  Email: ${userEmail}
-  Current Plan: ${currentPlan}
-  Requested Plan: ${targetPlan}
-
-Please let me know the next steps and if you need any
-additional information.
-
-Thank you!`}
-            </p>
+            {/* New Plan */}
+            <div className="bg-doser-primary/10 rounded-lg p-4 border-2 border-doser-primary">
+              <p className="text-xs text-doser-primary uppercase mb-2">
+                New Plan
+              </p>
+              <h3 className="text-lg font-semibold text-doser-text">
+                {targetPlan?.name}
+              </h3>
+              <p className="text-2xl font-bold text-doser-text mt-2">
+                £{targetPlan?.price}
+                <span className="text-sm font-normal text-doser-text-muted">
+                  /month
+                </span>
+              </p>
+            </div>
           </div>
 
-          {/* Instructions */}
+          {/* Prorated Billing Info */}
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-lg p-4">
             <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-              <strong className="font-semibold">Next Steps:</strong> Copy the
-              information to send manually.
+              <strong className="font-semibold">Prorated Billing:</strong> You'll
+              be charged the difference based on your remaining billing cycle.
+              The charge will be processed immediately.
             </p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-900 dark:text-red-100">{error}</p>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button type="button" onClick={handleCopyInfo} variant="doser">
-            {copied ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleChangePlan}
+            disabled={isLoading}
+            className="bg-doser-primary hover:bg-doser-primary/90"
+          >
+            {isLoading ? (
               <>
-                <Check className="w-4 h-4 mr-2" />
-                Copied!
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Changing Plan...
               </>
             ) : (
-              <>
-                <Copy className="w-4 h-4 mr-2" />
-                Copy Info
-              </>
+              <>Confirm Plan Change</>
             )}
           </Button>
         </DialogFooter>

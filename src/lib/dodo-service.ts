@@ -453,10 +453,37 @@ export class DodoService {
       // Use the actual status from Dodo, with fallback logic
       const subscriptionStatus = subscription.status as string;
 
-      // this is wrong, if the user pays for the subscription they are immediately out of the trial period
-
       // Build subscription object with explicit null handling
       const now = new Date().toISOString();
+
+      // Determine trial dates based on subscription status
+      // If status is "active", the user has paid and should not have active trial dates
+      // If status is "trialing", calculate trial end based on trial period
+      let trialStart: string | null = null;
+      let trialEnd: string | null = null;
+
+      if (subscriptionStatus === "trialing" && subscription.trial_period_days > 0) {
+        // User is on trial - set trial start and end dates
+        trialStart = subscription?.created_at?.toISOString() as string;
+        trialEnd = new Date(
+          subscription.created_at.getTime() +
+            subscription.trial_period_days * 24 * 60 * 60 * 1000
+        ).toISOString();
+        logger.info("Trial subscription detected", {
+          trialStart,
+          trialEnd,
+          trialPeriodDays: subscription.trial_period_days,
+        });
+      } else if (subscriptionStatus === "active") {
+        // User has paid - end trial immediately
+        trialStart = null;
+        trialEnd = now; // Mark trial as ended now
+        logger.info("Paid subscription detected, ending trial", {
+          status: subscriptionStatus,
+          trialEnd,
+        });
+      }
+
       const userSubscription: UserSubscription = {
         id: crypto.randomUUID(),
         user_id: userId,
@@ -475,11 +502,8 @@ export class DodoService {
           subscription?.previous_billing_date?.toISOString() as string,
         current_period_end:
           subscription?.next_billing_date?.toISOString() as string,
-        trial_start: subscription?.created_at?.toISOString() as string,
-        trial_end: new Date(
-          subscription.created_at.getTime() +
-            subscription.trial_period_days * 24 * 60 * 60 * 1000
-        ).toISOString(),
+        trial_start: trialStart as string | undefined,
+        trial_end: trialEnd as string | undefined,
         created_at: subscription.created_at?.toISOString() as string,
         updated_at: now,
       };
@@ -733,18 +757,25 @@ export class DodoService {
         });
 
         const supabase = this.getServiceSupabase() as any;
+        const now = new Date().toISOString();
+
+        // When payment succeeds, update status to active and end trial
         const { error: updateError } = await supabase
           .from("user_subscriptions")
           .update({
             status: "active",
-            updated_at: new Date().toISOString(),
+            trial_end: now, // End trial immediately upon payment
+            updated_at: now,
           })
           .eq("dodo_subscription_id", subscriptionId);
 
         if (updateError) {
           logger.error("Failed to update subscription status", { error: updateError });
         } else {
-          logger.info("Subscription status updated to active", { subscriptionId });
+          logger.info("Subscription status updated to active, trial ended", {
+            subscriptionId,
+            trialEnd: now
+          });
         }
       }
     } catch (error) {
@@ -859,6 +890,75 @@ export class DodoService {
     } catch (error) {
       logger.error("Error handling payment failed", { error });
       // Don't throw - we don't want to fail webhook processing
+    }
+  }
+
+  /**
+   * Change subscription plan (upgrade/downgrade)
+   */
+  async changePlan(
+    dodoSubscriptionId: string,
+    newPlanId: string,
+    userId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      logger.info("Changing subscription plan", {
+        dodoSubscriptionId,
+        newPlanId,
+        userId,
+      });
+
+      // Use the SDK to change the plan with prorated billing
+      const updatedSubscription = await this.dodoClient.subscriptions.changePlan(
+        dodoSubscriptionId,
+        {
+          product_id: newPlanId,
+          quantity: 1,
+          proration_billing_mode: "prorated_immediately",
+        }
+      );
+
+      logger.info("Plan changed successfully in Dodo", {
+        subscriptionId: updatedSubscription.subscription_id,
+      });
+
+      // Update local database with new plan
+      const serviceSupabase = this.getServiceSupabase();
+      const { error: updateError } = await serviceSupabase
+        .from("user_subscriptions")
+        .update({
+          plan_id: newPlanId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("dodo_subscription_id", dodoSubscriptionId)
+        .eq("user_id", userId);
+
+      if (updateError) {
+        logger.error("Failed to update subscription in database", {
+          error: updateError,
+        });
+        return {
+          success: false,
+          error: "Failed to update subscription in database",
+        };
+      }
+
+      logger.info("Subscription updated in database", { userId, newPlanId });
+      return { success: true };
+    } catch (error) {
+      logger.error("Error changing subscription plan", {
+        error,
+        dodoSubscriptionId,
+        newPlanId,
+        userId,
+      });
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to change subscription plan",
+      };
     }
   }
 
