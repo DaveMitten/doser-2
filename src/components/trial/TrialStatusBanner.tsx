@@ -21,8 +21,20 @@ export function TrialStatusBanner({
     isTrialExpired,
     isTrialActive,
     daysRemaining,
+    trialEndsAt,
   } = useSubscription();
   const router = useRouter();
+
+  // Format trial end date for display
+  const formatTrialEndDate = () => {
+    if (!trialEndsAt) return "";
+    const options: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    };
+    return trialEndsAt.toLocaleDateString("en-US", options);
+  };
 
   if (isLoading) {
     return (
@@ -95,8 +107,8 @@ export function TrialStatusBanner({
               </h3>
               <p className="text-yellow-600 text-sm">
                 {daysRemaining === 1
-                  ? "Your trial expires tomorrow"
-                  : `${daysRemaining} days remaining in your trial`}
+                  ? `Your trial expires tomorrow (${formatTrialEndDate()})`
+                  : `${daysRemaining} days remaining • Expires ${formatTrialEndDate()}`}
               </p>
             </div>
           </div>
@@ -105,7 +117,7 @@ export function TrialStatusBanner({
               onClick={handleUpgrade}
               className="bg-yellow-600 hover:bg-yellow-700 text-white"
             >
-              Upgrade Now
+              Subscribe Now
             </Button>
           )}
         </div>
@@ -121,7 +133,8 @@ export function TrialStatusBanner({
           <div>
             <h3 className="text-green-800 font-semibold">Free Trial Active</h3>
             <p className="text-green-600 text-sm">
-              {daysRemaining} days remaining in your trial
+              {daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining •
+              Expires {formatTrialEndDate()}
             </p>
           </div>
         </div>

@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Doser is a Next.js 15 application for cannabis dosage calculation and session tracking. It uses Supabase for authentication and database, Dodo Payments for subscription management, Statsig for analytics, and Sentry for error monitoring. The app targets medical cannabis users who want to accurately track their consumption and dosage.
 
+For documentation on any package or product used in this app, refer to context7 mcp.
+
 ## Development Commands
 
 ### Running the Application
