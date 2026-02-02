@@ -100,8 +100,8 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       key={item.href}
       href={item.href}
       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
-          ? "text-doser-primary bg-doser-primary-light"
-          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+        ? "text-doser-primary bg-doser-primary-light"
+        : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
         }`}
       onClick={onMobileItemClick}
     >
@@ -116,8 +116,8 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       key={item.href}
       href={item.href}
       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
-          ? "text-doser-primary bg-doser-primary-light"
-          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+        ? "text-doser-primary bg-doser-primary-light"
+        : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
         }`}
       onClick={onMobileItemClick}
     >
@@ -129,10 +129,11 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   return (
     <aside className="w-full min-h-screen p-4 flex flex-col">
       <div className="space-y-6 flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center space-x-3 pb-6 border-b border-doser-border">
-          <DoserSVG width={28} height={28} />
-          <span className="text-lg font-bold text-doser-text">Doser</span>
+        {/* Logo - Far Left */}
+        <div className="flex items-center justify-start pb-6 border-b border-doser-border">
+          <div className="relative w-24 h-24">
+            <DoserSVG />
+          </div>
         </div>
 
         {/* Navigation Menu */}

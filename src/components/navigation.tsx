@@ -124,18 +124,18 @@ export function Navigation({ currentPage }: NavigationProps) {
 
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 py-4 lg:px-8">
-      {/* Logo */}
-      <div className="flex items-center space-x-2">
-        <DoserSVG width={75} height={75} />
-      </div>
+      {/* Logo - Far Left */}
+      <Link href="/" className="hidden md:flex relative w-24 h-24 shrink-0 mr-auto">
+        <DoserSVG />
+      </Link>
 
       {/* Desktop Navigation Links */}
-      <div className="hidden md:flex items-center space-x-8">
+      <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
         {navigationLinks.map((link) => renderNavigationLink(link))}
       </div>
 
-      {/* Desktop CTA Buttons */}
-      <div className="hidden md:flex items-center space-x-4">
+      {/* Desktop CTA Buttons - Far Right */}
+      <div className="hidden md:flex items-center space-x-4 ml-auto">
         {loading ? (
           <div className="text-doser-text-muted text-sm">Loading...</div>
         ) : (
