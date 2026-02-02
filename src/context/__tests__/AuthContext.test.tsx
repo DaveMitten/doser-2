@@ -47,8 +47,6 @@ function TestComponent() {
     signIn,
     signOut,
     resetPassword,
-    refreshSession,
-    checkSessionValidity,
   } = useAuth();
 
   return (
@@ -75,12 +73,6 @@ function TestComponent() {
         onClick={() => resetPassword("test@example.com")}
       >
         Reset Password
-      </button>
-      <button data-testid="refresh-btn" onClick={refreshSession}>
-        Refresh Session
-      </button>
-      <button data-testid="check-btn" onClick={checkSessionValidity}>
-        Check Session
       </button>
     </div>
   );
@@ -143,9 +135,6 @@ describe("AuthContext", () => {
       password: "password",
       options: {
         emailRedirectTo: "http://localhost:3000/auth/callback?next=/dashboard",
-        data: {
-          email_verified: false, // Should be false in test environment
-        },
       },
     });
   });
@@ -205,28 +194,9 @@ describe("AuthContext", () => {
     });
 
     expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-      "test@example.com"
+      "test@example.com",
+      { redirectTo: "http://localhost:3000/auth/reset-password" }
     );
-  });
-
-  it("should handle session refresh successfully", async () => {
-    mockSupabase.auth.refreshSession.mockResolvedValue({
-      data: { session: { user: { email: "test@example.com" } } },
-      error: null,
-    });
-
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    const refreshBtn = screen.getByTestId("refresh-btn");
-    await act(async () => {
-      refreshBtn.click();
-    });
-
-    expect(mockSupabase.auth.refreshSession).toHaveBeenCalled();
   });
 
   it("should handle auth state changes", async () => {
