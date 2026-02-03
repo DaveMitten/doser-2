@@ -113,12 +113,12 @@ export function PricingCard({
       </Card>
 
       {/* Change Plan Modal */}
-      {isAuthenticated && (
+      {isAuthenticated && currentUserPlanId && (
         <ChangePlanModal
           open={isModalOpen}
           onOpenChange={setIsModalOpen}
-          currentPlan={currentPlanName}
-          targetPlan={plan.name}
+          currentPlanId={currentUserPlanId}
+          targetPlanId={plan.id}
           userEmail={userEmail}
           userName={userName}
         />
