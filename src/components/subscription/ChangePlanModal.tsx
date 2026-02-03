@@ -58,6 +58,14 @@ export function ChangePlanModal({
       const data = await response.json();
 
       if (!response.ok) {
+        // Log full error details for debugging
+        console.error("Plan change failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error,
+          currentPlanId,
+          targetPlanId,
+        });
         throw new Error(data.error || "Failed to change plan");
       }
 
@@ -71,7 +79,9 @@ export function ChangePlanModal({
       }, 2000);
     } catch (err) {
       console.error("Error changing plan:", err);
-      setError(err instanceof Error ? err.message : "Failed to change plan");
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to change plan. Please try again or contact support.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -140,6 +140,88 @@ test.describe("Subscription Trial Flow", () => {
       // Should redirect to checkout (in real scenario)
       // Here we just verify the API was called
     });
+
+    test("should allow trial user to upgrade to different plan (trial upgrade)", async ({
+      page,
+    }) => {
+      // Mock the plan change API (trial users upgrading to different plan)
+      await page.route("**/api/subscriptions/change-plan", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            message: "Plan changed successfully",
+            newPlanId: "pdt_RwjIQmhRz9N3S6afZ92p7", // Optimize plan
+          }),
+        });
+      });
+
+      await page.goto("/pricing");
+
+      // Find the Optimize plan card (different from current trial plan)
+      const optimizeCard = page.locator('[class*="Card"]', { hasText: "Optimize" });
+
+      // Click "Upgrade to Optimize" button
+      await optimizeCard.getByRole("button", { name: /Upgrade to Optimize/i }).click();
+
+      // Modal should open showing plan change confirmation
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page.getByText("Change Subscription Plan")).toBeVisible();
+
+      // Should show current trial plan (Track) and new plan (Optimize)
+      await expect(page.getByText("Current Plan")).toBeVisible();
+      await expect(page.getByText("New Plan")).toBeVisible();
+      await expect(page.getByText("Track")).toBeVisible();
+      await expect(page.getByText("Optimize")).toBeVisible();
+
+      // Should show prorated billing information
+      await expect(page.getByText(/Prorated Billing/i)).toBeVisible();
+
+      // Confirm plan change
+      await page.getByRole("button", { name: /Confirm Plan Change/i }).click();
+
+      // Should show success message
+      await expect(page.getByText("Plan Changed Successfully!")).toBeVisible();
+      await expect(
+        page.getByText("Your subscription has been updated to Optimize")
+      ).toBeVisible();
+    });
+
+    test("should handle trial upgrade errors gracefully", async ({ page }) => {
+      // Mock the plan change API with an error (simulating the old bug)
+      await page.route("**/api/subscriptions/change-plan", async (route) => {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: 'Cannot change plans. Your subscription status is "trialing". Only active or trial subscriptions can be upgraded.',
+          }),
+        });
+      });
+
+      await page.goto("/pricing");
+
+      // Find the Optimize plan card
+      const optimizeCard = page.locator('[class*="Card"]', { hasText: "Optimize" });
+
+      // Click "Upgrade to Optimize" button
+      await optimizeCard.getByRole("button", { name: /Upgrade to Optimize/i }).click();
+
+      // Wait for modal to open
+      await expect(page.getByRole("dialog")).toBeVisible();
+
+      // Confirm plan change
+      await page.getByRole("button", { name: /Confirm Plan Change/i }).click();
+
+      // Should show error message with clear explanation
+      await expect(
+        page.getByText(/Cannot change plans/i)
+      ).toBeVisible();
+      await expect(
+        page.getByText(/subscription status is/i)
+      ).toBeVisible();
+    });
   });
 
   test.describe("Trial User - Expiring Soon", () => {

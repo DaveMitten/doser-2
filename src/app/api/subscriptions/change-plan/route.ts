@@ -148,8 +148,8 @@ export async function POST(request: NextRequest) {
     const typedSubscription: Database["public"]["Tables"]["user_subscriptions"]["Row"] =
       subscription;
 
-    // Validate subscription is active and paid (not trial)
-    if (typedSubscription.status !== "active") {
+    // Validate subscription is active or trialing (both can change plans)
+    if (!["active", "trialing"].includes(typedSubscription.status)) {
       logError(
         new Error(
           `Cannot change plan for subscription with status: ${typedSubscription.status}`
@@ -160,12 +160,14 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           metadata: {
             status: typedSubscription.status,
+            currentPlanId: typedSubscription.plan_id,
+            dodoSubscriptionId: typedSubscription.dodo_subscription_id,
           },
         }
       );
       return NextResponse.json(
         {
-          error: `Cannot change plans while subscription is ${typedSubscription.status}. Please subscribe first.`,
+          error: `Cannot change plans. Your subscription status is "${typedSubscription.status}". Only active or trial subscriptions can be upgraded.`,
         },
         { status: 400 }
       );
@@ -185,6 +187,11 @@ export async function POST(request: NextRequest) {
         errorType: "subscription",
         eventType: "change-plan-missing-dodo-id",
         userId: user.id,
+        metadata: {
+          subscriptionId: typedSubscription.id,
+          planId: typedSubscription.plan_id,
+          status: typedSubscription.status,
+        },
       });
       return NextResponse.json(
         {
@@ -199,8 +206,10 @@ export async function POST(request: NextRequest) {
     logInfo("Initiating plan change", {
       userId: user.id,
       currentPlanId: typedSubscription.plan_id,
+      currentStatus: typedSubscription.status,
       newPlanId,
       dodoSubscriptionId: typedSubscription.dodo_subscription_id,
+      isTrialUpgrade: typedSubscription.status === "trialing",
     });
 
     const dodoService = new DodoService();
@@ -217,8 +226,11 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         metadata: {
           currentPlanId: typedSubscription.plan_id,
+          currentStatus: typedSubscription.status,
           newPlanId,
           error: result.error,
+          dodoSubscriptionId: typedSubscription.dodo_subscription_id,
+          isTrialUpgrade: typedSubscription.status === "trialing",
         },
       });
       return NextResponse.json(
@@ -230,7 +242,9 @@ export async function POST(request: NextRequest) {
     logInfo("Plan changed successfully", {
       userId: user.id,
       oldPlanId: typedSubscription.plan_id,
+      oldStatus: typedSubscription.status,
       newPlanId,
+      wasTrialUpgrade: typedSubscription.status === "trialing",
     });
 
     return NextResponse.json({
