@@ -909,7 +909,7 @@ export class DodoService {
       });
 
       // Use the SDK to change the plan with prorated billing
-      const updatedSubscription = await this.dodoClient.subscriptions.changePlan(
+      await this.dodoClient.subscriptions.changePlan(
         dodoSubscriptionId,
         {
           product_id: newPlanId,
@@ -919,11 +919,12 @@ export class DodoService {
       );
 
       logger.info("Plan changed successfully in Dodo", {
-        subscriptionId: updatedSubscription.subscription_id,
+        subscriptionId: dodoSubscriptionId,
+        newPlanId,
       });
 
       // Update local database with new plan
-      const serviceSupabase = this.getServiceSupabase();
+      const serviceSupabase = this.getServiceSupabase() as any;
       const { error: updateError } = await serviceSupabase
         .from("user_subscriptions")
         .update({

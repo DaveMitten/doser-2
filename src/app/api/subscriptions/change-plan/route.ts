@@ -6,6 +6,7 @@ import { Redis } from "@upstash/redis";
 import * as Sentry from "@sentry/nextjs";
 import { logError, logInfo } from "@/lib/error-logger";
 import { SUBSCRIPTION_PLANS } from "@/lib/dodo-types";
+import { Database } from "@/lib/database.types";
 
 // Initialize rate limiter (5 plan changes per day per user)
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
@@ -143,31 +144,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Type assertion to help TypeScript understand the subscription type
+    const typedSubscription: Database["public"]["Tables"]["user_subscriptions"]["Row"] =
+      subscription;
+
     // Validate subscription is active and paid (not trial)
-    if (subscription.status !== "active") {
+    if (typedSubscription.status !== "active") {
       logError(
         new Error(
-          `Cannot change plan for subscription with status: ${subscription.status}`
+          `Cannot change plan for subscription with status: ${typedSubscription.status}`
         ),
         {
           errorType: "subscription",
           eventType: "change-plan-invalid-status",
           userId: user.id,
           metadata: {
-            status: subscription.status,
+            status: typedSubscription.status,
           },
         }
       );
       return NextResponse.json(
         {
-          error: `Cannot change plans while subscription is ${subscription.status}. Please subscribe first.`,
+          error: `Cannot change plans while subscription is ${typedSubscription.status}. Please subscribe first.`,
         },
         { status: 400 }
       );
     }
 
     // Check if user is trying to change to the same plan
-    if (subscription.plan_id === newPlanId) {
+    if (typedSubscription.plan_id === newPlanId) {
       return NextResponse.json(
         { error: "You are already on this plan" },
         { status: 400 }
@@ -175,7 +180,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate has Dodo subscription ID
-    if (!subscription.dodo_subscription_id) {
+    if (!typedSubscription.dodo_subscription_id) {
       logError(new Error("Missing Dodo subscription ID"), {
         errorType: "subscription",
         eventType: "change-plan-missing-dodo-id",
@@ -193,14 +198,14 @@ export async function POST(request: NextRequest) {
     // Change plan using DodoService
     logInfo("Initiating plan change", {
       userId: user.id,
-      currentPlanId: subscription.plan_id,
+      currentPlanId: typedSubscription.plan_id,
       newPlanId,
-      dodoSubscriptionId: subscription.dodo_subscription_id,
+      dodoSubscriptionId: typedSubscription.dodo_subscription_id,
     });
 
     const dodoService = new DodoService();
     const result = await dodoService.changePlan(
-      subscription.dodo_subscription_id,
+      typedSubscription.dodo_subscription_id,
       newPlanId,
       user.id
     );
@@ -211,7 +216,7 @@ export async function POST(request: NextRequest) {
         eventType: "change-plan-dodo-failed",
         userId: user.id,
         metadata: {
-          currentPlanId: subscription.plan_id,
+          currentPlanId: typedSubscription.plan_id,
           newPlanId,
           error: result.error,
         },
@@ -224,7 +229,7 @@ export async function POST(request: NextRequest) {
 
     logInfo("Plan changed successfully", {
       userId: user.id,
-      oldPlanId: subscription.plan_id,
+      oldPlanId: typedSubscription.plan_id,
       newPlanId,
     });
 
