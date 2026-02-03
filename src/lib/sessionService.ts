@@ -43,7 +43,7 @@ export interface EnhancedCalculatedTotals {
 }
 
 export class SessionService {
-  private supabase = createSupabaseBrowserClient();
+  private supabase: any = createSupabaseBrowserClient();
 
   /**
    * Create a new session in the database

@@ -54,11 +54,11 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    throw new Error(getErrorMessage(error));
+    return { success: false, error: getErrorMessage(error) };
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  return { success: true };
 }
 
 export async function signup(formData: FormData) {
@@ -78,11 +78,11 @@ export async function signup(formData: FormData) {
 
   if (error) {
     // Use the helper function to get user-friendly error messages
-    throw new Error(getErrorMessage(error));
+    return { success: false, error: getErrorMessage(error) };
   }
 
   revalidatePath("/", "layout");
-  redirect("/auth?message=Check your email to continue sign in process");
+  return { success: true };
 }
 
 export async function signOut() {
@@ -91,11 +91,11 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    throw new Error(error.message);
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/", "layout");
-  redirect("/auth");
+  return { success: true };
 }
 
 export async function resetPassword(formData: FormData) {

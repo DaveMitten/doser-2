@@ -1,5 +1,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 // Create Redis client for rate limiting
 const redis = new Redis({
@@ -50,7 +53,7 @@ export async function checkRateLimit(
       remaining,
     };
   } catch (error) {
-    console.error("Rate limiting error (falling back to allow):", error);
+    logger.error("Rate limiting error - failing open", { error });
     // If rate limiting fails, allow the request (fail open for better UX)
     return {
       success: true,

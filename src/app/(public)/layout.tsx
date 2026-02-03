@@ -1,10 +1,11 @@
 import { Navigation } from "@/components/navigation";
 
-export default function PublicLayout({
+export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <>
       {/* Navigation for public pages */}

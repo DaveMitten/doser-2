@@ -1,8 +1,23 @@
+"use client";
+
 import { FeaturesSection } from "@/components/features-section";
 import Image from "next/image";
 import { CTAButton } from "@/components/CTAButton";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard");
+    }
+  }, [user, loading, router]);
+
   return (
     <>
       {/* Main Content */}

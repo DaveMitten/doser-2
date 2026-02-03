@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
+import { Database } from "@/lib/database.types";
 
+type UserSubscription =
+  Database["public"]["Tables"]["user_subscriptions"]["Row"];
 export async function GET() {
   try {
     const supabase = await createSupabaseServerClient();
@@ -15,11 +18,14 @@ export async function GET() {
     }
 
     // Get user's subscription from database
-    const { data: subscription, error } = await supabase
+    const {
+      data: subscription,
+      error,
+    }: { data: UserSubscription | null; error: Error | null } = (await supabase
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .single()) as { data: UserSubscription | null; error: Error | null };
 
     if (error || !subscription) {
       return NextResponse.json({

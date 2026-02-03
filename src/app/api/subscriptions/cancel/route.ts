@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { DodoService } from "@/lib/dodo-service";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
-
+import { UserSubscription } from "../../../../lib/dodo-types";
 export async function POST() {
   try {
     const supabase = await createSupabaseServerClient();
@@ -16,11 +16,12 @@ export async function POST() {
     }
 
     // Get user's subscription to find Dodo subscription ID
-    const { data: subscription } = await supabase
-      .from("user_subscriptions")
-      .select("dodo_subscription_id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: subscription }: { data: UserSubscription | null } =
+      (await supabase
+        .from("user_subscriptions")
+        .select("dodo_subscription_id")
+        .eq("user_id", user.id)
+        .single()) as { data: UserSubscription | null };
 
     if (!subscription?.dodo_subscription_id) {
       return NextResponse.json(

@@ -4,7 +4,8 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { UserDataProvider } from "@/context/UserDataContext";
 import { Analytics } from "@vercel/analytics/next";
-import MyStatsig from "./my-statsig";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,11 +38,11 @@ export default function RootLayout({
         <div className="fixed inset-0 bg-doser-background">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]"></div>
         </div>
-        <AuthProvider>
-          <MyStatsig>
+        <ErrorBoundary>
+          <AuthProvider>
             <UserDataProvider>{children}</UserDataProvider>
-          </MyStatsig>
-        </AuthProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -50,28 +50,24 @@ function PricingPageContent() {
             {/* Billing Toggle */}
             <div className="flex items-center justify-center space-x-4 mb-8">
               <span
-                className={`text-sm font-medium ${
-                  !isYearly ? "text-doser-text" : "text-doser-text-muted"
-                }`}
+                className={`text-sm font-medium ${!isYearly ? "text-doser-text" : "text-doser-text-muted"
+                  }`}
               >
                 Monthly
               </span>
               <button
                 onClick={() => setIsYearly(!isYearly)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isYearly ? "bg-doser-primary" : "bg-gray-200"
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isYearly ? "bg-doser-primary" : "bg-gray-200"
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isYearly ? "translate-x-6" : "translate-x-1"
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isYearly ? "translate-x-6" : "translate-x-1"
+                    }`}
                 />
               </button>
               <span
-                className={`text-sm font-medium ${
-                  isYearly ? "text-doser-text" : "text-doser-text-muted"
-                }`}
+                className={`text-sm font-medium ${isYearly ? "text-doser-text" : "text-doser-text-muted"
+                  }`}
               >
                 Yearly
               </span>
@@ -184,7 +180,7 @@ function PricingPageContent() {
   );
 }
 
-export default function PricingPage() {
+export default function Page() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-doser-background" />}>
       <PricingPageContent />

@@ -58,7 +58,24 @@ export default function DashboardPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    // #region agent log
+    if (typeof window !== 'undefined') {
+      console.log('Dashboard useEffect', {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+      });
+    }
+    // #endregion
+
+    if (!user) {
+      // #region agent log
+      if (typeof window !== 'undefined') {
+        console.warn('Dashboard: No user, returning early', { hasUser: false });
+      }
+      // #endregion
+      return;
+    }
 
     const fetchDashboardData = async () => {
       try {
@@ -244,9 +261,8 @@ export default function DashboardPage() {
           label="Total Sessions"
           sublabel={
             stats && stats.lastWeekSessions > 0
-              ? `+${
-                  stats.thisWeekSessions - stats.lastWeekSessions
-                } from last week`
+              ? `+${stats.thisWeekSessions - stats.lastWeekSessions
+              } from last week`
               : "Last 7 days"
           }
         />
@@ -288,9 +304,8 @@ export default function DashboardPage() {
               label="Total Sessions"
               sublabel={
                 stats && stats.lastWeekSessions > 0
-                  ? `+${
-                      stats.thisWeekSessions - stats.lastWeekSessions
-                    } from last week`
+                  ? `+${stats.thisWeekSessions - stats.lastWeekSessions
+                  } from last week`
                   : "Last 7 days"
               }
             />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 import DoserSVG from "./svgs/DoserSVG";
@@ -100,11 +100,11 @@ export function Navigation({ currentPage }: NavigationProps) {
   const renderCTAButton = (button: CTAButton, isMobile = false) => {
     const mobileClasses = isMobile
       ? cn(
-          "w-full justify-center ",
-          button.variant === "ghost"
-            ? "hover:!bg-transparent hover:!text-doser-text"
-            : ""
-        )
+        "w-full justify-center ",
+        button.variant === "ghost"
+          ? "hover:!bg-transparent hover:!text-doser-text"
+          : ""
+      )
       : "";
     const buttonClasses = `${button.className} ${mobileClasses}`;
 
@@ -124,20 +124,23 @@ export function Navigation({ currentPage }: NavigationProps) {
 
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 py-4 lg:px-8">
-      {/* Logo */}
-      <div className="flex items-center space-x-2">
-        <DoserSVG width={75} height={75} />
-      </div>
+      {/* Logo - Far Left */}
+      <Link href="/" className="hidden md:flex relative w-24 h-24 shrink-0 mr-auto">
+        <DoserSVG />
+      </Link>
 
       {/* Desktop Navigation Links */}
-      <div className="hidden md:flex items-center space-x-8">
+      <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
         {navigationLinks.map((link) => renderNavigationLink(link))}
       </div>
 
-      {/* Desktop CTA Buttons */}
-      <div className="hidden md:flex items-center space-x-4">
-        {!loading &&
-          getCtaButtons(!!user).map((button) => renderCTAButton(button))}
+      {/* Desktop CTA Buttons - Far Right */}
+      <div className="hidden md:flex items-center space-x-4 ml-auto">
+        {loading ? (
+          <div className="text-doser-text-muted text-sm">Loading...</div>
+        ) : (
+          getCtaButtons(!!user).map((button) => renderCTAButton(button))
+        )}
       </div>
 
       {/* Mobile Menu Button */}
@@ -178,10 +181,13 @@ export function Navigation({ currentPage }: NavigationProps) {
 
               {/* Mobile CTA Buttons */}
               <div className="pt-6 border-t border-doser-border space-y-2">
-                {!loading &&
+                {loading ? (
+                  <div className="text-doser-text-muted text-sm text-center py-2">Loading...</div>
+                ) : (
                   getCtaButtons(!!user).map((button) =>
                     renderCTAButton(button, true)
-                  )}
+                  )
+                )}
               </div>
             </div>
           </SheetContent>

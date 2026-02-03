@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/lib/useSubscription";
 import { SUBSCRIPTION_PLANS } from "@/lib/dodo-types";
 import { Calendar, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 export default function BillingPage() {
   const { subscription, cancelSubscription, isLoading } = useSubscription();
@@ -25,7 +28,8 @@ export default function BillingPage() {
         alert(result.error || "Failed to cancel subscription");
       }
     } catch (error) {
-      console.error("Error canceling subscription:", error);
+      logger.error("Error canceling subscription", { error });
+      alert("Failed to cancel subscription. Please try again.");
     } finally {
       setIsCanceling(false);
     }

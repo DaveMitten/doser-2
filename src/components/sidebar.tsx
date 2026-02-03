@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { signOut as serverSignOut } from "@/app/(public)/auth/actions";
 import { LogOut } from "lucide-react";
+import DoserSVG from "./svgs/DoserSVG";
 
 interface SidebarProps {
   currentPage?: string;
@@ -73,11 +74,18 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     try {
       // Try client-side signout first
       await signOut();
+      // Navigate to auth page after successful signout
+      window.location.href = "/auth";
     } catch (error) {
       console.error("1: Error signing out:", error);
       // Fallback to server action
       try {
-        await serverSignOut();
+        const result = await serverSignOut();
+        if (result.success) {
+          window.location.href = "/auth";
+        } else {
+          console.error("Server signout failed:", result.error);
+        }
       } catch (serverError) {
         console.error("2: Error server error signing out:", serverError);
       }
@@ -91,11 +99,10 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     <Link
       key={item.href}
       href={item.href}
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-        currentPage === item.pageKey
-          ? "text-doser-primary bg-doser-primary-light"
-          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-      }`}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
+        ? "text-doser-primary bg-doser-primary-light"
+        : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+        }`}
       onClick={onMobileItemClick}
     >
       <span className="text-base">{item.icon}</span>
@@ -108,11 +115,10 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
     <Link
       key={item.href}
       href={item.href}
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${
-        currentPage === item.pageKey
-          ? "text-doser-primary bg-doser-primary-light"
-          : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
-      }`}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm ${currentPage === item.pageKey
+        ? "text-doser-primary bg-doser-primary-light"
+        : "text-doser-text-muted hover:bg-doser-surface-hover hover:text-doser-text"
+        }`}
       onClick={onMobileItemClick}
     >
       <span className="text-base">{item.icon}</span>
@@ -123,12 +129,11 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
   return (
     <aside className="w-full min-h-screen p-4 flex flex-col">
       <div className="space-y-6 flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center space-x-3 pb-6 border-b border-doser-border">
-          <div className="w-7 h-7 bg-gradient-to-br from-doser-primary to-doser-primary-hover rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm">🌿</span>
+        {/* Logo - Far Left */}
+        <div className="flex items-center justify-start pb-6 border-b border-doser-border">
+          <div className="relative w-24 h-24">
+            <DoserSVG />
           </div>
-          <span className="text-lg font-bold text-doser-text">Doser</span>
         </div>
 
         {/* Navigation Menu */}
