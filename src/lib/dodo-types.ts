@@ -119,9 +119,9 @@ export interface SubscriptionPlan {
 // Pricing plans configuration
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: "pdt_euP6KahnWde9Ew1jvhIJj",
+    id: "pdt_0NVzLG1q7MTDYaO5KluZr",
     name: "Learn",
-    price: { monthly: 4.99, yearly: 54.89 },
+    price: { monthly: 5, yearly: 50 },
     currency: "GBP",
     interval: "month",
     trialDays: 7,
@@ -133,9 +133,9 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
   },
   {
-    id: "pdt_QT8CsZEYopzV38iWlE0Sb",
+    id: "pdt_0NVzLQtP39PxN3StTeSUD",
     name: "Track",
-    price: { monthly: 9.99, yearly: 109.89 },
+    price: { monthly: 10, yearly: 100 },
     currency: "GBP",
     interval: "month",
     trialDays: 7,
@@ -151,7 +151,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "pdt_cseHYcjUQrkC7iti2ysVR",
     name: "Optimize",
-    price: { monthly: 19.99, yearly: 219.89 },
+    price: { monthly: 20, yearly: 200 },
     currency: "GBP",
     interval: "month",
     trialDays: 7,
