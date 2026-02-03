@@ -9,6 +9,7 @@ import { useUserData } from "@/context/UserDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TrialStatusBanner } from "@/components/trial/TrialStatusBanner";
 export type RouteType = "public" | "auth";
 
 interface PricingSectionProps {
@@ -96,6 +97,13 @@ export function PricingSection({ routeType }: PricingSectionProps) {
       <main className="relative z-10">
         {/* Pricing Section */}
         <section className="container mx-auto px-6 py-16">
+          {/* Trial Status Banner - Only show for authenticated users */}
+          {routeType === "auth" && (
+            <div className="max-w-4xl mx-auto mb-8">
+              <TrialStatusBanner showUpgradeButton={false} />
+            </div>
+          )}
+
           <div className="text-center mb-12">
             <h2 className="text-4xl lg:text-5xl font-bold text-doser-text mb-4">
               Choose Your Perfect Plan
@@ -130,13 +138,14 @@ export function PricingSection({ routeType }: PricingSectionProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => {
               // Get the plan key from the plan name for routing
+              const planKey = plan.name.toLowerCase();
 
               return (
                 <PricingCard
                   key={plan.id}
                   plan={plan}
                   isYearly={isYearly}
-                  isPopular={PlanService.isPopularPlan(plan.id)}
+                  isPopular={PlanService.isPopularPlan(planKey)}
                   isAuthenticated={routeType === "auth"}
                   onClick={() => handleCardClick(plan.id)}
                   onSuccess={handleSubscriptionSuccess}

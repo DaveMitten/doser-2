@@ -56,11 +56,15 @@ export function SubscriptionButton({
     //   hasActiveSubscription,
     // });
 
-    // If user is on the current plan, do nothing
+    // If user is on the current plan with active paid subscription, do nothing
     if (isCurrentPlan && isActive) {
       // console.log("Already subscribed to this plan, returning");
+      setIsLoading(false);
       return;
     }
+
+    // If user is on trial for current plan, allow conversion to paid
+    // (flow continues to create subscription)
 
     // console.log("Creating subscription", {
     // planId,
@@ -98,33 +102,55 @@ export function SubscriptionButton({
   };
 
   const getButtonText = () => {
+    const isTrialing = subscription?.status === "trialing";
+    const planName = plan?.name || subscriptionIdToName[planId] || "Plan";
+
+    // Current plan with active paid subscription
     if (isCurrentPlan && isActive) {
       return "Current Plan";
     }
 
-    if (subscription?.status === "trialing") {
-      return `Upgrade`;
+    // Current plan during trial - allow early conversion to paid
+    if (isCurrentPlan && isTrialing) {
+      return "Start Paid Subscription";
     }
 
-    // If user has active subscription and this is a different plan
+    // Different plan while on trial - allow upgrade/downgrade
+    if (isTrialing && !isCurrentPlan) {
+      return `Upgrade to ${planName}`;
+    }
+
+    // Different plan with active paid subscription
     if (hasActiveSubscription && !isCurrentPlan) {
       return "Change Plan";
     }
 
+    // New user or no subscription
     return "Start 7-Day Trial";
   };
 
   const getButtonVariant = () => {
+    const isTrialing = subscription?.status === "trialing";
+
+    // Current plan with active paid subscription
     if (isCurrentPlan && isActive) {
       return "secondary";
     }
 
-    if (subscriptionIdToName[planId] === "Track") {
-      return "default"; // Primary for Track plan
+    // Current plan during trial - highlight as actionable
+    if (isCurrentPlan && isTrialing) {
+      return "default";
+    }
+
+    // Track plan or upgrade option - use primary styling
+    if (subscriptionIdToName[planId] === "Track" || (isTrialing && !isCurrentPlan)) {
+      return "default";
     }
 
     return "outline";
   };
+
+  const isTrialing = subscription?.status === "trialing";
 
   return (
     <Button
