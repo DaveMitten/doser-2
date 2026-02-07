@@ -131,7 +131,7 @@ export function Sidebar({ currentPage, onMobileItemClick }: SidebarProps) {
       <div className="space-y-6 flex flex-col h-full">
         {/* Logo - Far Left */}
         <div className="flex items-center justify-start pb-6 border-b border-doser-border">
-          <div className="relative w-24 h-24">
+          <div className="relative w-20 h-20">
             <DoserSVG />
           </div>
         </div>

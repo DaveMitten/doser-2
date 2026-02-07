@@ -117,9 +117,11 @@ export interface SubscriptionPlan {
 }
 
 // Pricing plans configuration
+// Plan IDs can be overridden via environment variables for different environments
+// .trim() removes any trailing whitespace/newlines from environment variables
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: "pdt_0NVzLG1q7MTDYaO5KluZr",
+    id: (process.env.NEXT_PUBLIC_PLAN_ID_LEARN || "pdt_0NVzLG1q7MTDYaO5KluZr").trim(),
     name: "Learn",
     price: { monthly: 5, yearly: 50 },
     currency: "GBP",
@@ -133,7 +135,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
   },
   {
-    id: "pdt_0NVzLQtP39PxN3StTeSUD",
+    id: (process.env.NEXT_PUBLIC_PLAN_ID_TRACK || "pdt_0NVzLQtP39PxN3StTeSUD").trim(),
     name: "Track",
     price: { monthly: 10, yearly: 100 },
     currency: "GBP",
@@ -149,7 +151,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
   },
   {
-    id: "pdt_cseHYcjUQrkC7iti2ysVR",
+    id: (process.env.NEXT_PUBLIC_PLAN_ID_OPTIMIZE || "pdt_0NVzLjKPEFGIYMmqDQ4mS").trim(),
     name: "Optimize",
     price: { monthly: 20, yearly: 200 },
     currency: "GBP",

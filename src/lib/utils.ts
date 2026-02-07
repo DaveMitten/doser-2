@@ -97,6 +97,11 @@ export function getAuthCallbackUrl(): string {
 }
 
 export const subscriptionIdToName: Record<string, string> = {
+  // Current production plan IDs (from Dodo Payments)
+  pdt_0NVzLG1q7MTDYaO5KluZr: "Learn",
+  pdt_0NVzLQtP39PxN3StTeSUD: "Track",
+  pdt_0NVzLjKPEFGIYMmqDQ4mS: "Optimize",
+  // Legacy plan IDs (for backwards compatibility)
   pdt_euP6KahnWde9Ew1jvhIJj: "Learn",
   pdt_QT8CsZEYopzV38iWlE0Sb: "Track",
   pdt_cseHYcjUQrkC7iti2ysVR: "Optimize",
