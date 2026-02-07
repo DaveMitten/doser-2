@@ -123,9 +123,9 @@ export function Navigation({ currentPage }: NavigationProps) {
   };
 
   return (
-    <nav className="relative z-10 flex items-center justify-between px-6 py-4 lg:px-8">
+    <nav className="relative z-10 flex items-center justify-between px-6 py-2 lg:px-8">
       {/* Logo - Far Left */}
-      <Link href="/" className="hidden md:flex relative w-32 h-32 shrink-0 mr-auto">
+      <Link href="/" className="hidden md:flex relative w-20 h-20 shrink-0 mr-auto">
         <DoserSVG />
       </Link>
 

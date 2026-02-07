@@ -39,15 +39,14 @@ export function PricingCard({
   // Get the current plan name from the plan ID
   const currentPlanName = currentUserPlanId
     ? SUBSCRIPTION_PLANS.find((p) => p.id === currentUserPlanId)?.name ||
-      currentUserPlanId
+    currentUserPlanId
     : "";
 
   return (
     <>
       <Card
-        className={`bg-doser-surface border-doser-border flex flex-col ${
-          isPopular ? "border-2 border-doser-primary relative" : ""
-        }`}
+        className={`bg-doser-surface border-doser-border flex flex-col ${isPopular ? "border-2 border-doser-primary relative" : ""
+          }`}
       >
         {isPopular && (
           <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-doser-primary text-doser-text">
@@ -62,7 +61,7 @@ export function PricingCard({
               {plan.currency === "GBP" ? "£" : "€"}
               {plan.price}
             </span>
-            <span className="text-doser-text-muted">/{plan.interval}</span>
+            <span className="text-doser-text-muted">/{isYearly ? "year" : 'month'}</span>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col flex-grow space-y-4">
@@ -99,11 +98,10 @@ export function PricingCard({
             />
           ) : (
             <Button
-              className={`w-full ${
-                isPopular
-                  ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
-                  : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
-              }`}
+              className={`w-full ${isPopular
+                ? "bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+                : "bg-doser-surface hover:bg-doser-surface-hover text-doser-text border border-doser-border"
+                }`}
               onClick={onClick}
             >
               Start 7-Day Free Trial

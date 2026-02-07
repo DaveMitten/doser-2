@@ -13,6 +13,51 @@ import {
 import { CreditCard, Loader2, Check, AlertCircle } from "lucide-react";
 import { PlanService } from "@/lib/plan-service";
 import { useUserData } from "@/context/UserDataContext";
+import { PlanDetails } from "@/lib/plan-service";
+
+interface CurrentPlanCardProps {
+  plan: PlanDetails | null;
+  isOnTrial: boolean;
+}
+
+function CurrentPlanCard({ plan, isOnTrial }: CurrentPlanCardProps) {
+  const hasCurrentPlan = plan?.name && plan?.price;
+
+  return (
+    <div className="bg-doser-background rounded-lg p-4 border border-doser-border">
+      <p className="text-xs text-doser-text-muted uppercase mb-2">
+        Current Plan
+      </p>
+      {hasCurrentPlan ? (
+        <>
+          <h3 className="text-lg font-semibold text-doser-text">
+            {plan.name}
+          </h3>
+          <p className="text-2xl font-bold text-doser-text mt-2">
+            £{plan.price}
+            <span className="text-sm font-normal text-doser-text-muted">
+              /month
+            </span>
+          </p>
+        </>
+      ) : isOnTrial ? (
+        <>
+          <h3 className="text-lg font-semibold text-doser-text">Trial</h3>
+          <p className="text-sm text-doser-text-muted mt-2">
+            You&apos;re currently on a trial
+          </p>
+        </>
+      ) : (
+        <>
+          <h3 className="text-lg font-semibold text-doser-text">No Plan</h3>
+          <p className="text-sm text-doser-text-muted mt-2">
+            No active subscription
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface ChangePlanModalProps {
   open: boolean;
@@ -34,11 +79,14 @@ export function ChangePlanModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { refetch } = useUserData();
+  const { refetch, subscription } = useUserData();
 
   // Get plan details
   const currentPlan = PlanService.getPlanDetails(currentPlanId);
   const targetPlan = PlanService.getPlanDetails(targetPlanId);
+
+  // Check if user is on trial
+  const isOnTrial = subscription?.status === "trialing";
 
   const handleChangePlan = async () => {
     setIsLoading(true);
@@ -134,20 +182,7 @@ export function ChangePlanModal({
           {/* Plan Comparison */}
           <div className="grid grid-cols-2 gap-4">
             {/* Current Plan */}
-            <div className="bg-doser-background rounded-lg p-4 border border-doser-border">
-              <p className="text-xs text-doser-text-muted uppercase mb-2">
-                Current Plan
-              </p>
-              <h3 className="text-lg font-semibold text-doser-text">
-                {currentPlan?.name}
-              </h3>
-              <p className="text-2xl font-bold text-doser-text mt-2">
-                £{currentPlan?.price}
-                <span className="text-sm font-normal text-doser-text-muted">
-                  /month
-                </span>
-              </p>
-            </div>
+            <CurrentPlanCard plan={currentPlan} isOnTrial={isOnTrial} />
 
             {/* New Plan */}
             <div className="bg-doser-primary/10 rounded-lg p-4 border-2 border-doser-primary">
