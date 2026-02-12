@@ -68,7 +68,7 @@ export function TrialStatusBanner({
     router.push("/pricing");
   };
 
-  if (isTrialExpired) {
+  if (isTrialExpired && process.env.NODE_ENV !== 'development') {
     return (
       <Card className={`bg-red-50 border-red-200 ${className}`}>
         <div className="flex items-center justify-between p-4">

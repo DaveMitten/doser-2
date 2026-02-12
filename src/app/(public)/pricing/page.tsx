@@ -10,7 +10,7 @@ import { AlertTriangle } from "lucide-react";
 function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
   const searchParams = useSearchParams();
-  const trialExpired = searchParams.get("trial_expired") === "true";
+  const trialExpired = searchParams.get("trial_expired") === "true" && process.env.NODE_ENV !== 'development';
 
   const plans = PlanService.getAllPlans(isYearly);
 

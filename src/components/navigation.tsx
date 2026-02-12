@@ -3,26 +3,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { cn } from "../lib/utils";
 import DoserSVG from "./svgs/DoserSVG";
 import { useAuth } from "@/context/AuthContext";
-
-interface NavigationProps {
-  currentPage?: string;
-}
-
-interface NavigationLink {
-  href: string;
-  label: string;
-  pageKey: string;
-}
-
-const navigationLinks: NavigationLink[] = [
-  { href: "/", label: "Home", pageKey: "home" },
-  { href: "/pricing", label: "Pricing", pageKey: "pricing" },
-];
 
 interface CTAButton {
   href: string;
@@ -53,7 +37,7 @@ const getCtaButtons = (isAuthenticated: boolean): CTAButton[] => {
     },
     {
       href: "/auth?signup=true",
-      label: "Get Started",
+      label: "Start Tracking Free",
       variant: "default",
       className:
         "bg-doser-primary hover:bg-doser-primary-hover text-doser-text font-bold",
@@ -61,41 +45,9 @@ const getCtaButtons = (isAuthenticated: boolean): CTAButton[] => {
   ];
 };
 
-export function Navigation({ currentPage }: NavigationProps) {
+export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
   const { user, loading } = useAuth();
-
-  // Auto-determine current page if not provided
-  if (!currentPage) {
-    if (pathname === "/pricing") {
-      currentPage = "pricing";
-    } else {
-      currentPage = "home";
-    }
-  }
-
-  const renderNavigationLink = (link: NavigationLink, isMobile = false) => {
-    const isActive = currentPage === link.pageKey;
-    const baseClasses = isMobile
-      ? "block py-3 px-4 rounded-lg transition-colors"
-      : "transition-colors";
-
-    const activeClasses = isActive
-      ? "text-doser-text"
-      : "text-doser-text-muted hover:text-doser-text";
-
-    return (
-      <Link
-        key={link.label + `${isMobile}`}
-        href={link.href}
-        className={`${baseClasses} ${activeClasses}`}
-        onClick={() => isMobile && setIsMobileMenuOpen(false)}
-      >
-        {link.label}
-      </Link>
-    );
-  };
 
   const renderCTAButton = (button: CTAButton, isMobile = false) => {
     const mobileClasses = isMobile
@@ -125,14 +77,9 @@ export function Navigation({ currentPage }: NavigationProps) {
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 py-2 lg:px-8">
       {/* Logo - Far Left */}
-      <Link href="/" className="hidden md:flex relative w-20 h-20 shrink-0 mr-auto">
+      <Link href="/" className="hidden md:flex relative w-20 h-20 shrink-0">
         <DoserSVG />
       </Link>
-
-      {/* Desktop Navigation Links */}
-      <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
-        {navigationLinks.map((link) => renderNavigationLink(link))}
-      </div>
 
       {/* Desktop CTA Buttons - Far Right */}
       <div className="hidden md:flex items-center space-x-4 ml-auto">
@@ -172,15 +119,8 @@ export function Navigation({ currentPage }: NavigationProps) {
             className="bg-doser-surface border-doser-border w-80"
           >
             <div className="space-y-6">
-              {/* Mobile Navigation Links */}
-              <div className="space-y-2">
-                {navigationLinks.map((link) =>
-                  renderNavigationLink(link, true)
-                )}
-              </div>
-
               {/* Mobile CTA Buttons */}
-              <div className="pt-6 border-t border-doser-border space-y-2">
+              <div className="space-y-2">
                 {loading ? (
                   <div className="text-doser-text-muted text-sm text-center py-2">Loading...</div>
                 ) : (

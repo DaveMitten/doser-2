@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getBaseUrl } from "@/lib/utils";
+import * as Sentry from "@sentry/nextjs";
 
 // Helper function to get user-friendly error messages
 const getErrorMessage = (
-  error: { message?: string } | null | undefined
+  error: { message?: string } | null | undefined,
+  isProduction = process.env.NODE_ENV === "production"
 ): string => {
   if (error?.message) {
     const message = error.message.toLowerCase();
@@ -36,7 +38,25 @@ const getErrorMessage = (
       return "Too many signup attempts. Please wait a moment and try again.";
     }
 
-    // Return the original error message for other cases
+    // Handle database errors
+    if (
+      message.includes("database error") ||
+      message.includes("database") ||
+      message.includes("trigger") ||
+      message.includes("insert") ||
+      message.includes("constraint") ||
+      message.includes("violates")
+    ) {
+      if (isProduction) {
+        return "We're experiencing technical difficulties. Please contact support or try again later.";
+      }
+      return error.message; // Show detailed error in development
+    }
+
+    // Return user-friendly message in production, detailed in development
+    if (isProduction) {
+      return "Something went wrong. Please contact support if the issue persists.";
+    }
     return error.message;
   }
 
@@ -69,7 +89,7 @@ export async function signup(formData: FormData) {
     password: formData.get("password") as string,
   };
 
-  const { error } = await supabase.auth.signUp({
+  const { error, data: signupData } = await supabase.auth.signUp({
     ...data,
     options: {
       emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/dashboard`,
@@ -77,6 +97,30 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
+    // Log error to Sentry with context
+    Sentry.captureException(error, {
+      tags: {
+        component: "signup",
+        email: data.email,
+        error_type: "supabase_auth",
+      },
+      contexts: {
+        signup: {
+          email: data.email,
+          error_message: error.message,
+          error_name: error.name,
+          error_status: error.status,
+        },
+      },
+    });
+
+    console.error("Signup error:", {
+      email: data.email,
+      error: error.message,
+      status: error.status,
+      name: error.name,
+    });
+
     // Use the helper function to get user-friendly error messages
     return { success: false, error: getErrorMessage(error) };
   }

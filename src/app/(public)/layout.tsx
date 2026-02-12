@@ -9,7 +9,7 @@ export default async function Layout({
   return (
     <>
       {/* Navigation for public pages */}
-      <Navigation currentPage="home" />
+      <Navigation />
 
       {/* Main Content */}
       <main className="relative z-10">{children}</main>
