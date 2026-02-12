@@ -17,7 +17,7 @@ export function CTAButton({ variant = "hero" }: CTAButtonProps) {
 
   const isHero = variant === "hero";
   const linkHref = user ? "/dashboard" : "/auth?signup=true";
-  const buttonText = user ? "Dashboard" : "Get Started";
+  const buttonText = user ? "Dashboard" : "Start Tracking Free";
 
   return (
     <Link key={buttonText} href={linkHref} className={isHero ? "mt-16" : ""}>
