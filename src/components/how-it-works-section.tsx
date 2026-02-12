@@ -5,7 +5,7 @@ export function HowItWorksSection() {
       title: "Log your Session",
       description:
         "Before or right after using, log the details of your session in seconds using our quick-entry interface. Works on desktop and mobile.",
-      tags: ["Strain", "Method", "Dose amount", "Vape / Oil / Flower", "Time of day"],
+      tags: ["Strain", "Method", "Dose amount", "Time of day"],
     },
     {
       number: "02",
@@ -19,7 +19,7 @@ export function HowItWorksSection() {
       title: "Get Insights",
       description:
         "Your data builds over time into a clear picture of what works for you. See which strains, doses, and methods consistently give you the best relief.",
-      tags: ["Usage trends", "Optimal dose range", "Best strains for you", "Tolerance tracking"],
+      tags: ["Usage trends", "Optimal dose range", "Best strains for you"],
     },
   ];
 
