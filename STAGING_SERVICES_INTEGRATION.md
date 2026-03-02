@@ -6,21 +6,22 @@ This document covers how to configure EVERY service and integration for staging 
 
 ## Services Used by Doser
 
-| Service | Purpose | Has Test Mode? | Staging Strategy |
-|---------|---------|----------------|------------------|
-| **Vercel** | Hosting | Yes (Preview) | Separate deployment |
-| **Supabase** | Database + Auth | No | Separate project (recommended) |
-| **Dodo Payments** | Subscriptions | ✅ Yes | Test mode keys |
-| **Resend** | Email delivery | Partial | Same account, different sender |
-| **Sentry** | Error tracking | Tags | Same or separate project |
-| **Statsig** | Analytics/Feature flags | Yes | Separate environment |
-| **Upstash Redis** | Rate limiting | No | Same or separate database |
+| Service           | Purpose                 | Has Test Mode? | Staging Strategy               |
+| ----------------- | ----------------------- | -------------- | ------------------------------ |
+| **Vercel**        | Hosting                 | Yes (Preview)  | Separate deployment            |
+| **Supabase**      | Database + Auth         | No             | Separate project (recommended) |
+| **Dodo Payments** | Subscriptions           | ✅ Yes         | Test mode keys                 |
+| **Resend**        | Email delivery          | Partial        | Same account, different sender |
+| **Sentry**        | Error tracking          | Tags           | Same or separate project       |
+| **Statsig**       | Analytics/Feature flags | Yes            | Separate environment           |
+| **Upstash Redis** | Rate limiting           | No             | Same or separate database      |
 
 ---
 
 ## 1. Dodo Payments Configuration
 
 ### Production Setup:
+
 ```bash
 DODO_PAYMENTS_API_KEY=your_live_key
 DODO_PAYMENTS_ENVIRONMENT=live_mode
@@ -28,6 +29,7 @@ DODO_PAYMENTS_WEBHOOK_KEY=whsec_live_...
 ```
 
 ### Staging Setup:
+
 ```bash
 DODO_PAYMENTS_API_KEY=your_test_key
 DODO_PAYMENTS_ENVIRONMENT=test_mode
@@ -51,12 +53,14 @@ DODO_PAYMENTS_WEBHOOK_KEY=whsec_test_...
 ### Testing Subscriptions on Staging:
 
 **Test mode features:**
+
 - ✅ Create subscriptions without real charges
 - ✅ Test webhook events
 - ✅ Use test payment methods
 - ✅ Test subscription lifecycle (active, cancelled, expired)
 
 **Test Payment Methods:**
+
 ```
 Test Card: 4242 4242 4242 4242
 Expiry: Any future date
@@ -65,6 +69,7 @@ ZIP: Any 5 digits
 ```
 
 **Trigger Test Events:**
+
 - Successful payment: Card ending in 4242
 - Failed payment: Card ending in 0002
 - Requires authentication: Card ending in 3220
@@ -72,11 +77,13 @@ ZIP: Any 5 digits
 ### Subscription Plans Configuration:
 
 Your plans (from `src/lib/dodo-types.ts`):
+
 - Learn: £4.99/month
 - Track: £9.99/month
 - Optimize: £19.99/month
 
 **Staging Strategy:**
+
 - Use same plan IDs for consistency
 - Payments will be in test mode (no real charges)
 - Can create test plans with £0.01 pricing if needed
@@ -88,6 +95,7 @@ Your plans (from `src/lib/dodo-types.ts`):
 ### Option A: Separate Staging Project (Recommended)
 
 **Production:**
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://cppbdcylcwpjuhyxiwud.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
@@ -95,6 +103,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 ```
 
 **Staging:**
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-staging-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
@@ -102,6 +111,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 ```
 
 **Setup Steps:**
+
 1. Create new Supabase project: `doser-staging`
 2. Run database schema (copy from production)
 3. Configure auth settings for staging URL
@@ -114,11 +124,13 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 ### Option B: Shared Project (Not Recommended)
 
 **Issues with sharing:**
+
 - ❌ Email rate limits shared (will affect production)
 - ❌ Test data mixed with production
 - ❌ Risky for testing destructive operations
 
 **Only use if:**
+
 - Very low traffic
 - Short-term testing only
 - Will upgrade to separate soon
@@ -139,6 +151,7 @@ WHERE schemaname = 'public';
 ```
 
 **Or use migration files:**
+
 ```bash
 # If you have migration files in repo
 # Apply them to staging project
@@ -147,6 +160,7 @@ WHERE schemaname = 'public';
 ### Auth Configuration:
 
 **In Staging Supabase:**
+
 1. **Authentication** → **URL Configuration**
    - Site URL: `https://staging.doserapp.com`
    - Redirect URLs: Add staging URLs
@@ -169,16 +183,19 @@ WHERE schemaname = 'public';
 ### Strategy: Same Account, Different Senders
 
 **Production Emails:**
+
 ```
 From: Doser <noreply@doserapp.com>
 ```
 
 **Staging Emails:**
+
 ```
 From: Doser Staging <staging@doserapp.com>
 ```
 
 **Environment Variables:**
+
 ```bash
 # Same key for both environments
 RESEND_API_KEY=re_your_api_key
@@ -194,23 +211,24 @@ NEXT_PUBLIC_APP_URL=https://doserapp.com (production)
 // src/lib/email.ts (or wherever email logic lives)
 
 const getEmailFrom = () => {
-  const isProduction = process.env.NODE_ENV === 'production'
-    && process.env.NEXT_PUBLIC_APP_URL?.includes('doserapp.com')
-    && !process.env.NEXT_PUBLIC_APP_URL?.includes('staging');
+  const isProduction =
+    process.env.NODE_ENV === "production" &&
+    process.env.NEXT_PUBLIC_APP_URL?.includes("doserapp.com") &&
+    !process.env.NEXT_PUBLIC_APP_URL?.includes("staging");
 
   if (isProduction) {
-    return 'Doser <noreply@doserapp.com>';
+    return "Doser <noreply@doserapp.com>";
   }
 
   // Staging or development
-  return 'Doser Staging <staging@doserapp.com>';
+  return "Doser Staging <staging@doserapp.com>";
 };
 
 // Use in email sending:
 await resend.emails.send({
   from: getEmailFrom(),
   to: user.email,
-  subject: 'Welcome to Doser',
+  subject: "Welcome to Doser",
   // ...
 });
 ```
@@ -218,13 +236,16 @@ await resend.emails.send({
 ### Domain Verification:
 
 **For `staging@doserapp.com`:**
+
 - Already verified (same domain as production)
 - Can use immediately
 
 **Alternative for quick testing:**
+
 ```
 From: Doser Staging <onboarding@resend.dev>
 ```
+
 - Works immediately
 - No verification needed
 - Good for initial staging setup
@@ -232,6 +253,7 @@ From: Doser Staging <onboarding@resend.dev>
 ### Resend Dashboard Organization:
 
 **Tag emails by environment:**
+
 - Use Resend's email metadata/tags
 - Filter by environment in dashboard
 - Track staging vs production separately
@@ -243,24 +265,28 @@ From: Doser Staging <onboarding@resend.dev>
 ### Option A: Separate Projects (Recommended)
 
 **Production:**
+
 ```bash
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@o4510243455172608.ingest.de.sentry.io/4510243456090192
 SENTRY_PROJECT=doser-production
 ```
 
 **Staging:**
+
 ```bash
 NEXT_PUBLIC_SENTRY_DSN=https://yyy@o4510243455172608.ingest.de.sentry.io/YOUR_STAGING_PROJECT_ID
 SENTRY_PROJECT=doser-staging
 ```
 
 **Setup:**
+
 1. Go to Sentry Dashboard
 2. Create new project: `doser-staging`
 3. Copy new DSN
 4. Configure alerts separately for staging
 
 **Benefits:**
+
 - ✅ Separate error tracking
 - ✅ Won't pollute production error logs
 - ✅ Different alert rules
@@ -269,26 +295,30 @@ SENTRY_PROJECT=doser-staging
 ### Option B: Same Project with Tags
 
 **Both environments:**
+
 ```bash
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@o4510243455172608.ingest.de.sentry.io/4510243456090192
 SENTRY_ENVIRONMENT=staging  # or production
 ```
 
 **Configure in code:**
+
 ```typescript
 // sentry.client.config.ts
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.SENTRY_ENVIRONMENT || 'development',
+  environment: process.env.SENTRY_ENVIRONMENT || "development",
   // ...
 });
 ```
 
 **Benefits:**
+
 - ✅ Simpler setup
 - ✅ One project to manage
 
 **Cons:**
+
 - ❌ Mixed error logs
 - ❌ Need to filter by environment
 
@@ -301,24 +331,28 @@ Sentry.init({
 Statsig supports environments natively!
 
 **Production:**
+
 ```bash
 NEXT_PUBLIC_STATSIG_CLIENT_KEY=client-your_prod_key
 STATSIG_SERVER_KEY=secret-your_prod_key
 ```
 
 **Staging:**
+
 ```bash
 NEXT_PUBLIC_STATSIG_CLIENT_KEY=client-your_staging_key
 STATSIG_SERVER_KEY=secret-your_staging_key
 ```
 
 **Setup:**
+
 1. Go to Statsig Dashboard
 2. Create **"Staging"** environment
 3. Copy environment-specific keys
 4. Configure feature flags per environment
 
 **Benefits:**
+
 - ✅ Test feature flags on staging first
 - ✅ Separate analytics
 - ✅ No impact on production metrics
@@ -327,6 +361,7 @@ STATSIG_SERVER_KEY=secret-your_staging_key
 ### Feature Flag Testing Strategy:
 
 **Workflow:**
+
 1. Create feature flag in Statsig
 2. Enable in staging environment
 3. Test thoroughly
@@ -341,19 +376,22 @@ STATSIG_SERVER_KEY=secret-your_staging_key
 ### Option A: Same Database
 
 **Both environments:**
+
 ```bash
 UPSTASH_REDIS_REST_URL=https://tidy-man-17253.upstash.io
 UPSTASH_REDIS_REST_TOKEN=AUNlAAInc...
 ```
 
 **Use key prefixes:**
+
 ```typescript
 // src/lib/rate-limit.ts
 const getKeyPrefix = () => {
-  const isProduction = process.env.NODE_ENV === 'production'
-    && !process.env.NEXT_PUBLIC_APP_URL?.includes('staging');
+  const isProduction =
+    process.env.NODE_ENV === "production" &&
+    !process.env.NEXT_PUBLIC_APP_URL?.includes("staging");
 
-  return isProduction ? 'prod:' : 'staging:';
+  return isProduction ? "prod:" : "staging:";
 };
 
 export async function checkRateLimit(identifier: string) {
@@ -363,34 +401,40 @@ export async function checkRateLimit(identifier: string) {
 ```
 
 **Benefits:**
+
 - ✅ Simple setup
 - ✅ One database to manage
 - ✅ Free tier sufficient
 
 **Cons:**
+
 - ❌ Shared limits (if you hit free tier cap)
 
 ### Option B: Separate Database
 
 **Production:**
+
 ```bash
 UPSTASH_REDIS_REST_URL=https://prod-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=token_prod
 ```
 
 **Staging:**
+
 ```bash
 UPSTASH_REDIS_REST_URL=https://staging-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=token_staging
 ```
 
 **Setup:**
+
 1. Create new Upstash database
 2. Name: `doser-staging`
 3. Copy credentials
 4. Still free tier
 
 **Benefits:**
+
 - ✅ Completely isolated
 - ✅ Separate rate limit quotas
 
@@ -409,6 +453,7 @@ feature/* → Preview (auto-generated URLs)
 ### Environment Variables per Environment:
 
 **Vercel supports 3 environments:**
+
 1. **Production** - `main` branch
 2. **Preview** - all other branches
 3. **Development** - local
@@ -418,11 +463,13 @@ feature/* → Preview (auto-generated URLs)
 Go to Vercel → Project → Settings → Environment Variables
 
 **For each variable, set:**
+
 - ☑️ Production (for `main` branch)
 - ☑️ Preview (for `staging` and feature branches)
 - ☐ Development (usually use `.env.local`)
 
 **Production values** (main branch):
+
 ```bash
 NEXT_PUBLIC_APP_URL=https://doserapp.com
 NEXT_PUBLIC_SUPABASE_URL=https://prod-supabase.co
@@ -431,6 +478,7 @@ DODO_PAYMENTS_ENVIRONMENT=live_mode
 ```
 
 **Preview values** (staging/feature branches):
+
 ```bash
 NEXT_PUBLIC_APP_URL=https://staging.doserapp.com
 NEXT_PUBLIC_SUPABASE_URL=https://staging-supabase.co
@@ -447,6 +495,7 @@ DODO_PAYMENTS_ENVIRONMENT=test_mode
 3. Staging gets preview deployment
 
 **Or use branch-specific env vars:**
+
 - Can set different values for `staging` branch specifically
 - More granular control
 
@@ -457,17 +506,20 @@ DODO_PAYMENTS_ENVIRONMENT=test_mode
 ### DNS Setup:
 
 **Production:**
+
 ```
 doserapp.com → Vercel (main branch)
 www.doserapp.com → Redirect to doserapp.com
 ```
 
 **Staging:**
+
 ```
 staging.doserapp.com → Vercel (staging branch)
 ```
 
 **DNS Records:**
+
 ```
 Type: A
 Name: @
@@ -485,10 +537,12 @@ Value: cname.vercel-dns.com
 ### Vercel Domain Configuration:
 
 **Production project:**
+
 - `doserapp.com` (primary)
 - `www.doserapp.com` (redirect)
 
 **Staging setup:**
+
 1. In same Vercel project → Domains
 2. Add `staging.doserapp.com`
 3. Assign to `staging` branch
@@ -594,6 +648,7 @@ NEXT_PUBLIC_VERCEL_ENV=preview
 - [ ] Plan change webhook processed
 
 **Test Cards to Try:**
+
 - ✅ Success: 4242 4242 4242 4242
 - ❌ Decline: 4000 0000 0000 0002
 - 🔐 Auth: 4000 0027 6000 3220
@@ -632,41 +687,45 @@ NEXT_PUBLIC_VERCEL_ENV=preview
 
 ## Cost Summary
 
-| Service | Production Cost | Staging Cost | Notes |
-|---------|----------------|--------------|-------|
-| Vercel | Free/Pro ($20) | Included | Same project |
-| Supabase | Free | Free | Separate project |
-| Dodo Payments | Transaction fees | $0 (test mode) | No charges in test |
-| Resend | Free (100/day) | Included | Same account |
-| Sentry | Free (5k errors/mo) | Included | Same org |
-| Statsig | Free | Free | Separate env |
-| Upstash | Free (10k req/day) | Included/Free | Share or separate |
-| Domain | $12/yr | $0 | Use subdomain |
-| **Total Monthly** | ~$20-40 | **~$0** | Staging is free! |
+| Service           | Production Cost     | Staging Cost   | Notes              |
+| ----------------- | ------------------- | -------------- | ------------------ |
+| Vercel            | Free/Pro ($20)      | Included       | Same project       |
+| Supabase          | Free                | Free           | Separate project   |
+| Dodo Payments     | Transaction fees    | $0 (test mode) | No charges in test |
+| Resend            | Free (100/day)      | Included       | Same account       |
+| Sentry            | Free (5k errors/mo) | Included       | Same org           |
+| Statsig           | Free                | Free           | Separate env       |
+| Upstash           | Free (10k req/day)  | Included/Free  | Share or separate  |
+| Domain            | $12/yr              | $0             | Use subdomain      |
+| **Total Monthly** | ~$20-40             | **~$0**        | Staging is free!   |
 
 ---
 
 ## Implementation Timeline
 
 ### Week 1: Essential Staging
+
 - [ ] Create `staging` branch
 - [ ] Configure Vercel preview deployment
 - [ ] Set up staging environment variables
 - [ ] Test basic deployment
 
 ### Week 2: Service Integration
+
 - [ ] Create staging Supabase project
 - [ ] Configure Dodo test mode
 - [ ] Set up email with staging sender
 - [ ] Test payment flow
 
 ### Week 3: Monitoring & Polish
+
 - [ ] Configure Sentry staging project
 - [ ] Set up Statsig staging environment
 - [ ] Add staging domain (optional)
 - [ ] Document workflow
 
 ### Week 4: Testing & Launch
+
 - [ ] Complete testing checklist
 - [ ] Train team on staging workflow
 - [ ] Create deployment runbook
