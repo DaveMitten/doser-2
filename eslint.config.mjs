@@ -16,4 +16,11 @@ const eslintConfig = [
   },
 ];
 
-export default eslintConfig;
+// Export a clean config without circular references
+export default eslintConfig.map(config => {
+  if (typeof config === 'object' && config !== null) {
+    const { plugins, ...rest } = config;
+    return rest;
+  }
+  return config;
+});
