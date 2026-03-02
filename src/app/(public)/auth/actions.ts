@@ -82,51 +82,90 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  try {
+    const supabase = await createSupabaseServerClient();
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+    const data = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
 
-  const { error, data: signupData } = await supabase.auth.signUp({
-    ...data,
-    options: {
-      emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/dashboard`,
-    },
-  });
+    console.log("Attempting signup for:", data.email);
 
-  if (error) {
-    // Log error to Sentry with context
-    Sentry.captureException(error, {
+    const { error, data: signupData } = await supabase.auth.signUp({
+      ...data,
+      options: {
+        emailRedirectTo: `${getBaseUrl()}/auth/callback?next=/dashboard`,
+      },
+    });
+
+    if (error) {
+      // Log error to Sentry with context
+      Sentry.captureException(error, {
+        tags: {
+          component: "signup",
+          email: data.email,
+          error_type: "supabase_auth",
+        },
+        contexts: {
+          signup: {
+            email: data.email,
+            error_message: error.message,
+            error_name: error.name,
+            error_status: error.status,
+          },
+        },
+      });
+
+      console.error("Signup error:", {
+        email: data.email,
+        error: error.message,
+        status: error.status,
+        name: error.name,
+      });
+
+      // Use the helper function to get user-friendly error messages
+      return { success: false, error: getErrorMessage(error) };
+    }
+
+    console.log("Signup successful for:", data.email, {
+      userId: signupData.user?.id,
+      emailSent: signupData.user?.identities?.length === 0 ? "auto-confirmed" : "verification-required"
+    });
+
+    // Log successful signup to Sentry for monitoring
+    Sentry.captureMessage("User signup successful", {
+      level: "info",
       tags: {
         component: "signup",
         email: data.email,
-        error_type: "supabase_auth",
       },
       contexts: {
         signup: {
           email: data.email,
-          error_message: error.message,
-          error_name: error.name,
-          error_status: error.status,
+          userId: signupData.user?.id,
+          emailConfirmed: signupData.user?.email_confirmed_at ? true : false,
         },
       },
     });
 
-    console.error("Signup error:", {
-      email: data.email,
-      error: error.message,
-      status: error.status,
-      name: error.name,
+    revalidatePath("/", "layout");
+    return { success: true, userId: signupData.user?.id };
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error("Unexpected signup error:", error);
+    Sentry.captureException(error, {
+      tags: {
+        component: "signup",
+        error_type: "unexpected",
+      },
     });
 
-    // Use the helper function to get user-friendly error messages
-    return { success: false, error: getErrorMessage(error) };
+    return {
+      success: false,
+      error: "An unexpected error occurred. Please try again or contact support."
+    };
   }
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 export async function signOut() {

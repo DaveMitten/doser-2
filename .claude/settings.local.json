@@ -35,8 +35,14 @@
       "Bash(pnpm lint:fix:*)",
       "Bash(ls:*)",
       "Bash(git checkout:*)",
-      "Bash(gh pr create --title \"Remove private access gate for public app access\" --body \"$\\(cat <<''EOF''\n## Summary\n- Removes the secret link / cookie gating that blocked public routes \\(landing, `/auth`, `/signup`, `/pricing`\\) from users without `?access=sandwichesarelovely123`\n- Simplifies `src/middleware.ts` to only handle Supabase session refresh\n- Deletes unused `flags.ts` \\(no imports anywhere in the codebase\\)\n\n## Test plan\n- [ ] Visit `/` without the access cookie or query param — should load the landing page\n- [ ] Visit `/signup`, `/auth`, `/pricing` — all should be accessible\n- [ ] Authenticated routes \\(`/dashboard`, `/calculator`, etc.\\) still require login\n- [ ] Verify build passes with `npm run build`\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")"
+      "Bash(gh pr create --title \"Remove private access gate for public app access\" --body \"$\\(cat <<''EOF''\n## Summary\n- Removes the secret link / cookie gating that blocked public routes \\(landing, `/auth`, `/signup`, `/pricing`\\) from users without `?access=sandwichesarelovely123`\n- Simplifies `src/middleware.ts` to only handle Supabase session refresh\n- Deletes unused `flags.ts` \\(no imports anywhere in the codebase\\)\n\n## Test plan\n- [ ] Visit `/` without the access cookie or query param — should load the landing page\n- [ ] Visit `/signup`, `/auth`, `/pricing` — all should be accessible\n- [ ] Authenticated routes \\(`/dashboard`, `/calculator`, etc.\\) still require login\n- [ ] Verify build passes with `npm run build`\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
+      "Bash(chmod:*)",
+      "Bash(/Users/davidmitten/Documents/dev/side-projects/doser-2/scripts/fix-signup-issues.sh)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
