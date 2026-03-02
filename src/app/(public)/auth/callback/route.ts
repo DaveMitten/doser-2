@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { EmailOtpType } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getBaseUrl } from "@/lib/utils";
+import { getBaseUrl, extractVerificationParams } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   // Rate limit by IP address
@@ -18,11 +18,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(errorUrl);
   }
 
-  const { searchParams } = new URL(request.url);
-  const token_hash = searchParams.get("token_hash");
-  const type = searchParams.get("type");
-  const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+  const next = url.searchParams.get("next") ?? "/dashboard";
 
   // Handle PKCE flow (code parameter)
   if (code) {
@@ -41,8 +39,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(errorUrl);
   }
 
-  // Handle OTP flow (token_hash parameter)
+  // Handle OTP flow (token_hash parameter) - use universal extraction for email client compatibility
+  const { token_hash, type, source } = extractVerificationParams(url);
+
   if (token_hash && type) {
+    console.log(`[Auth Callback] Using ${source} extraction method for verification`);
     const supabase = await createSupabaseServerClient();
 
     const { data, error } = await supabase.auth.verifyOtp({
@@ -64,6 +65,9 @@ export async function GET(request: NextRequest) {
     }
 
     console.error("OTP verification failed:", error);
+    console.error("Extraction method used:", source);
+    console.error("Token hash length:", token_hash?.length);
+    console.error("Type:", type);
 
     // Handle verification error with more specific error types
     const errorUrl = new URL("/auth/error", getBaseUrl());
@@ -99,6 +103,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Handle missing token or type
+  console.error("[Auth Callback] No valid verification parameters found");
+  console.error("Extraction source:", source);
+  console.error("Token hash:", token_hash);
+  console.error("Type:", type);
+  console.error("Full URL:", request.url);
+
   const errorUrl = new URL("/auth/error", getBaseUrl());
   errorUrl.searchParams.set("error", "invalid_token");
   return NextResponse.redirect(errorUrl);

@@ -137,15 +137,24 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
     }
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
-      const result = await signup(formData);
+      try {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
 
-      if (result.success) {
-        setSuccess(true);
-      } else {
-        setError(result.error || "An error occurred during sign up");
+        console.log("Submitting signup form for:", email);
+        const result = await signup(formData);
+
+        console.log("Signup result:", result);
+
+        if (result.success) {
+          setSuccess(true);
+        } else {
+          setError(result.error || "An error occurred during sign up");
+        }
+      } catch (err) {
+        console.error("Signup submission error:", err);
+        setError("Failed to submit signup form. Please try again or refresh the page.");
       }
     });
   };
@@ -180,23 +189,47 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
   };
 
   if (success) {
-    return (
-      <EmailConfirmationModal
-        title="Check Your Email"
-        message="We've sent you a confirmation link at"
-        email={email}
-        secondaryMessage="Once verified, you'll have access to your 7-day free trial!"
-        resendMessage={resendMessage}
-        isResending={isResending}
-        resendCooldown={resendCooldown}
-        onResend={handleResendVerification}
-        onReset={() => {
-          resetForm();
-          onToggleMode();
-        }}
-        resetButtonText="Back to Sign In"
-      />
-    );
+    try {
+      return (
+        <EmailConfirmationModal
+          title="Check Your Email"
+          message="We've sent you a confirmation link at"
+          email={email}
+          secondaryMessage="Once verified, you'll have access to your 7-day free trial!"
+          resendMessage={resendMessage}
+          isResending={isResending}
+          resendCooldown={resendCooldown}
+          onResend={handleResendVerification}
+          onReset={() => {
+            resetForm();
+            onToggleMode();
+          }}
+          resetButtonText="Back to Sign In"
+        />
+      );
+    } catch (err) {
+      console.error("Error rendering EmailConfirmationModal:", err);
+      // Fallback UI if modal fails to render
+      return (
+        <Card className="w-full max-w-md mx-auto p-6 bg-doser-card border-doser-border">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold text-doser-text">Account Created!</h2>
+            <p className="text-doser-text-muted">
+              Please check your email at <strong>{email}</strong> for a verification link.
+            </p>
+            <Button
+              onClick={() => {
+                resetForm();
+                onToggleMode();
+              }}
+              className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </Card>
+      );
+    }
   }
 
   return (
