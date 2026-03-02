@@ -178,6 +178,10 @@ Sessions capture:
 
 **Dev Server**: The `npm run dev` script runs `verify-env.js` first to validate environment setup
 
+**Supabase API Keys**: Project uses newer key format (`sb_publishable_*` for anon key, `sb_secret_*` for service key) not legacy JWT tokens
+
+**Staging Environment**: Separate Supabase project at `xmxaadpeoujtoctfzhoe.supabase.co` - Vercel Preview environment uses staging credentials, Production uses production credentials
+
 ### Development Workflow
 
 **Webhook Testing**: Use `npm run dev:tunnel` which starts ngrok tunnel for webhook testing. Update `DEV_WEBHOOK_URL` in .env.local and configure in Dodo Payments dashboard.
@@ -191,6 +195,12 @@ Sessions capture:
 - Playwright for E2E browser tests
 
 **Type Safety**: Database types are generated in src/lib/database.types.ts - regenerate when schema changes
+
+**Vercel Environment Management**: Use `vercel env ls` to list, `vercel env rm <VAR> <ENV> --yes` to remove, `echo "value" | vercel env add <VAR> <ENV>` to add per-environment variables (production, preview, development)
+
+**Database Testing**: Use Node scripts with `@supabase/supabase-js` client to verify connectivity - see `scripts/test-staging-db.js` for pattern
+
+**Complete Database Setup**: See `COMPLETE_SUPABASE_SETUP.sql` for full schema including all tables, RLS policies, triggers, and helper functions
 
 ## Important Patterns
 
@@ -217,6 +227,10 @@ Sessions capture:
 2. Client components: Use useAuth() hook
 3. Check session validity before protected operations
 4. Handle email verification flow (see src/app/(public)/auth/verified/)
+
+### Known Issues & Workarounds
+1. **ESLint Circular Dependency**: Next.js 15.5.9 + flat ESLint config causes build errors - ESLint disabled during builds via `next.config.ts` (`ignoreDuringBuilds: true`). Run linting separately with `npm run lint` or ESLint CLI
+2. **GitHub Secret Scanning**: Push protection blocks commits with API keys - sanitize documentation/config files before committing (use placeholders like `[YOUR_KEY]`)
 
 ## Key Files Reference
 
