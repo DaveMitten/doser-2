@@ -1,0 +1,152 @@
+name: Issue Coding Agent
+
+on:
+  issues:
+    types: [labeled]
+
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to resolve"
+        required: true
+        type: string
+
+jobs:
+  resolve:
+    # Only run when the agent-ready label is applied
+    if: github.event.label.name == 'agent-ready' || github.event_name == 'workflow_dispatch'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine issue number
+        id: issue
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "number=${{ github.event.inputs.issue_number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Mark issue as in-progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = parseInt('${{ steps.issue.outputs.number }}');
+            // Add in-progress label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              labels: ['agent:in-progress']
+            });
+            // Remove agent-ready label
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                name: 'agent-ready'
+              });
+            } catch (e) {}
+
+      - name: Run coding agent
+        id: agent
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          max_turns: "30"
+          prompt: |
+            You are a coding agent working on the Doser repository.
+
+            Your task is to resolve issue #${{ steps.issue.outputs.number }}.
+
+            First, read CLAUDE.md so you understand the project architecture,
+            stack, conventions, and any areas you must not touch.
+
+            Then follow these steps:
+
+            1. Read the full issue including all comments
+            2. Explore the relevant parts of the codebase to understand context
+            3. Plan your implementation — identify which files need changing
+            4. Create a new branch named: agent/issue-${{ steps.issue.outputs.number }}
+            5. Implement the changes. Follow existing code style exactly.
+            6. Write or update tests if the project has a test suite
+            7. Run any available lint/type-check commands and fix any errors you introduced
+            8. Commit your changes with the message:
+               "fix: resolve issue #${{ steps.issue.outputs.number }} [agent]"
+            9. Push the branch
+            10. Open a pull request with:
+                - Title: "[Agent] Fix #${{ steps.issue.outputs.number }}: <issue title>"
+                - Body that includes:
+                  - "Closes #${{ steps.issue.outputs.number }}"
+                  - A brief summary of what was changed and why
+                  - Any decisions or trade-offs made
+                  - Any follow-up work that was out of scope
+
+            **Rules:**
+            - Do NOT modify files listed in CLAUDE.md under "Do not touch"
+            - Do NOT make changes beyond the scope of the issue
+            - If you discover the issue is actually more complex than expected,
+              open the PR with what you've done and leave a comment explaining
+              what remains — do not try to solve everything
+            - If you cannot make progress, post a comment on the issue explaining
+              why and what information would help
+
+      - name: Handle success — update labels
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = parseInt('${{ steps.issue.outputs.number }}');
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              labels: ['agent:pr-opened']
+            });
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                name: 'agent:in-progress'
+              });
+            } catch (e) {}
+
+      - name: Handle failure — update labels and comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = parseInt('${{ steps.issue.outputs.number }}');
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              labels: ['agent:failed']
+            });
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                name: 'agent:in-progress'
+              });
+            } catch (e) {}
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body: '⚠️ **Coding agent failed.**\n\nThe agent encountered an error and could not complete this issue. Please check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nYou can re-queue this issue by removing the `agent:failed` label and adding `agent-ready`.'
+            });
