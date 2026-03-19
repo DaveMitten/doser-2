@@ -118,12 +118,6 @@ const SelectYourVapourizer = ({
                   No capsule support
                 </div>
               )}
-              {selectedVaporizer.remoteControl && (
-                <div className="flex items-center gap-1 text-doser-green text-xs font-medium">
-                  <span>&#x2022;</span>
-                  <span>Remote control</span>
-                </div>
-              )}
               <div className="text-doser-text-muted text-xs capitalize">
                 {selectedVaporizer.type}
               </div>

@@ -5,5 +5,4 @@ export interface Vaporizer {
   capsuleOption: boolean;
   dosingCapsuleCapacity: number; // grams
   extractionEfficiency: number; // % THC extraction at 210°C [${DIA-SOURCE}](reddit.com/2l)
-  remoteControl?: boolean; // supports Bluetooth/app remote control
 }
