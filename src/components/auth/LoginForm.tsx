@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Zap } from "lucide-react";
 import { login } from "../../app/(public)/auth/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
 import * as Sentry from "@sentry/nextjs";
 
 interface LoginFormProps {
@@ -25,8 +26,14 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [isResetPending, startResetTransition] = useTransition();
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
+  const { resetPassword } = useAuth();
 
   // Auto-fill test credentials in development
   useEffect(() => {
@@ -127,6 +134,99 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
     });
   };
 
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) return;
+
+    setResetError(null);
+    startResetTransition(async () => {
+      try {
+        await resetPassword(resetEmail);
+        setResetSent(true);
+      } catch (err) {
+        console.error("Password reset error:", err);
+        Sentry.captureException(err, {
+          tags: {
+            component: "LoginForm",
+            action: "resetPassword",
+          },
+        });
+        setResetError("Failed to send reset email. Please try again.");
+      }
+    });
+  };
+
+  if (isForgotPassword) {
+    return (
+      <Card className="w-full max-w-md mx-auto p-6 bg-doser-card border-doser-border">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-doser-text">Reset Password</h2>
+          <p className="text-doser-text-muted mt-2">
+            Enter your email and we&apos;ll send you a reset link
+          </p>
+        </div>
+
+        {resetSent ? (
+          <div className="space-y-4">
+            <div className="text-green-500 text-sm text-center">
+              Check your email for a password reset link.
+            </div>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setResetSent(false);
+                setResetEmail("");
+              }}
+              className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                disabled={isResetPending}
+                className="bg-doser-background border-doser-border text-doser-text"
+                required
+              />
+            </div>
+
+            {resetError && (
+              <div className="text-red-500 text-sm text-center">{resetError}</div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isResetPending || !resetEmail}
+              className="w-full bg-doser-primary hover:bg-doser-primary-hover text-doser-text"
+            >
+              {isResetPending ? "Sending..." : "Send Reset Email"}
+            </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  setResetError(null);
+                }}
+                className="text-doser-primary hover:text-doser-primary-hover font-medium text-sm"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        )}
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md mx-auto p-6 bg-doser-card border-doser-border">
       <div className="text-center mb-6">
@@ -185,6 +285,19 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
         {error && (
           <div className="text-red-500 text-sm text-center">{error}</div>
         )}
+
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => {
+              setResetEmail(email);
+              setIsForgotPassword(true);
+            }}
+            className="text-doser-primary hover:text-doser-primary-hover font-medium text-sm"
+          >
+            Forgot password?
+          </button>
+        </div>
 
         <Button
           type="submit"
