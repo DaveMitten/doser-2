@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is read automatically by Claude Code and the GitHub issue agents.
+Keep it up to date as the project evolves.
 
 ## Project Overview
 
@@ -240,3 +241,72 @@ Sessions capture:
 - **Sessions**: src/lib/sessionService.ts, src/app/(authorised)/sessions/page.tsx
 - **Database Types**: src/lib/database.types.ts
 - **Middleware**: middleware.ts → src/lib/supabase-middleware.ts
+
+---
+
+## GitHub Issue Agent Configuration
+
+This section is used by the autonomous GitHub issue agents (triage + coding).
+
+### Code Conventions for Agents
+
+- **TypeScript**: Strict mode. No `any`. Use proper types and interfaces.
+- **Components**: Functional components only. No class components.
+- **Naming**: PascalCase for components, camelCase for functions/variables, kebab-case for files.
+- **Imports**: Use `@/` path aliases. No relative `../../` imports.
+- **API routes**: Always validate input. Return consistent `{ data, error }` shaped responses.
+- **Error handling**: Never swallow errors silently. Log and surface them appropriately.
+- **Comments**: Only comment *why*, not *what*. Keep comments minimal.
+
+### Do Not Touch (Agent Restrictions)
+
+The coding agent must **not** modify anything in these areas without explicit instruction in the issue:
+
+- `/prisma/migrations/` — migration files (never create or delete migrations)
+- `src/app/api/webhooks/` — webhook handlers (critical payment/auth logic)
+- Any file containing payment or billing logic (Dodo Payments integration)
+- Auth configuration files (Supabase client setup)
+- Environment variable handling (`.env.example`, `verify-env.js`)
+- Database schema (`src/lib/database.types.ts` — auto-generated)
+- This file (`CLAUDE.md`)
+
+### What Makes a Good Issue for the Coding Agent
+
+The triage agent checks issues against these criteria before the coding agent works on them.
+
+#### Bug reports need:
+- What is broken (specific behaviour, not "it doesn't work")
+- Steps to reproduce
+- Expected behaviour vs actual behaviour
+- Which area of the app (route, component, or feature name)
+
+#### Feature requests need:
+- A user story: _"As a [user type], I want to [action] so that [outcome]"_
+- Acceptance criteria — bullet list of what "done" looks like
+- Which route or area of the app this belongs to
+
+#### Chores / refactors need:
+- Specific files or patterns to change
+- The goal or reason
+- Clear definition of done
+
+### Labels Used by the Agents
+
+| Label | Meaning |
+|---|---|
+| `agent-ready` | Issue is well-defined, queued for coding agent |
+| `needs-clarification` | Triage agent found missing information |
+| `too-vague` | Issue cannot be evaluated as written |
+| `agent:in-progress` | Coding agent is currently working on this |
+| `agent:pr-opened` | Done — PR has been created |
+| `agent:failed` | Coding agent encountered an error |
+| `agent:skip` | Manually excluded from agent processing |
+
+### Agent Testing & Verification
+
+After making changes, the coding agent will:
+1. Run `npm run lint` to check for ESLint errors
+2. Run `npm run build` to verify the build succeeds (if applicable)
+3. Run tests if changes affect tested code
+
+The agent should commit changes with descriptive messages and open PRs that reference the issue number.
