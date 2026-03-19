@@ -12,9 +12,18 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { isTrialExpired } = useSubscription();
   const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+    router.push("/auth");
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -58,15 +67,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
           <div className="flex flex-col space-y-2">
             <Button
-              onClick={() => router.push("/pricing")}
+              onClick={() => router.push("/pricing?trial_expired=true")}
               className="w-full bg-green-600 hover:bg-green-700 text-white"
             >
               View Pricing Plans
             </Button>
             <Button
-              onClick={() => router.push("/auth")}
+              onClick={handleSignOut}
               variant="outline"
-              className="w-full"
+              className="w-full text-gray-900 border-gray-300 hover:bg-gray-50"
             >
               Sign Out
             </Button>

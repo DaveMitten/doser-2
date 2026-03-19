@@ -6,13 +6,19 @@ import { PricingCard } from "@/components/subscription/PricingCard";
 import { PlanService } from "@/lib/plan-service";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/lib/useSubscription";
 
 function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
   const searchParams = useSearchParams();
   const trialExpired = searchParams.get("trial_expired") === "true" && process.env.NODE_ENV !== 'development';
+  const { user } = useAuth();
+  const { subscription, hasActiveSubscription } = useSubscription();
 
   const plans = PlanService.getAllPlans(isYearly);
+
+  const isAuthenticatedUser = !!user;
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -44,7 +50,9 @@ function PricingPageContent() {
               Choose Your Plan
             </h1>
             <p className="text-xl text-doser-text-muted mb-8">
-              Start with a 7-day free trial on all paid plans
+              {trialExpired
+                ? "Choose a paid plan to continue using Doser"
+                : "Start with a 7-day free trial on all paid plans"}
             </p>
 
             {/* Billing Toggle */}
@@ -92,9 +100,11 @@ function PricingPageContent() {
                     plan={plan}
                     isYearly={isYearly}
                     isPopular={PlanService.isPopularPlan(planKey)}
-                    isAuthenticated={false}
-                    onClick={() => {
-                      // Redirect to signup for free trial
+                    isAuthenticated={isAuthenticatedUser}
+                    currentUserPlanId={subscription?.plan_id ?? undefined}
+                    hasActiveSubscription={hasActiveSubscription}
+                    userEmail={user?.email}
+                    onClick={isAuthenticatedUser ? undefined : () => {
                       window.location.href = "/auth?signup=true";
                     }}
                   />
