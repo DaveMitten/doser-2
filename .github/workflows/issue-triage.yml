@@ -18,67 +18,122 @@ jobs:
     permissions:
       contents: read
       issues: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run triage agent
-        uses: anthropics/claude-code-action@v1
+      - name: Triage issue with Claude
+        uses: actions/github-script@v7
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          max_turns: "10"
-          prompt: |
-            You are a triage agent for the Doser GitHub repository.
-            Your job is to evaluate issue #${{ github.event.issue.number }} and determine
-            whether it is well-defined enough for the coding agent to work on autonomously.
+          script: |
+            const fs = require('fs');
 
-            First, read CLAUDE.md in the root of the repository so you understand the
-            project, its stack, and what constitutes a good issue.
+            // Read CLAUDE.md
+            const claudeMd = fs.readFileSync('CLAUDE.md', 'utf8');
 
-            Then evaluate the issue using these criteria:
+            // Get issue details
+            const issue = context.payload.issue;
+            const issueBody = `Title: ${issue.title}\n\nBody:\n${issue.body || '(no description provided)'}`;
 
-            **For bug reports, ALL of the following must be present:**
-            - Clear description of what is broken
-            - Steps to reproduce (or a specific user action that triggers it)
-            - Expected behaviour vs actual behaviour
-            - Reference to a specific area of the app (route, component, API endpoint, or feature)
+            // Call Anthropic API
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+              },
+              body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 4096,
+                messages: [{
+                  role: 'user',
+                  content: `You are a triage agent for the Doser GitHub repository.
 
-            **For feature requests, ALL of the following must be present:**
-            - A user story or clear description of the desired behaviour
-            - Acceptance criteria (what "done" looks like)
-            - Reference to where in the app this belongs
+Here is the project documentation (CLAUDE.md):
 
-            **For chores/refactors, ALL of the following must be present:**
-            - Specific files, modules, or patterns to be changed
-            - The reason or goal
-            - Clear definition of done
+${claudeMd}
 
-            ---
+---
 
-            Based on your evaluation, take ONE of the following actions:
+Here is the issue to evaluate (#${issue.number}):
 
-            **If the issue meets ALL criteria for its type:**
-            1. Add the label `agent-ready` to the issue
-            2. Post a comment:
-               > ✅ **Ready for the coding agent.**
-               > This issue is well-defined and has been queued for automatic implementation.
-               > A pull request will be opened once the agent completes the work.
+${issueBody}
 
-            **If the issue is missing specific information:**
-            1. Add the label `needs-clarification` to the issue
-            2. Remove the label `agent-ready` if present
-            3. Post a comment that:
-               - States what is missing as a concise bullet list
-               - Asks the specific questions that would unblock an engineer
-               - Ends with: "Once you've updated the issue, it will be automatically re-evaluated."
+---
 
-            **If the issue is too vague to evaluate:**
-            1. Add the label `too-vague` to the issue
-            2. Post a comment that:
-               - Briefly explains why it can't be acted on as written
-               - Includes a suggested rewrite inside a `<details>` block with the summary "📝 Suggested rewrite — click to expand"
-               - The rewrite should be a complete, well-formed issue based on reasonable assumptions about what the author likely meant, using the Doser context from CLAUDE.md
-               - Ends with: "Feel free to copy and edit this, then update the issue — it will be automatically re-evaluated."
+Your job is to evaluate this issue and determine whether it is well-defined enough for an autonomous coding agent to work on.
 
-            Do not add multiple outcome labels. Apply exactly one of: `agent-ready`, `needs-clarification`, or `too-vague`.
+**For bug reports, ALL of the following must be present:**
+- Clear description of what is broken
+- Steps to reproduce (or a specific user action that triggers it)
+- Expected behaviour vs actual behaviour
+- Reference to a specific area of the app (route, component, API endpoint, or feature)
+
+**For feature requests, ALL of the following must be present:**
+- A user story or clear description of the desired behaviour
+- Acceptance criteria (what "done" looks like)
+- Reference to where in the app this belongs
+
+**For chores/refactors, ALL of the following must be present:**
+- Specific files, modules, or patterns to be changed
+- The reason or goal
+- Clear definition of done
+
+---
+
+Respond with a JSON object (and ONLY the JSON object, no markdown formatting) with this exact structure:
+{
+  "decision": "agent-ready" | "needs-clarification" | "too-vague",
+  "comment": "The markdown comment to post on the issue"
+}
+
+For "agent-ready": Keep the comment brief and encouraging.
+For "needs-clarification": List what's missing as bullets and ask specific questions.
+For "too-vague": Include a suggested rewrite in a <details> block with summary "📝 Suggested rewrite — click to expand"`
+                }]
+              })
+            });
+
+            if (!response.ok) {
+              const error = await response.text();
+              throw new Error(`Anthropic API error: ${error}`);
+            }
+
+            const data = await response.json();
+            const responseText = data.content[0].text;
+
+            // Parse the JSON response
+            let result;
+            try {
+              // Try to extract JSON from the response
+              const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                result = JSON.parse(jsonMatch[0]);
+              } else {
+                throw new Error('No JSON found in response');
+              }
+            } catch (e) {
+              console.log('Failed to parse response:', responseText);
+              throw new Error(`Could not parse Claude response: ${e.message}`);
+            }
+
+            // Apply the label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: [result.decision]
+            });
+
+            // Post the comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: result.comment
+            });
+
+            console.log(`Applied label: ${result.decision}`);
