@@ -92,6 +92,15 @@ export const dryHerbVaporizers: Vaporizer[] = [
   },
   // Desktop vaporizers
   {
+    name: "EKT-41",
+    type: "desktop",
+    chamberCapacity: 0.5, // grams
+    capsuleOption: true,
+    dosingCapsuleCapacity: 0.15, // grams
+    extractionEfficiency: 75, // % THC extraction (estimated, desktop convection with precision temperature)
+    remoteControl: true,
+  },
+  {
     name: "Volcano Hybrid",
     type: "desktop",
     chamberCapacity: 0.5, // grams
