@@ -1020,4 +1020,141 @@ export class DodoService {
       throw error;
     }
   }
+
+  /**
+   * Fetch subscriptions from Dodo Payments by customer ID and sync to database
+   * This is the fallback for when webhooks fail or subscriptions are missing
+   */
+  async fetchAndSyncSubscriptionsByCustomer(
+    customerId: string,
+    userId: string
+  ): Promise<UserSubscription | null> {
+    try {
+      logger.info("Fetching subscriptions from Dodo Payments", {
+        customerId,
+        userId,
+      });
+
+      // Use the SDK to get customer subscriptions
+      const subscriptions = await this.dodoClient.subscriptions.list({
+        customer_id: customerId,
+        limit: 100,
+      });
+
+      if (!subscriptions || subscriptions.length === 0) {
+        logger.info("No subscriptions found for customer", { customerId });
+        return null;
+      }
+
+      logger.info("Found subscriptions from Dodo", {
+        count: subscriptions.length,
+        customerId,
+      });
+
+      // Find the most recent active or trialing subscription
+      const activeSubscription = subscriptions.find((sub: any) =>
+        ["active", "trialing"].includes(sub.status)
+      );
+
+      if (!activeSubscription) {
+        logger.info("No active subscriptions found for customer", {
+          customerId,
+          statuses: subscriptions.map((s: any) => s.status),
+        });
+        return null;
+      }
+
+      logger.info("Found active subscription, syncing to database", {
+        subscriptionId: activeSubscription.subscription_id,
+        status: activeSubscription.status,
+      });
+
+      // Sync this subscription to the database
+      const now = new Date().toISOString();
+      const subscriptionStatus = activeSubscription.status as string;
+
+      // Calculate trial dates
+      let trialStart: string | null = null;
+      let trialEnd: string | null = null;
+
+      if (
+        subscriptionStatus === "trialing" &&
+        activeSubscription.trial_period_days > 0
+      ) {
+        trialStart = activeSubscription.created_at?.toISOString() as string;
+        trialEnd = new Date(
+          activeSubscription.created_at.getTime() +
+            activeSubscription.trial_period_days * 24 * 60 * 60 * 1000
+        ).toISOString();
+      } else if (subscriptionStatus === "active") {
+        trialStart = null;
+        trialEnd = now;
+      }
+
+      // Extract plan_id from metadata or use product_id
+      const metadata = activeSubscription.metadata as
+        | Record<string, unknown>
+        | undefined;
+      const planId =
+        (metadata?.plan_id as string) ||
+        (activeSubscription.product_id as string);
+
+      const userSubscription: UserSubscription = {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        plan_id: planId,
+        status: subscriptionStatus as
+          | "active"
+          | "cancelled"
+          | "expired"
+          | "on_hold"
+          | "failed"
+          | "trialing",
+        dodo_subscription_id: activeSubscription.subscription_id as string,
+        dodo_customer_id: customerId,
+        current_period_start:
+          activeSubscription.previous_billing_date?.toISOString() as string,
+        current_period_end:
+          activeSubscription.next_billing_date?.toISOString() as string,
+        trial_start: trialStart as string | undefined,
+        trial_end: trialEnd as string | undefined,
+        created_at: activeSubscription.created_at?.toISOString() as string,
+        updated_at: now,
+      };
+
+      // Use service role client to bypass RLS
+      const supabase = this.getServiceSupabase() as any;
+
+      const { data: upsertedData, error } = await supabase
+        .from("user_subscriptions")
+        .upsert(userSubscription, {
+          onConflict: "user_id",
+          ignoreDuplicates: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        logger.error("Failed to sync subscription to database", {
+          error,
+          subscriptionId: activeSubscription.subscription_id,
+        });
+        throw error;
+      }
+
+      logger.info("Successfully synced subscription from Dodo to database", {
+        subscriptionId: activeSubscription.subscription_id,
+        userId,
+      });
+
+      return upsertedData as UserSubscription;
+    } catch (error) {
+      logger.error("Error fetching and syncing subscriptions", {
+        error,
+        customerId,
+        userId,
+      });
+      return null;
+    }
+  }
 }

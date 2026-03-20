@@ -18,15 +18,67 @@ jobs:
     permissions:
       contents: read
       issues: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Triage issue with Claude
-        uses: actions/github-script@v7
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Run triage agent
+        uses: anthropics/claude-code-action@v1
         with:
-          script: |
-            const script = require('./.github/scripts/triage-issue.js');
-            await script({ github, context, core });
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          max_turns: "10"
+          prompt: |
+            You are a triage agent for the Doser GitHub repository.
+            Your job is to evaluate issue #${{ github.event.issue.number }} and determine
+            whether it is well-defined enough for the coding agent to work on autonomously.
+
+            First, read CLAUDE.md in the root of the repository so you understand the
+            project, its stack, and what constitutes a good issue.
+
+            Then evaluate the issue using these criteria:
+
+            **For bug reports, ALL of the following must be present:**
+            - Clear description of what is broken
+            - Steps to reproduce (or a specific user action that triggers it)
+            - Expected behaviour vs actual behaviour
+            - Reference to a specific area of the app (route, component, API endpoint, or feature)
+
+            **For feature requests, ALL of the following must be present:**
+            - A user story or clear description of the desired behaviour
+            - Acceptance criteria (what "done" looks like)
+            - Reference to where in the app this belongs
+
+            **For chores/refactors, ALL of the following must be present:**
+            - Specific files, modules, or patterns to be changed
+            - The reason or goal
+            - Clear definition of done
+
+            ---
+
+            Based on your evaluation, take ONE of the following actions:
+
+            **If the issue meets ALL criteria for its type:**
+            1. Add the label `agent-ready` to the issue
+            2. Post a comment:
+               > ✅ **Ready for the coding agent.**
+               > This issue is well-defined and has been queued for automatic implementation.
+               > A pull request will be opened once the agent completes the work.
+
+            **If the issue is missing specific information:**
+            1. Add the label `needs-clarification` to the issue
+            2. Remove the label `agent-ready` if present
+            3. Post a comment that:
+               - States what is missing as a concise bullet list
+               - Asks the specific questions that would unblock an engineer
+               - Ends with: "Once you've updated the issue, it will be automatically re-evaluated."
+
+            **If the issue is too vague to evaluate:**
+            1. Add the label `too-vague` to the issue
+            2. Post a comment that:
+               - Briefly explains why it can't be acted on as written
+               - Includes a suggested rewrite inside a `<details>` block with the summary "📝 Suggested rewrite — click to expand"
+               - The rewrite should be a complete, well-formed issue based on reasonable assumptions about what the author likely meant, using the Doser context from CLAUDE.md
+               - Ends with: "Feel free to copy and edit this, then update the issue — it will be automatically re-evaluated."
+
+            Do not add multiple outcome labels. Apply exactly one of: `agent-ready`, `needs-clarification`, or `too-vague`.

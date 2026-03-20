@@ -3,6 +3,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  eslint: {
+    // Disable ESLint during build to avoid circular dependency error
+    // Run linting separately with: npm run lint (or use ESLint CLI directly)
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     const isDev = process.env.NODE_ENV === "development";
     const devWebSocketSources = isDev

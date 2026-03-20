@@ -31,9 +31,36 @@ export function useSubscription(): UseSubscriptionReturn {
     refetch: refetchContext,
   } = useUserData();
 
-  const hasActiveSubscription = subscription
-    ? ["active", "trialing"].includes(subscription.status)
-    : false;
+  // Check if subscription is truly active (not expired)
+  const hasActiveSubscription = (() => {
+    if (!subscription) return false;
+
+    const now = new Date();
+
+    // Check status field
+    if (!["active", "trialing"].includes(subscription.status)) {
+      return false;
+    }
+
+    // For trialing subscriptions, check trial_end
+    if (subscription.status === "trialing") {
+      if (subscription.trial_end) {
+        const trialEnd = new Date(subscription.trial_end);
+        return trialEnd > now;
+      }
+    }
+
+    // For active subscriptions, check current_period_end
+    if (subscription.status === "active") {
+      if (subscription.current_period_end) {
+        const periodEnd = new Date(subscription.current_period_end);
+        return periodEnd > now;
+      }
+    }
+
+    // Default to status field if no dates available
+    return true;
+  })();
 
   const createSubscription = async (
     planId: string,
