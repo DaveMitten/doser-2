@@ -24,7 +24,19 @@ function isSubscriptionActive(subscription: UserSubscription): boolean {
   if (subscription.status === "trialing") {
     if (subscription.trial_end) {
       const trialEnd = new Date(subscription.trial_end);
-      return trialEnd > now;
+      const isExpired = trialEnd <= now;
+
+      if (isExpired) {
+        logger.warn("Trial subscription expired", {
+          userId: subscription.user_id,
+          subscriptionId: subscription.id,
+          trialEnd: subscription.trial_end,
+          status: subscription.status,
+          daysExpired: Math.floor((now.getTime() - trialEnd.getTime()) / (1000 * 60 * 60 * 24))
+        });
+      }
+
+      return !isExpired;
     }
   }
 
@@ -32,7 +44,19 @@ function isSubscriptionActive(subscription: UserSubscription): boolean {
   if (subscription.status === "active") {
     if (subscription.current_period_end) {
       const periodEnd = new Date(subscription.current_period_end);
-      return periodEnd > now;
+      const isExpired = periodEnd <= now;
+
+      if (isExpired) {
+        logger.warn("Active subscription expired", {
+          userId: subscription.user_id,
+          subscriptionId: subscription.id,
+          currentPeriodEnd: subscription.current_period_end,
+          status: subscription.status,
+          daysExpired: Math.floor((now.getTime() - periodEnd.getTime()) / (1000 * 60 * 60 * 24))
+        });
+      }
+
+      return !isExpired;
     }
   }
 
