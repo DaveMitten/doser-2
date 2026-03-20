@@ -81,12 +81,12 @@ export interface UserSubscription {
     | "on_hold"
     | "failed"
     | "trialing";
-  dodo_subscription_id?: string;
-  dodo_customer_id?: string;
+  dodo_subscription_id: string | null;
+  dodo_customer_id: string | null;
   current_period_start: string;
   current_period_end: string;
-  trial_start?: string;
-  trial_end?: string;
+  trial_start: string | null;
+  trial_end: string | null;
   created_at: string;
   updated_at: string;
 }

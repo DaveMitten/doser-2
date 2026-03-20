@@ -497,13 +497,13 @@ export class DodoService {
           | "trialing",
         dodo_subscription_id: subscription.subscription_id as string,
         dodo_customer_id:
-          (subscription.customer?.customer_id as string) || undefined,
+          (subscription.customer?.customer_id as string) || null,
         current_period_start:
           subscription?.previous_billing_date?.toISOString() as string,
         current_period_end:
           subscription?.next_billing_date?.toISOString() as string,
-        trial_start: trialStart as string | undefined,
-        trial_end: trialEnd as string | undefined,
+        trial_start: trialStart ?? null,
+        trial_end: trialEnd ?? null,
         created_at: subscription.created_at?.toISOString() as string,
         updated_at: now,
       };
@@ -1036,10 +1036,17 @@ export class DodoService {
       });
 
       // Use the SDK to get customer subscriptions
-      const subscriptions = await this.dodoClient.subscriptions.list({
-        customer_id: customerId,
-        limit: 100,
-      });
+      const response = await this.dodoClient.subscriptions.list();
+
+      // Convert paginated response to array and filter by customer_id
+      const allSubscriptions: any[] = [];
+      for await (const subscription of response) {
+        allSubscriptions.push(subscription);
+      }
+
+      const subscriptions = allSubscriptions.filter(
+        (sub: any) => sub.customer?.customer_id === customerId
+      );
 
       if (!subscriptions || subscriptions.length === 0) {
         logger.info("No subscriptions found for customer", { customerId });
@@ -1116,8 +1123,8 @@ export class DodoService {
           activeSubscription.previous_billing_date?.toISOString() as string,
         current_period_end:
           activeSubscription.next_billing_date?.toISOString() as string,
-        trial_start: trialStart as string | undefined,
-        trial_end: trialEnd as string | undefined,
+        trial_start: trialStart ?? null,
+        trial_end: trialEnd ?? null,
         created_at: activeSubscription.created_at?.toISOString() as string,
         updated_at: now,
       };
