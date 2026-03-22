@@ -17,6 +17,7 @@ export function TrialStatusBanner({
 }: TrialStatusBannerProps) {
   const {
     subscription,
+    hasActiveSubscription,
     isLoading,
     isTrialExpired,
     isTrialActive,
@@ -55,7 +56,7 @@ export function TrialStatusBanner({
     );
   }
 
-  if (!subscription) {
+  if (!subscription || !hasActiveSubscription) {
     return null;
   }
   console.log(subscription.status);

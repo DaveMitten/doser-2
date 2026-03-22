@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
-  const { isTrialExpired } = useSubscription();
+  const { isTrialExpired, hasActiveSubscription } = useSubscription();
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // Show trial expired modal (non-blocking for subscription load)
-  if (isTrialExpired && process.env.NODE_ENV !== 'development') {
+  if (isTrialExpired && !hasActiveSubscription && process.env.NODE_ENV !== 'development') {
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
