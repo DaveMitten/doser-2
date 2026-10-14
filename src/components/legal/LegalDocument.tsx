@@ -9,10 +9,12 @@ import { marked } from "marked";
  * repo; these files are copies, so edit there first and copy across.
  *
  * Publishing a draft is the mistake this guards against: while a document
- * still says "Status: DRAFT" or holds an [UPPER CASE] placeholder, the build
- * fails, so Vercel keeps serving the previous deployment instead.
+ * still says "Status: DRAFT" or holds a placeholder, the build fails, so
+ * Vercel keeps serving the previous deployment instead. A placeholder is any
+ * bracketed text starting with a capital — `[TRIAL LENGTH, OR “none”]`,
+ * `[FLOOR — e.g. £50]` — except a Markdown link label, `[Text](url)`.
  */
-const PLACEHOLDER = /\[[A-Z][A-Z0-9 _—–\-.,:/()]*\]/;
+const PLACEHOLDER = /\[[A-Z][^\]\n]*\](?![(\[:])/;
 
 export function readLegalDocument(file: "privacy.md" | "terms.md"): string {
   const markdown = fs.readFileSync(path.join(process.cwd(), "src/content/legal", file), "utf8");
