@@ -18,6 +18,8 @@ function PricingPageContent() {
     subscription,
     hasActiveSubscription,
     isLoading: subscriptionLoading,
+    error: subscriptionError,
+    refetch: refetchSubscription,
   } = useSubscription();
 
   const plans = PlanService.getAllPlans(isYearly);
@@ -27,6 +29,10 @@ function PricingPageContent() {
   // a click would start a second checkout — so hold the cards back
   const isCheckingAccount =
     authLoading || (isAuthenticatedUser && subscriptionLoading);
+  // A failed lookup also leaves the plan unknown — offer a retry rather than
+  // checkout buttons, since nothing server-side stops a duplicate subscription
+  const subscriptionLookupFailed =
+    isAuthenticatedUser && !subscriptionLoading && !!subscriptionError;
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -99,6 +105,19 @@ function PricingPageContent() {
           {isCheckingAccount ? (
             <div className="text-center text-doser-text-muted py-16">
               Loading your plan...
+            </div>
+          ) : subscriptionLookupFailed ? (
+            <div className="text-center py-16 space-y-4">
+              <p className="text-doser-text-muted">
+                We couldn&apos;t load your current plan.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchSubscription()}
+                className="text-doser-primary hover:text-doser-primary-hover font-medium"
+              >
+                Try again
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
