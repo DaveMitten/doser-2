@@ -6,13 +6,41 @@ import { PricingCard } from "@/components/subscription/PricingCard";
 import { PlanService } from "@/lib/plan-service";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/lib/useSubscription";
 
 function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const trialExpired = searchParams.get("trial_expired") === "true" && process.env.NODE_ENV !== 'development';
+  const { user, loading: authLoading } = useAuth();
+  const {
+    subscription,
+    hasActiveSubscription,
+    isLoading: subscriptionLoading,
+    error: subscriptionError,
+    refetch: refetchSubscription,
+  } = useSubscription();
 
   const plans = PlanService.getAllPlans(isYearly);
+
+  const isAuthenticatedUser = !!user;
+  // Until both are known, a paying subscriber looks like a new customer and
+  // a click would start a second checkout — so hold the cards back. Only the
+  // first load: a refresh of a known plan keeps the cards (and any open
+  // ChangePlanModal success state) mounted
+  const isCheckingAccount =
+    authLoading ||
+    (isAuthenticatedUser && subscriptionLoading && !subscription);
+  // A failed lookup also leaves the plan unknown — offer a retry rather than
+  // checkout buttons, since nothing server-side stops a duplicate subscription
+  const subscriptionLookupFailed =
+    isAuthenticatedUser && !subscriptionLoading && !!subscriptionError;
+  // Plan changes go through Dodo; a local trial has no Dodo subscription to
+  // change, so it buys a plan through checkout like anyone else
+  const canChangePlan =
+    hasActiveSubscription && !!subscription?.dodo_subscription_id;
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -44,7 +72,9 @@ function PricingPageContent() {
               Choose Your Plan
             </h1>
             <p className="text-xl text-doser-text-muted mb-8">
-              Start with a 7-day free trial on all paid plans
+              {trialExpired
+                ? "Choose a paid plan to continue using Doser"
+                : "Start with a 7-day free trial on all paid plans"}
             </p>
 
             {/* Billing Toggle */}
@@ -80,28 +110,57 @@ function PricingPageContent() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan) => {
-              const planKey = plan.name.toLowerCase();
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative cursor-pointer transition-all duration-200 hover:transform hover:scale-102`}
-                >
-                  <PricingCard
-                    plan={plan}
-                    isYearly={isYearly}
-                    isPopular={PlanService.isPopularPlan(planKey)}
-                    isAuthenticated={false}
-                    onClick={() => {
-                      // Redirect to signup for free trial
-                      window.location.href = "/auth?signup=true";
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          {isCheckingAccount ? (
+            <div className="text-center text-doser-text-muted py-16">
+              Loading your plan...
+            </div>
+          ) : subscriptionLookupFailed ? (
+            <div className="text-center py-16 space-y-4">
+              <p className="text-doser-text-muted">
+                We couldn&apos;t load your current plan.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchSubscription()}
+                className="text-doser-primary hover:text-doser-primary-hover font-medium"
+              >
+                Try again
+              </button>
+            </div>
+          ) : (
+            <>
+            {checkoutError && (
+              <p className="text-center text-red-500 text-sm mb-6">
+                Couldn&apos;t start checkout: {checkoutError}. Please try again.
+              </p>
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans.map((plan) => {
+                const planKey = plan.name.toLowerCase();
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative cursor-pointer transition-all duration-200 hover:transform hover:scale-102`}
+                  >
+                    <PricingCard
+                      plan={plan}
+                      isYearly={isYearly}
+                      isPopular={PlanService.isPopularPlan(planKey)}
+                      isAuthenticated={isAuthenticatedUser}
+                      currentUserPlanId={subscription?.plan_id ?? undefined}
+                      hasActiveSubscription={canChangePlan}
+                      userEmail={user?.email}
+                      onError={setCheckoutError}
+                      onClick={isAuthenticatedUser ? () => setCheckoutError(null) : () => {
+                        window.location.href = "/auth?signup=true";
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            </>
+          )}
 
           {/* Features Section */}
           <div className="mt-16 text-center">
