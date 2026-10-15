@@ -27,9 +27,12 @@ function PricingPageContent() {
 
   const isAuthenticatedUser = !!user;
   // Until both are known, a paying subscriber looks like a new customer and
-  // a click would start a second checkout — so hold the cards back
+  // a click would start a second checkout — so hold the cards back. Only the
+  // first load: a refresh of a known plan keeps the cards (and any open
+  // ChangePlanModal success state) mounted
   const isCheckingAccount =
-    authLoading || (isAuthenticatedUser && subscriptionLoading);
+    authLoading ||
+    (isAuthenticatedUser && subscriptionLoading && !subscription);
   // A failed lookup also leaves the plan unknown — offer a retry rather than
   // checkout buttons, since nothing server-side stops a duplicate subscription
   const subscriptionLookupFailed =
