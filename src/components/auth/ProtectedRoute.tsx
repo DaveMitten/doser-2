@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,28 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading, signOut } = useAuth();
   const { isTrialExpired, hasActiveSubscription } = useSubscription();
   const router = useRouter();
+  const pathname = usePathname();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
+  // Only leave once the session is gone — /auth bounces a live session back
+  // to /dashboard, which would land the user on this modal again
   const handleSignOut = async () => {
+    setIsSigningOut(true);
+    setSignOutError(null);
     try {
       await signOut();
+      router.push("/auth");
     } catch (error) {
       console.error("Sign out failed:", error);
+      setSignOutError("Couldn't sign you out. Please try again.");
+      setIsSigningOut(false);
     }
-    router.push("/auth");
   };
+
+  // The checkout return page refreshes the subscription itself; gating it on
+  // the pre-checkout (expired) record would keep that refresh from running
+  const isCheckoutReturn = pathname === "/billing/success";
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +59,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // Show trial expired modal (non-blocking for subscription load)
-  if (isTrialExpired && !hasActiveSubscription && process.env.NODE_ENV !== 'development') {
+  if (
+    isTrialExpired &&
+    !hasActiveSubscription &&
+    !isCheckoutReturn &&
+    process.env.NODE_ENV !== "development"
+  ) {
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
@@ -65,6 +83,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             using Doser and access all features.
           </p>
 
+          {signOutError && (
+            <p className="text-sm text-red-600">{signOutError}</p>
+          )}
+
           <div className="flex flex-col space-y-2">
             <Button
               onClick={() => router.push("/pricing?trial_expired=true")}
@@ -74,10 +96,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             </Button>
             <Button
               onClick={handleSignOut}
+              disabled={isSigningOut}
               variant="outline"
               className="w-full text-gray-900 border-gray-300 hover:bg-gray-50"
             >
-              Sign Out
+              {isSigningOut ? "Signing out..." : "Sign Out"}
             </Button>
           </div>
         </div>

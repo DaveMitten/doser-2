@@ -13,12 +13,20 @@ function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
   const searchParams = useSearchParams();
   const trialExpired = searchParams.get("trial_expired") === "true" && process.env.NODE_ENV !== 'development';
-  const { user } = useAuth();
-  const { subscription, hasActiveSubscription } = useSubscription();
+  const { user, loading: authLoading } = useAuth();
+  const {
+    subscription,
+    hasActiveSubscription,
+    isLoading: subscriptionLoading,
+  } = useSubscription();
 
   const plans = PlanService.getAllPlans(isYearly);
 
   const isAuthenticatedUser = !!user;
+  // Until both are known, a paying subscriber looks like a new customer and
+  // a click would start a second checkout — so hold the cards back
+  const isCheckingAccount =
+    authLoading || (isAuthenticatedUser && subscriptionLoading);
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -88,30 +96,36 @@ function PricingPageContent() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan) => {
-              const planKey = plan.name.toLowerCase();
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative cursor-pointer transition-all duration-200 hover:transform hover:scale-102`}
-                >
-                  <PricingCard
-                    plan={plan}
-                    isYearly={isYearly}
-                    isPopular={PlanService.isPopularPlan(planKey)}
-                    isAuthenticated={isAuthenticatedUser}
-                    currentUserPlanId={subscription?.plan_id ?? undefined}
-                    hasActiveSubscription={hasActiveSubscription}
-                    userEmail={user?.email}
-                    onClick={isAuthenticatedUser ? undefined : () => {
-                      window.location.href = "/auth?signup=true";
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          {isCheckingAccount ? (
+            <div className="text-center text-doser-text-muted py-16">
+              Loading your plan...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans.map((plan) => {
+                const planKey = plan.name.toLowerCase();
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative cursor-pointer transition-all duration-200 hover:transform hover:scale-102`}
+                  >
+                    <PricingCard
+                      plan={plan}
+                      isYearly={isYearly}
+                      isPopular={PlanService.isPopularPlan(planKey)}
+                      isAuthenticated={isAuthenticatedUser}
+                      currentUserPlanId={subscription?.plan_id ?? undefined}
+                      hasActiveSubscription={hasActiveSubscription}
+                      userEmail={user?.email}
+                      onClick={isAuthenticatedUser ? undefined : () => {
+                        window.location.href = "/auth?signup=true";
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Features Section */}
           <div className="mt-16 text-center">
