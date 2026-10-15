@@ -216,7 +216,8 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
                   setIsForgotPassword(false);
                   setResetError(null);
                 }}
-                className="text-doser-primary hover:text-doser-primary-hover font-medium text-sm"
+                disabled={isResetPending}
+                className="text-doser-primary hover:text-doser-primary-hover font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back to Sign In
               </button>
