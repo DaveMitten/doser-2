@@ -1,6 +1,9 @@
 import { UserSubscription } from "./dodo-types";
 import { subscriptionIdToName } from "./utils";
 import { useUserData } from "@/context/UserDataContext";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 interface UseSubscriptionReturn {
   subscription: UserSubscription | null;
@@ -31,9 +34,60 @@ export function useSubscription(): UseSubscriptionReturn {
     refetch: refetchContext,
   } = useUserData();
 
-  const hasActiveSubscription = subscription
-    ? ["active", "trialing"].includes(subscription.status)
-    : false;
+  // Check if subscription is truly active (not expired)
+  const hasActiveSubscription = (() => {
+    if (!subscription) return false;
+
+    const now = new Date();
+
+    // Check status field
+    if (!["active", "trialing"].includes(subscription.status)) {
+      return false;
+    }
+
+    // For trialing subscriptions, check trial_end
+    if (subscription.status === "trialing") {
+      if (subscription.trial_end) {
+        const trialEnd = new Date(subscription.trial_end);
+        const isExpired = trialEnd <= now;
+
+        if (isExpired) {
+          logger.warn("Trial subscription expired (client-side check)", {
+            userId: subscription.user_id,
+            subscriptionId: subscription.id,
+            trialEnd: subscription.trial_end,
+            status: subscription.status,
+            daysExpired: Math.floor((now.getTime() - trialEnd.getTime()) / (1000 * 60 * 60 * 24))
+          });
+        }
+
+        return !isExpired;
+      }
+    }
+
+    // For active subscriptions, check current_period_end
+    if (subscription.status === "active") {
+      if (subscription.current_period_end) {
+        const periodEnd = new Date(subscription.current_period_end);
+        const isExpired = periodEnd <= now;
+
+        if (isExpired) {
+          logger.warn("Active subscription expired (client-side check)", {
+            userId: subscription.user_id,
+            subscriptionId: subscription.id,
+            currentPeriodEnd: subscription.current_period_end,
+            status: subscription.status,
+            daysExpired: Math.floor((now.getTime() - periodEnd.getTime()) / (1000 * 60 * 60 * 24))
+          });
+        }
+
+        return !isExpired;
+      }
+    }
+
+    // Default to status field if no dates available
+    return true;
+  })();
 
   const createSubscription = async (
     planId: string,
