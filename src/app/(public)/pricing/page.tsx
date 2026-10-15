@@ -11,6 +11,7 @@ import { useSubscription } from "@/lib/useSubscription";
 
 function PricingPageContent() {
   const [isYearly, setIsYearly] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const trialExpired = searchParams.get("trial_expired") === "true" && process.env.NODE_ENV !== 'development';
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +34,10 @@ function PricingPageContent() {
   // checkout buttons, since nothing server-side stops a duplicate subscription
   const subscriptionLookupFailed =
     isAuthenticatedUser && !subscriptionLoading && !!subscriptionError;
+  // Plan changes go through Dodo; a local trial has no Dodo subscription to
+  // change, so it buys a plan through checkout like anyone else
+  const canChangePlan =
+    hasActiveSubscription && !!subscription?.dodo_subscription_id;
 
   return (
     <div className="min-h-screen bg-doser-background">
@@ -120,6 +125,12 @@ function PricingPageContent() {
               </button>
             </div>
           ) : (
+            <>
+            {checkoutError && (
+              <p className="text-center text-red-500 text-sm mb-6">
+                Couldn&apos;t start checkout: {checkoutError}. Please try again.
+              </p>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 const planKey = plan.name.toLowerCase();
@@ -134,9 +145,10 @@ function PricingPageContent() {
                       isPopular={PlanService.isPopularPlan(planKey)}
                       isAuthenticated={isAuthenticatedUser}
                       currentUserPlanId={subscription?.plan_id ?? undefined}
-                      hasActiveSubscription={hasActiveSubscription}
+                      hasActiveSubscription={canChangePlan}
                       userEmail={user?.email}
-                      onClick={isAuthenticatedUser ? undefined : () => {
+                      onError={setCheckoutError}
+                      onClick={isAuthenticatedUser ? () => setCheckoutError(null) : () => {
                         window.location.href = "/auth?signup=true";
                       }}
                     />
@@ -144,6 +156,7 @@ function PricingPageContent() {
                 );
               })}
             </div>
+            </>
           )}
 
           {/* Features Section */}
