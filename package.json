@@ -39,6 +39,7 @@
     "date-fns": "^4.1.0",
     "flags": "^4.0.2",
     "lucide-react": "^0.539.0",
+    "marked": "^16.4.2",
     "next": "^15.4.6",
     "react": "19.2.3",
     "react-day-picker": "^9.8.1",
