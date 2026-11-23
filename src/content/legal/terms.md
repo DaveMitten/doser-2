@@ -1,27 +1,17 @@
 # Doser — Terms of Service
 
-**Status: DRAFT. This is not legal advice.**
-This document was drafted by describing what the Doser app actually does, as implemented in
-this repository. It has **not** been reviewed by a lawyer. Given that Doser handles health
-data in a legally regulated category and sells an auto-renewing subscription, it must be
-reviewed and approved by a qualified legal professional before publication. See
-`OWNER_TASKS.md` O-2.2.
-
-Anything in `[SQUARE BRACKETS]` is a placeholder the owner must fill in before publication.
-Subscription pricing and terms must match exactly what is configured in App Store Connect.
-
-**Last updated:** [DATE OF PUBLICATION]
+**Last updated:** 7 November 2026
 **Applies to:** the Doser mobile app for iOS (bundle identifier `com.doser.mobile`).
 
 ---
 
 ## 1. Agreement
 
-These Terms are a contract between you and **[LEGAL ENTITY NAME]**, **[REGISTERED ADDRESS]**
+These Terms are a contract between you and **David Mitten, a sole trader trading as Doser**, **3rd Floor Suite, 207 Regent Street, London W1B 3HH, United Kingdom**
 (“we”, “us”, “Doser”). By creating an account or using the app you accept them. If you do not
 accept them, do not use the app.
 
-Our [Privacy Policy]([PRIVACY POLICY URL]) explains how we handle your data and forms part of
+Our [Privacy Policy](https://doserapp.com/privacy) explains how we handle your data and forms part of
 these Terms.
 
 ---
@@ -60,7 +50,7 @@ unlawful for you to possess or consume cannabis, do not use this app.
 
 You are responsible for keeping your login details secure and for everything done through your
 account. Give us accurate information when you sign up, and tell us at
-**[SUPPORT CONTACT EMAIL]** if you believe your account has been accessed by someone else.
+**support@doserapp.com** if you believe your account has been accessed by someone else.
 
 One account is for one person. Do not share it.
 
@@ -97,16 +87,12 @@ We may suspend or terminate an account that breaches these Terms.
 Some features require a paid subscription. Free users may use the app with the limits shown
 in-app, including a cap on the number of active prescriptions.
 
-> **Owner action before publication:** the bracketed terms below must be replaced with the
-> exact plan names, prices, currencies and durations configured in App Store Connect. App
-> Store Guideline 3.1.2 requires the length of subscription, the content or services provided,
-> and the price per unit of time to be stated, and requires this document and the privacy
-> policy to be linked from the paywall itself.
+<!-- Maintainers: keep the plan details below identical to the exact plan names, prices, currencies and durations configured in App Store Connect. App Store Guideline 3.1.2 requires the length of subscription, the content or services provided, and the price per unit of time to be stated, and requires this document and the privacy policy to be linked from the paywall itself. -->
 
-- **Plan(s):** [PLAN NAME(S)]
-- **Price:** [PRICE] per [BILLING PERIOD], in your local App Store currency
-- **What it unlocks:** [PREMIUM FEATURE LIST]
-- **Free trial, if offered:** [TRIAL LENGTH, OR “none”]
+- **Plan(s):** Doser Premium (monthly)
+- **Price:** £4.99 per month in the UK; Apple sets the equivalent price in your local App Store currency
+- **What it unlocks:** tracking more than one prescription at a time
+- **Free trial, if offered:** 7 days free for new subscribers; you are charged when the trial ends unless you cancel before then
 
 Key terms:
 
@@ -147,19 +133,27 @@ separately in your device’s subscription settings.
 
 ## 10. Disclaimers and liability
 
-To the fullest extent the law allows, Doser is provided **“as is”** without warranties of any
-kind, and we exclude all implied warranties including fitness for a particular purpose.
+We will provide Doser with reasonable care and skill. If you are a consumer, the law gives you
+rights when digital content or a service is faulty, not as described, or not of satisfactory
+quality. **Nothing in these Terms takes those rights away.** Citizens Advice can tell you more
+about them.
 
-We are **not liable** for any harm arising from your consumption of cannabis, from decisions
-you make based on the app’s estimates, from data you lose, or from any use of the app that
-these Terms prohibit.
+Doser records what you enter and calculates from it. As section 2 explains, its figures are not
+medical advice, and decisions about your treatment are yours to make with your prescriber.
+
+We are not responsible for loss or damage that:
+
+- was not reasonably foreseeable when you started using Doser;
+- was not caused by our breach of these Terms or our failure to use reasonable care and skill; or
+- results from using Doser in a way these Terms prohibit.
+
+Doser is for personal use only. We are not liable to you for any business loss.
 
 Nothing in these Terms excludes or limits our liability for death or personal injury caused by
-our negligence, for fraud, or for anything else that cannot lawfully be excluded. Where
-liability can be limited, our total liability to you is limited to the greater of the amount
-you paid us in the 12 months before the claim, or **[MINIMUM LIABILITY FLOOR — e.g. £50]**.
-
-If you are a consumer, you keep all your statutory rights and nothing here overrides them.
+our negligence, for fraud or fraudulent misrepresentation, or for anything else that cannot
+lawfully be excluded or limited. Subject to that, and to your statutory rights, our total
+liability to you is limited to the greater of the amount you paid us in the 12 months before
+the claim, or **£100**.
 
 ---
 
@@ -172,8 +166,8 @@ takes effect. Continuing to use Doser after that means you accept the updated Te
 
 ## 12. Governing law
 
-These Terms are governed by the laws of **[GOVERNING LAW — e.g. England and Wales]**, and the
-courts of **[JURISDICTION]** have jurisdiction — except that, if you are a consumer, you may
+These Terms are governed by the laws of **England and Wales**, and the
+courts of **England and Wales** have jurisdiction — except that, if you are a consumer, you may
 also bring proceedings in the courts of the country where you live, and you keep the
 protection of that country’s mandatory consumer law.
 
@@ -191,6 +185,6 @@ must also comply with the Apple Media Services Terms and Conditions.
 
 ## 14. Contact
 
-**[LEGAL ENTITY NAME]**
-**[REGISTERED ADDRESS]**
-**[SUPPORT CONTACT EMAIL]**
+**David Mitten, a sole trader trading as Doser**
+**3rd Floor Suite, 207 Regent Street, London W1B 3HH, United Kingdom**
+**support@doserapp.com**

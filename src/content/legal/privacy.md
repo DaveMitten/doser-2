@@ -1,26 +1,18 @@
 # Doser — Privacy Policy
 
-**Status: DRAFT. This is not legal advice.**
-This document was drafted by describing what the Doser app and its backend actually do, as
-implemented in this repository. It has **not** been reviewed by a lawyer. It must be reviewed
-and approved by a qualified legal professional before it is published or referenced from the
-App Store listing. See `OWNER_TASKS.md` O-2.2.
-
-Anything in `[SQUARE BRACKETS]` is a placeholder the owner must fill in before publication.
-
-**Last updated:** [DATE OF PUBLICATION]
+**Last updated:** 7 November 2026
 **Applies to:** the Doser mobile app for iOS (bundle identifier `com.doser.mobile`).
 
 ---
 
 ## 1. Who we are
 
-Doser is operated by **[LEGAL ENTITY NAME]**, **[REGISTERED ADDRESS]**
+Doser is operated by **David Mitten, a sole trader trading as Doser**, **3rd Floor Suite, 207 Regent Street, London W1B 3HH, United Kingdom**
 (“we”, “us”, “Doser”). For the purposes of UK/EU data protection law we are the **data
 controller** for the personal data described in this policy.
 
 If you have any question about this policy or about your data, contact us at
-**[PRIVACY CONTACT EMAIL]**.
+**support@doserapp.com**.
 
 ---
 
@@ -122,7 +114,7 @@ To be explicit, Doser does **not** collect or access:
 - Performance telemetry or session recordings
 - Any health data held by Apple Health or any other app
 
-> **Reviewer note:** items 4.7 must be re-checked before each App Store submission.
+<!-- Maintainers: re-check section 4.7 before each App Store submission. -->
 
 ### 4.8 Crash reports
 
@@ -143,6 +135,7 @@ none of these providers is permitted to use your data for their own purposes.
 | Provider | What they do | What they receive |
 |---|---|---|
 | **Supabase** | Hosts our Postgres database and handles authentication | Everything in sections 4.1–4.5 |
+| **Fly.io** | Runs our API server, in its London region | The requests the app sends to our API, including health data, while they are handled. It does not store them |
 | **Adapty** | Manages subscription status and entitlements | A subscription profile identifier and your purchase/entitlement status. **No health data.** |
 | **Sentry** (Functional Software, Inc.) | Error and crash reporting | The crash reports described in section 4.8. **No health data** |
 | **Apple** | Processes App Store payments | Your payment details, which go to Apple directly — **we never see or store card details** |
@@ -150,9 +143,19 @@ none of these providers is permitted to use your data for their own purposes.
 If we are running without a subscription provider configured, no data is sent to Adapty at
 all and all users are treated as being on the free tier.
 
-Hosting region: **[HOSTING REGION — e.g. Supabase project region]**. Depending on that region,
-your data may be transferred outside the UK/EEA; where it is, the transfer is covered by
-**[TRANSFER MECHANISM — e.g. UK IDTA / EU Standard Contractual Clauses]**.
+Hosting region: your account and health data are stored in **Ireland (EU), in Amazon Web
+Services’ eu-west-1 region**, and our API runs in London. Some of these providers are based
+outside the UK, or use sub-processors outside the UK and EEA: Supabase’s contracting entity is
+in Singapore, and Adapty, Sentry and Fly.io are in the United States. Where personal data
+leaves the UK, the transfer is protected by:
+
+- the **EU Standard Contractual Clauses with the UK Information Commissioner’s International
+  Data Transfer Addendum**, under our data processing agreements with Supabase, Adapty and
+  Sentry; and
+- the **UK Extension to the EU–US Data Privacy Framework**, under which Sentry and Fly.io are
+  certified.
+
+You can ask us for a copy of these safeguards using the contact details in section 13.
 
 ---
 
@@ -176,7 +179,7 @@ Deleted prescriptions are held briefly as “soft-deleted” records so that the
 from within the app; they are removed permanently when you clear your data or delete your
 account.
 
-Backups taken by our hosting provider may retain a copy for up to **[BACKUP RETENTION PERIOD]**
+Backups taken by our hosting provider may retain a copy for up to **7 days**
 before they expire on their normal rotation.
 
 ---
@@ -197,7 +200,7 @@ Two of these rights are built into the app and take effect immediately:
   your prescriptions and session logs while keeping your account, devices and preferences.
 
 You can correct or export any other data by editing it in the app, or by writing to us at
-**[PRIVACY CONTACT EMAIL]**. We will respond within one month.
+**support@doserapp.com**. We will respond within one month.
 
 If you are unhappy with how we have handled your data, you can complain to the UK Information
 Commissioner’s Office (ico.org.uk) or your local supervisory authority.
@@ -221,7 +224,7 @@ you, we will notify you and the relevant regulator as the law requires.
 Doser is not for children. You must be **18 or over** to use it, and the app asks you to
 confirm this before you can use any logging feature. We do not knowingly collect data from
 anyone under 18. If you believe a minor has created an account, contact
-**[PRIVACY CONTACT EMAIL]** and we will delete it.
+**support@doserapp.com** and we will delete it.
 
 ---
 
@@ -243,6 +246,6 @@ data — we will tell you in the app before the change takes effect.
 
 ## 13. Contact
 
-**[LEGAL ENTITY NAME]**
-**[REGISTERED ADDRESS]**
-**[PRIVACY CONTACT EMAIL]**
+**David Mitten, a sole trader trading as Doser**
+**3rd Floor Suite, 207 Regent Street, London W1B 3HH, United Kingdom**
+**support@doserapp.com**
