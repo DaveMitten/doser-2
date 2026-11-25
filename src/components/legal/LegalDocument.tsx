@@ -16,7 +16,7 @@ import { marked } from "marked";
  */
 const PLACEHOLDER = /\[[A-Z][^\]\n]*\](?![(\[:])/;
 
-export function readLegalDocument(file: "privacy.md" | "terms.md"): string {
+export function readLegalDocument(file: "privacy.md" | "terms.md" | "support.md"): string {
   const markdown = fs.readFileSync(path.join(process.cwd(), "src/content/legal", file), "utf8");
   const placeholder = markdown.match(PLACEHOLDER);
   if (/Status:\s*DRAFT/i.test(markdown) || placeholder) {
