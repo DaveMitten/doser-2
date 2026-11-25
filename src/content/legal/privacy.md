@@ -1,6 +1,6 @@
 # Doser — Privacy Policy
 
-**Last updated:** 7 November 2026
+**Last updated:** 25 November 2026
 **Applies to:** the Doser mobile app for iOS (bundle identifier `com.doser.mobile`).
 
 ---
@@ -93,6 +93,21 @@ minimum and maximum temperature.
 
 Your default loading method, default device, temperature scale (Celsius or Fahrenheit),
 restock date, and whether low-inventory alerts and critical reminders are switched on.
+
+### 4.5a Your reasons for using Doser (onboarding goals)
+
+When you first set up the app you can choose what you use medical cannabis for: sleep, pain,
+anxiety, mood, appetite, nausea, focus or other. This is optional and you can skip it. Because
+it describes your health, it is **health data** and is covered by section 3. It is stored
+with your preferences in our database, together with the time you finished setting up the
+app. It is never sent to Adapty, Sentry or any other provider, and it is deleted with your
+account.
+
+### 4.5b Notifications
+
+If you turn on reminders, your iPhone asks for permission to show notifications. Reminders are
+scheduled on your phone. We do not collect a push token or send notifications from our
+servers.
 
 ### 4.6 Data stored only on your phone
 
